@@ -149,7 +149,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
   <h2 id="lockTitle">Seu período de acesso terminou</h2>
   <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 59,90 pelo botão abaixo.</p>
 
-  <a class="paybtn" id="paymentBtn" href="https://nubank.com.br/cobrar/fvuvf2/6ac183ff-3511-4769-83bc-6fdd681350f8" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank pelo Nubank</a>
+  <a class="paybtn" id="paymentBtn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank pelo Nubank</a>
 
   <div id="paidArea" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:none">
     <h3 style="margin:0 0 8px">Pagamento realizado?</h3>
@@ -190,7 +190,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
       <div class="monthly-payment-title">R$ 59,90 <span>/ mês</span></div>
       <div class="monthly-payment-sub">Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.</div>
     </div>
-    <a class="monthly-payment-btn" href="https://nubank.com.br/cobrar/fvuvf2/6ac183ff-3511-4769-83bc-6fdd681350f8" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank</a>
+    <a class="monthly-payment-btn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank</a>
   </div>
 
   <div class="app-tabs">
@@ -481,6 +481,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let mode="login", user=null, clients=[], entries=[], selectedClientId=null;
 const RICO_ADMIN_USER_ID="2f2e9b50-79c2-4bd2-9ffc-1ae3c7b3b63e";
+const PAYMENT_URL="https://nubank.com.br/cobrar/fvuvf2/6ac183ff-3511-4769-83bc-6fdd681350f8";
 let adminRows=[];
 const $=id=>document.getElementById(id);
 const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -520,6 +521,11 @@ function hideAll(){
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
 function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden")}
+function applyPaymentUrl(){
+  const ids=["paymentBtn"];
+  ids.forEach(id=>{const el=$(id);if(el)el.href=PAYMENT_URL});
+  document.querySelectorAll(".monthly-payment-btn").forEach(el=>el.href=PAYMENT_URL);
+}
 function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
 function showNetworkInvite(){
   $("networkInvite").classList.remove("hidden");
@@ -1333,6 +1339,7 @@ $("unlockBtn").onclick=async()=>{
   setTimeout(async()=>{showApp();startCountdown();await loadData();},500);
 };
 
+applyPaymentUrl();
 registerRicoWorker().then(()=>refreshNotifyButton());
 boot();
 </script>
