@@ -82,13 +82,13 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .admin-email{font-weight:800;color:var(--text)}.admin-small{font-size:11px;color:var(--muted)}#adminUsersTable{min-width:900px}
 @media(max-width:800px){.admin-metrics{grid-template-columns:repeat(2,1fr)}}
 
-.china-history-decor{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 14px;min-height:62px;overflow:hidden;border:1px solid rgba(255,255,255,.05);border-radius:16px;background:linear-gradient(90deg,rgba(183,28,28,.06),rgba(255,215,0,.035),rgba(49,230,124,.03))}
-.china-symbol{font-size:30px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}.china-word{font-weight:950;letter-spacing:.12em;color:#ffd54f;font-size:18px;text-shadow:0 0 16px rgba(255,213,79,.18)}
-.china-mascot{position:relative;width:54px;height:54px;display:grid;place-items:center;animation:chinaMascotBob 2.4s ease-in-out infinite}.china-face{font-size:40px;filter:drop-shadow(0 5px 8px rgba(0,0,0,.4));animation:chinaTearShake 1.8s ease-in-out infinite}.china-badge{position:absolute;right:-1px;bottom:-1px;font-size:18px;background:#08140d;border:1px solid var(--line);border-radius:999px;padding:2px 4px}
-.china-float{animation:chinaFlagFloat 3s ease-in-out infinite}
-@keyframes chinaFlagFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(3deg)}}
-@keyframes chinaMascotBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes chinaTearShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+.china-history-decor{position:relative;display:flex;align-items:center;justify-content:center;gap:24px;margin:8px 0 14px;min-height:78px;overflow:hidden;border:1px solid rgba(255,255,255,.06);border-radius:16px;background:linear-gradient(90deg,rgba(190,22,34,.09),rgba(255,210,55,.035),rgba(49,230,124,.03))}
+.china-flag{font-size:46px;line-height:1;filter:drop-shadow(0 5px 12px rgba(0,0,0,.35))}
+.china-fight-mark{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:15px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.14)}
+.boxing-glove{font-size:38px;line-height:1;transform:rotate(-10deg)}
+.impact-mark{font-size:25px;line-height:1}
+.target-chest{font-size:40px;line-height:1}
+@media(max-width:620px){.china-history-decor{gap:14px;min-height:68px}.china-flag{font-size:38px}.boxing-glove{font-size:32px}.impact-mark{font-size:21px}.target-chest{font-size:34px}}
 .history-sections{display:grid;gap:14px}.history-panel{border:1px solid var(--line);border-radius:16px;background:#09150f;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.history-panel:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.2)}
 .history-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 15px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .history-panel-head>div:first-child{display:flex;align-items:center;gap:9px;font-size:15px}.history-icon{font-size:18px;display:inline-block;animation:historyIconPulse 2.6s ease-in-out infinite}
@@ -98,7 +98,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .history-withdraw .history-panel-head{background:linear-gradient(90deg,rgba(101,183,255,.08),transparent)}.history-withdraw .history-total strong{color:var(--blue)}.history-withdraw:hover{border-color:rgba(101,183,255,.35)}
 .history-chest .history-panel-head{background:linear-gradient(90deg,rgba(197,156,255,.08),transparent)}.history-chest .history-total strong{color:var(--purple)}.history-chest:hover{border-color:rgba(197,156,255,.35)}
 .history-panel .table-wrap{border:0;border-radius:0}.history-table{min-width:620px}.history-table th:last-child,.history-table td:last-child{text-align:right}.history-empty{text-align:center!important;color:var(--muted);padding:22px!important}
-@media(prefers-reduced-motion:reduce){.china-float,.china-mascot,.china-face,.history-icon{animation:none!important}.history-panel{transition:none!important}}
+@media(prefers-reduced-motion:reduce){.history-icon{animation:none!important}.history-panel{transition:none!important}}
 
 </style>
 </head>
@@ -211,11 +211,11 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
       <div class="toolbar"><input id="search" placeholder="Buscar histórico..."><button class="secondary" id="refreshBtn">Atualizar</button></div>
 
       <div class="china-history-decor" aria-hidden="true">
-        <div class="china-symbol china-float">🇨🇳</div>
-        <div class="china-word">中国</div>
-        <div class="china-mascot">
-          <div class="china-face">😭</div>
-          <div class="china-badge">🇨🇳</div>
+        <div class="china-flag" title="Bandeira da China">🇨🇳</div>
+        <div class="china-fight-mark">
+          <span class="boxing-glove">🥊</span>
+          <span class="impact-mark">💥</span>
+          <span class="target-chest">🧰</span>
         </div>
       </div>
 
