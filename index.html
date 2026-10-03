@@ -289,23 +289,6 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     </main>
   </div>
 
-  <section class="dashboard-view cycle-board" style="margin-top:14px">
-    <div class="cycle-board-top">
-      <div><div class="cycle-board-kicker">OPERAÇÃO</div></div>
-      <div class="cycle-board-legend"><span class="dot"></span> Valores atualizados pelos lançamentos salvos</div>
-    </div>
-    <div class="cycle-table-wrap">
-      <table class="cycle-table">
-        <thead><tr><th>TELA</th><th>1º depósito</th><th>2º depósito</th><th>Saque filha</th><th class="cycle-bau-head">Baú</th><th>Lucro</th><th>ROI</th><th></th></tr></thead>
-        <tbody id="cycleRows"></tbody>
-        <tfoot>
-          <tr class="cycle-total-row"><td><strong>TOTAL DO CICLO</strong><span id="cycleTotalScreens">0 telas</span></td><td id="cycleFirstDepTotal">R$ 0,00</td><td id="cycleSecondDepTotal">R$ 0,00</td><td id="cycleWithdrawTotal">R$ 0,00</td><td id="cycleChestTotal">R$ 0,00</td><td class="cycle-profit" id="cycleProfitTotal">R$ 0,00</td><td class="cycle-roi" id="cycleRoiTotal">0%</td><td></td></tr>
-          <tr class="cycle-wallet-row"><td colspan="2"></td><td colspan="2"><span>SAI DO BOLSO</span> <strong id="cycleOutPocket">R$ 0,00</strong></td><td colspan="3"><span>VOLTA PRO BOLSO</span> <strong id="cycleBackPocket">R$ 0,00</strong></td><td></td></tr>
-        </tfoot>
-      </table>
-    </div>
-  </section>
-
   <section id="profitView" class="hidden">
     <div id="profitOverview">
     <div class="grid report-grid">
@@ -873,6 +856,7 @@ function cycleClientData(c){
   return {deposits,first,second,depTotal,withdraw,chest,profit,roi,extraDeposits:Math.max(0,deposits.length-2)};
 }
 function renderCycleBoard(){
+  if(!$("cycleRows"))return;
   const data=clients.map((c,i)=>Object.assign({c,i},cycleClientData(c)));
   if(data.length){
     $("cycleRows").innerHTML=data.map(x=>{
