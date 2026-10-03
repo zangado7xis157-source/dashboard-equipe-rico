@@ -70,7 +70,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .achievement-bar{height:100%;width:0;border-radius:inherit;background:var(--ach-color);transition:width .5s ease}
 .achievement-progress{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}.achievement-status{margin-top:14px;font-size:12px;font-weight:900}
 .achievement-card.unlocked{box-shadow:0 0 0 1px var(--ach-color),0 18px 50px rgba(0,0,0,.25)}.achievement-card.locked{filter:saturate(.7)}
-.achievement-actions{display:flex;gap:7px;margin-top:12px}.achievement-actions button{width:100%;font-size:12px}.achievement-note{margin-top:14px}.achievement-next{font-size:13px;color:var(--muted);line-height:1.5}
+.achievement-actions{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}.achievement-actions select{min-width:120px;flex:1}.achievement-actions button{flex:1;min-width:120px;font-size:12px}.achievement-note{margin-top:14px}.achievement-next{font-size:13px;color:var(--muted);line-height:1.5}
 .ach-bronze{--ach-color:#cd7f32}.ach-silver{--ach-color:#d7dee8}.ach-gold{--ach-color:#ffd34e}.ach-diamond{--ach-color:#58d6ff}.ach-elite{--ach-color:#ff5570}
 @media(max-width:1050px){.achievement-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.achievement-grid{grid-template-columns:1fr}.achievement-card{min-height:0}}
 
@@ -520,6 +520,7 @@ async function loadData(){
   if(!selectedClientId||!clients.some(x=>x.id===selectedClientId)) selectedClientId=clients[0]?.id||null;
   render();
   if(!$("profitView").classList.contains("hidden")) renderProfitReport();
+  if(!$("achievementsView").classList.contains("hidden")) renderAchievements();
 }
 
 $("addClient").onclick=async()=>{
@@ -846,23 +847,111 @@ function renderProfitReport(){
   $("profitUpdatedAt").textContent=`Atualizado em ${new Date().toLocaleString("pt-BR")}. Os valores vêm dos lançamentos salvos no Supabase.`;
   if(!$("monthDetailView").classList.contains("hidden")) renderMonthDetail();
 }
+const ACHIEVEMENT_LEVELS=[
+  {value:10000,label:"10K",name:"Bronze",className:"ach-bronze",color:"#cd7f32"},
+  {value:20000,label:"20K",name:"Prata",className:"ach-silver",color:"#d7dee8"},
+  {value:30000,label:"30K",name:"Ouro",className:"ach-gold",color:"#ffd34e"},
+  {value:40000,label:"40K",name:"Diamante",className:"ach-diamond",color:"#58d6ff"},
+  {value:50000,label:"50K",name:"Elite",className:"ach-elite",color:"#ff5570"}
+];
+const ACHIEVEMENT_SIZES={
+  "A4":{w:1654,h:2339,label:"A4"},
+  "A3":{w:2339,h:3307,label:"A3"},
+  "20x30":{w:1575,h:2362,label:"20 x 30 cm"},
+  "30x40":{w:2362,h:3150,label:"30 x 40 cm"}
+};
+
+function totalAchievementProfit(){
+  const t=totals(entries);
+  return Math.max(0,t.s+t.b-t.d);
+}
+function renderAchievements(){
+  const profit=totalAchievementProfit();
+  $("achievementTotalProfit").textContent=fmt(profit);
+  const next=ACHIEVEMENT_LEVELS.find(x=>profit<x.value);
+  $("achievementNextText").textContent=next ? `Próxima meta: ${next.label} • faltam ${fmt(Math.max(0,next.value-profit))}` : "Todas as metas até 50K foram conquistadas. Parabéns!";
+  $("achievementGrid").innerHTML=ACHIEVEMENT_LEVELS.map(level=>{
+    const unlocked=profit>=level.value;
+    const pct=Math.max(0,Math.min(100,(profit/level.value)*100));
+    const sizeOptions=Object.entries(ACHIEVEMENT_SIZES).map(([key,size])=>`<option value="${key}">${size.label}</option>`).join("");
+    return `<article class="achievement-card ${level.className} ${unlocked?"unlocked":"locked"}">
+      <div class="achievement-badge">${unlocked?"🏆":"🔒"}</div>
+      <div class="achievement-name">${level.name}</div>
+      <h3>R$ ${level.label}</h3>
+      <div class="muted">Meta de lucro acumulado</div>
+      <div class="achievement-track"><div class="achievement-bar" style="width:${pct.toFixed(1)}%"></div></div>
+      <div class="achievement-progress"><span>${fmt(Math.min(profit,level.value))}</span><span>${Math.floor(pct)}%</span></div>
+      <div class="achievement-status" style="color:${unlocked?level.color:"var(--muted)"}">${unlocked?"✓ Conquista desbloqueada":`Faltam ${fmt(Math.max(0,level.value-profit))}`}</div>
+      ${unlocked?`<div class="achievement-actions"><select id="achSize${level.value}" aria-label="Tamanho da placa">${sizeOptions}</select><button class="secondary" onclick="downloadAchievement(${level.value})">Baixar placa</button></div>`:""}
+    </article>`;
+  }).join("");
+}
+function achievementRoundedRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
+}
+function achievementFitText(ctx,text,maxWidth,startSize,minSize){
+  let size=startSize;
+  while(size>minSize){ctx.font=`800 ${size}px Arial`;if(ctx.measureText(text).width<=maxWidth)break;size-=2;}
+  return size;
+}
+window.downloadAchievement=value=>{
+  const level=ACHIEVEMENT_LEVELS.find(x=>x.value===value);
+  if(!level||totalAchievementProfit()<level.value)return alert("Essa conquista ainda não foi desbloqueada.");
+  const sizeKey=$(`achSize${value}`)?.value||"A4";
+  const size=ACHIEVEMENT_SIZES[sizeKey]||ACHIEVEMENT_SIZES.A4;
+  const canvas=document.createElement("canvas");canvas.width=size.w;canvas.height=size.h;
+  const ctx=canvas.getContext("2d");
+  const W=canvas.width,H=canvas.height,S=Math.min(W/1600,H/2200);
+  const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,"#07110c");grad.addColorStop(.58,"#0b1710");grad.addColorStop(1,"#020604");ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=.16;ctx.fillStyle=level.color;ctx.beginPath();ctx.arc(W*.82,H*.15,W*.34,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(W*.18,H*.86,W*.30,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle=level.color;ctx.lineWidth=Math.max(4,8*S);achievementRoundedRect(ctx,55*S,55*S,W-110*S,H-110*S,32*S);ctx.stroke();
+  ctx.strokeStyle="rgba(255,255,255,.13)";ctx.lineWidth=Math.max(2,2*S);achievementRoundedRect(ctx,78*S,78*S,W-156*S,H-156*S,25*S);ctx.stroke();
+  ctx.textAlign="center";ctx.fillStyle=level.color;ctx.font=`900 ${34*S}px Arial`;ctx.fillText("CONQUISTA DESBLOQUEADA",W/2,330*S);
+  ctx.fillStyle="#ffffff";achievementFitText(ctx,"DASHBOARD DE LUCRO CPA",W-220*S,76*S,34*S);ctx.fillText("DASHBOARD DE LUCRO CPA",W/2,470*S);
+  ctx.fillStyle=level.color;ctx.font=`900 ${48*S}px Arial`;ctx.fillText("EQUIPE RICO",W/2,555*S);
+  ctx.fillStyle="#ffffff";ctx.font=`900 ${190*S}px Arial`;ctx.fillText(`R$ ${level.label}`,W/2,965*S);
+  ctx.fillStyle=level.color;ctx.font=`800 ${42*S}px Arial`;ctx.fillText(`NÍVEL ${level.name.toUpperCase()}`,W/2,1060*S);
+  ctx.fillStyle="#ffffff";ctx.font=`700 ${38*S}px Arial`;ctx.fillText("PARABÉNS POR ALCANÇAR ESTA META!",W/2,1365*S);
+  const thanks="Obrigado por confiar e fazer parte do Dashboard de Lucro CPA — Equipe Rico.";
+  ctx.fillStyle="#b8cbbd";achievementFitText(ctx,thanks,W-260*S,31*S,20*S);ctx.fillText(thanks,W/2,1445*S);
+  ctx.fillStyle="#ffffff";ctx.font=`700 ${25*S}px Arial`;ctx.fillText("CONSTÂNCIA • EVOLUÇÃO • RESULTADO",W/2,1685*S);
+  ctx.fillStyle="#7d9b86";ctx.font=`500 ${20*S}px Arial`;ctx.fillText(`Meta de ${fmt(level.value)} em lucro acumulado • ${size.label}`,W/2,1765*S);
+  ctx.fillStyle=level.color;ctx.font=`900 ${28*S}px Arial`;ctx.fillText("DASHBOARD DE LUCRO CPA — EQUIPE RICO",W/2,H-220*S);
+  const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=`Equipe-Rico-${level.label}-${sizeKey}.png`;document.body.appendChild(a);a.click();a.remove();
+};
+
 function showDashboardView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.remove("hidden"));
   $("profitView").classList.add("hidden");
+  $("achievementsView").classList.add("hidden");
   $("dashboardTab").className="primary";
   $("profitTab").className="secondary";
+  $("achievementsTab").className="secondary";
 }
 function showProfitView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
+  $("achievementsView").classList.add("hidden");
   $("profitView").classList.remove("hidden");
   $("profitOverview").classList.remove("hidden");
   $("monthDetailView").classList.add("hidden");
   $("dashboardTab").className="secondary";
   $("profitTab").className="primary";
+  $("achievementsTab").className="secondary";
   renderProfitReport();
+}
+function showAchievementsView(){
+  document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
+  $("profitView").classList.add("hidden");
+  $("achievementsView").classList.remove("hidden");
+  $("dashboardTab").className="secondary";
+  $("profitTab").className="secondary";
+  $("achievementsTab").className="primary";
+  renderAchievements();
 }
 $("dashboardTab").onclick=showDashboardView;
 $("profitTab").onclick=showProfitView;
+$("achievementsTab").onclick=showAchievementsView;
 $("profitRefreshBtn").onclick=async()=>{await loadData();renderProfitReport()};
 $("monthProfitCard").onclick=openMonthDetail;
 $("monthProfitCard").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openMonthDetail()}};
