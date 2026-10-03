@@ -20,8 +20,13 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:12px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}th{color:var(--muted);background:#0a1710}
 .clients-grid{grid-template-columns:repeat(3,1fr);margin-top:12px}.client-card{padding:14px;border:1px solid var(--line);border-radius:15px;background:#0a1710}.client-card h3{margin:0 0 6px}.vals{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.vals div{padding:8px;border:1px solid var(--line);border-radius:10px;background:#08140d}.vals span{display:block;color:var(--muted);font-size:10px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.toolbar input{flex:1;min-width:200px}
+.app-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.app-tabs button{min-width:140px}
+.report-grid{grid-template-columns:repeat(4,1fr);margin-bottom:14px}
+.report-card{position:relative;overflow:hidden}.report-card .period{color:var(--muted);font-size:12px}.report-card .profit{font-size:28px;font-weight:900;margin-top:7px;color:var(--green)}
+.report-card .range{font-size:11px;color:var(--muted);margin-top:6px}
+.report-table td:last-child,.report-table th:last-child{text-align:right}.report-note{margin-top:10px;line-height:1.5}
 @media(max-width:1000px){.metrics{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.clients-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:650px){.metrics,.clients-grid,.client-stats,.money,.row{grid-template-columns:1fr}}
+@media(max-width:650px){.metrics,.clients-grid,.client-stats,.money,.row,.report-grid{grid-template-columns:1fr}}
 
 .paywall{max-width:560px;margin:7vh auto;text-align:center}
 .paywall h2{font-size:30px;margin:0 0 8px}
@@ -85,7 +90,12 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     <div><span class="trialbadge" id="trialStatus">Verificando acesso...</span> <span class="muted" id="userEmail"></span> <button class="secondary" id="logoutBtn">Sair</button></div>
   </div>
 
-  <div class="grid metrics">
+  <div class="app-tabs">
+    <button class="primary" id="dashboardTab">Visão geral</button>
+    <button class="secondary" id="profitTab">Lucros</button>
+  </div>
+
+  <div class="grid metrics dashboard-view">
     <div class="card metric"><div class="label">Clientes</div><div class="value" id="mClientes">0</div></div>
     <div class="card metric"><div class="label">Depósitos</div><div class="value" id="mDep">R$ 0,00</div></div>
     <div class="card metric"><div class="label">Saques</div><div class="value" id="mSaq">R$ 0,00</div></div>
@@ -93,7 +103,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     <div class="card metric"><div class="label">Lucro geral</div><div class="value" id="mLucro">R$ 0,00</div></div>
   </div>
 
-  <div class="grid layout">
+  <div class="grid layout dashboard-view">
     <aside class="card">
       <h2>Cadastrar cliente</h2>
       <div class="field"><label>Nome</label><input id="clientName"></div>
@@ -132,9 +142,51 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     </main>
   </div>
 
-  <section class="card" style="margin-top:14px">
+  <section class="card dashboard-view" style="margin-top:14px">
     <h2 style="margin-top:0">Todos os clientes</h2>
     <div class="grid clients-grid" id="clientsGrid"></div>
+  </section>
+
+  <section id="profitView" class="hidden">
+    <div class="grid report-grid">
+      <div class="card report-card">
+        <div class="period">Lucro de hoje</div>
+        <div class="profit" id="profitToday">R$ 0,00</div>
+        <div class="range" id="rangeToday"></div>
+      </div>
+      <div class="card report-card">
+        <div class="period">Lucro da semana</div>
+        <div class="profit" id="profitWeek">R$ 0,00</div>
+        <div class="range" id="rangeWeek"></div>
+      </div>
+      <div class="card report-card">
+        <div class="period">Lucro do mês</div>
+        <div class="profit" id="profitMonth">R$ 0,00</div>
+        <div class="range" id="rangeMonth"></div>
+      </div>
+      <div class="card report-card">
+        <div class="period">Lucro total</div>
+        <div class="profit" id="profitTotal">R$ 0,00</div>
+        <div class="range">Todo o histórico salvo</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="top" style="margin-bottom:10px">
+        <div>
+          <h2 style="margin:0">Resumo de lucros</h2>
+          <div class="muted">Saques + Baús − Depósitos, somando todos os clientes.</div>
+        </div>
+        <button class="secondary" id="profitRefreshBtn">Atualizar</button>
+      </div>
+      <div class="table-wrap">
+        <table class="report-table">
+          <thead><tr><th>Período</th><th>Depósitos</th><th>Saques</th><th>Baús</th><th>Lucro</th></tr></thead>
+          <tbody id="profitTableBody"></tbody>
+        </table>
+      </div>
+      <div class="muted report-note" id="profitUpdatedAt"></div>
+    </div>
   </section>
 </section>
 
@@ -147,12 +199,26 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let mode="login", user=null, clients=[], entries=[], selectedClientId=null;
 const $=id=>document.getElementById(id);
 const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const today=()=>new Date().toISOString().slice(0,10);
+const localDateKey=(d=new Date())=>{
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+};
+const today=()=>localDateKey();
 $("entryDate").value=today();
 
 function money(v){let s=String(v||"").trim().replace(/\s/g,"");if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");let n=Number(s);return Number.isFinite(n)?Math.round(n*100)/100:NaN}
 function selected(){return clients.find(c=>c.id===selectedClientId)||null}
-function totals(list){return list.reduce((a,e)=>{if(e.entry_type==="deposito")a.d+=Number(e.value);if(e.entry_type==="saque")a.s+=Number(e.value);if(e.entry_type==="bau")a.b+=Number(e.value);return a},{d:0,s:0,b:0})}
+const toCents=v=>Math.round(Number(v||0)*100);
+function totals(list){
+  const c=list.reduce((a,e)=>{
+    const v=toCents(e.value);
+    if(e.entry_type==="deposito")a.d+=v;
+    if(e.entry_type==="saque")a.s+=v;
+    if(e.entry_type==="bau")a.b+=v;
+    return a;
+  },{d:0,s:0,b:0});
+  return {d:c.d/100,s:c.s/100,b:c.b/100};
+}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
 let accessRow=null, countdownTimer=null;
@@ -261,6 +327,7 @@ async function loadData(){
   clients=c.data||[];entries=e.data||[];
   if(!selectedClientId||!clients.some(x=>x.id===selectedClientId)) selectedClientId=clients[0]?.id||null;
   render();
+  if(!$("profitView").classList.contains("hidden")) renderProfitReport();
 }
 
 $("addClient").onclick=async()=>{
@@ -314,6 +381,89 @@ function renderHistory(){
   $("tbody").innerHTML=list.map(e=>`<tr><td>${esc(String(e.entry_date).split("-").reverse().join("/"))}</td><td>${e.entry_type==="deposito"?"Depósito":e.entry_type==="saque"?"Saque":"Baú"}</td><td>${fmt(e.value)}</td><td>${esc(e.note||"-")}</td><td><button class="danger" onclick="deleteEntry('${e.id}')">Excluir</button></td></tr>`).join("");
 }
 
+
+function dateFromKey(key){
+  const [y,m,d]=String(key).split("-").map(Number);
+  return new Date(y,m-1,d,12,0,0,0);
+}
+function formatDateKey(key){
+  return String(key).split("-").reverse().join("/");
+}
+function addDaysKey(key,days){
+  const d=dateFromKey(key); d.setDate(d.getDate()+days); return localDateKey(d);
+}
+function reportPeriod(startKey,endKey){
+  const list=entries.filter(e=>{
+    const k=String(e.entry_date).slice(0,10);
+    return k>=startKey && k<=endKey;
+  });
+  const t=totals(list);
+  return {...t,profit:t.s+t.b-t.d};
+}
+function currentPeriods(){
+  const now=new Date();
+  const todayKey=localDateKey(now);
+  const dow=now.getDay();
+  const mondayOffset=dow===0?-6:1-dow;
+  const monday=new Date(now.getFullYear(),now.getMonth(),now.getDate()+mondayOffset,12);
+  const sunday=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+6,12);
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1,12);
+  const monthEnd=new Date(now.getFullYear(),now.getMonth()+1,0,12);
+  return {
+    today:{start:todayKey,end:todayKey,label:"Hoje"},
+    week:{start:localDateKey(monday),end:localDateKey(sunday),label:"Semana"},
+    month:{start:localDateKey(monthStart),end:localDateKey(monthEnd),label:"Mês"}
+  };
+}
+function renderProfitReport(){
+  const p=currentPeriods();
+  const day=reportPeriod(p.today.start,p.today.end);
+  const week=reportPeriod(p.week.start,p.week.end);
+  const month=reportPeriod(p.month.start,p.month.end);
+  const all=totals(entries);
+  const total={...all,profit:all.s+all.b-all.d};
+
+  $("profitToday").textContent=fmt(day.profit);
+  $("profitWeek").textContent=fmt(week.profit);
+  $("profitMonth").textContent=fmt(month.profit);
+  $("profitTotal").textContent=fmt(total.profit);
+
+  $("rangeToday").textContent=formatDateKey(p.today.start);
+  $("rangeWeek").textContent=`${formatDateKey(p.week.start)} até ${formatDateKey(p.week.end)}`;
+  $("rangeMonth").textContent=`${formatDateKey(p.month.start)} até ${formatDateKey(p.month.end)}`;
+
+  const rows=[
+    ["Hoje",day],
+    ["Semana atual",week],
+    ["Mês atual",month],
+    ["Total geral",total]
+  ];
+  $("profitTableBody").innerHTML=rows.map(([label,r])=>`
+    <tr>
+      <td><strong>${label}</strong></td>
+      <td>${fmt(r.d)}</td>
+      <td>${fmt(r.s)}</td>
+      <td>${fmt(r.b)}</td>
+      <td><strong>${fmt(r.profit)}</strong></td>
+    </tr>`).join("");
+  $("profitUpdatedAt").textContent=`Atualizado em ${new Date().toLocaleString("pt-BR")}. Os valores vêm dos lançamentos salvos no Supabase.`;
+}
+function showDashboardView(){
+  document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.remove("hidden"));
+  $("profitView").classList.add("hidden");
+  $("dashboardTab").className="primary";
+  $("profitTab").className="secondary";
+}
+function showProfitView(){
+  document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
+  $("profitView").classList.remove("hidden");
+  $("dashboardTab").className="secondary";
+  $("profitTab").className="primary";
+  renderProfitReport();
+}
+$("dashboardTab").onclick=showDashboardView;
+$("profitTab").onclick=showProfitView;
+$("profitRefreshBtn").onclick=async()=>{await loadData();renderProfitReport()};
 
 function setupPaymentFlow(){
   const key = user ? `payment_started_${user.id}` : "payment_started";
