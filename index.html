@@ -100,6 +100,25 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .history-panel .table-wrap{border:0;border-radius:0}.history-table{min-width:620px}.history-table th:last-child,.history-table td:last-child{text-align:right}.history-empty{text-align:center!important;color:var(--muted);padding:22px!important}
 @media(prefers-reduced-motion:reduce){.history-icon{animation:none!important}.history-panel{transition:none!important}}
 
+.cycle-board{background:#0d2330;border:1px solid #31596b;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.2)}
+.cycle-board-top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 16px;background:linear-gradient(180deg,#112b39,#0e2531);border-bottom:1px solid #31596b;flex-wrap:wrap}
+.cycle-board-top h2{margin:2px 0 0;font-size:18px}.cycle-board-kicker{font-size:10px;font-weight:950;letter-spacing:.15em;color:#9bb2bf}
+.cycle-board-legend{font-size:11px;color:#9bb2bf}.cycle-board-legend .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#19e3a0;margin-right:6px;box-shadow:0 0 12px rgba(25,227,160,.55)}
+.cycle-table-wrap{overflow:auto}.cycle-table{min-width:920px;width:100%;border-collapse:collapse;background:#102733}
+.cycle-table th{padding:10px 12px;background:#102733;color:#c7d5db;font-size:10px;text-align:center;border-right:1px solid #31505e;border-bottom:2px solid #d0a629;white-space:nowrap}
+.cycle-table th:first-child{text-align:left}.cycle-table th.cycle-bau-head{color:#ffd136}
+.cycle-table td{padding:11px 12px;border-right:1px solid #294653;border-bottom:1px solid #2a4b59;text-align:center;background:#16323e;font-size:12px;font-weight:800}
+.cycle-table td:first-child{text-align:left}.cycle-table tbody tr:hover td{background:#193846}
+.cycle-screen-main{display:flex;align-items:center;gap:9px}.cycle-screen-num{font-weight:950;color:#dbe8ed}.cycle-screen-info{min-width:0}.cycle-screen-name{display:block;font-weight:950;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.cycle-house{display:inline-flex;margin-top:5px;padding:4px 8px;border-radius:8px;border:1px dashed #406779;color:#7fa4b5;font-size:9px;text-decoration:none;font-weight:800}.cycle-house.linked{border-style:solid;color:#77dcb4;border-color:rgba(25,227,160,.3);background:rgba(25,227,160,.06)}
+.cycle-money-box{display:inline-flex;align-items:center;justify-content:center;min-width:88px;padding:8px 9px;border-radius:9px;background:#183b48;border:1px solid #3a6371;color:#f4fbff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.cycle-money-box.empty{background:#0b2028;border-color:#183d48;color:#6f8c98}.cycle-money-box.chest{box-shadow:0 0 0 2px rgba(255,209,54,.12);border-color:#476872}.cycle-extra{display:block;font-size:8px;color:#7f9da9;margin-top:4px}
+.cycle-profit,.cycle-roi{color:#12efa5!important;font-weight:950!important;font-size:14px!important}.cycle-profit.negative,.cycle-roi.negative{color:#ff7885!important}
+.cycle-trash{width:32px;height:32px;padding:0;border-radius:9px;background:#183844;color:#8aa8b4;border:1px solid #345b68;font-size:15px}
+.cycle-total-row td{background:#102733!important;border-top:1px solid #d0a629;border-bottom:0;font-size:12px}.cycle-total-row td:first-child strong{display:block;font-size:10px;letter-spacing:.12em}.cycle-total-row td:first-child span{display:block;color:#7f98a4;font-size:9px;margin-top:3px}
+.cycle-wallet-row td{background:#102733!important;border-top:0;border-bottom:0;padding-top:3px;padding-bottom:11px;color:#9baeb7}.cycle-wallet-row span{font-size:9px;letter-spacing:.1em;margin-right:7px}.cycle-wallet-row strong{font-size:12px;color:#d4dee3}.cycle-wallet-row td:nth-child(5) strong{color:#ffd136}
+.cycle-empty-row td{text-align:center!important;padding:28px!important;color:#8aa1ac;font-weight:700}
+@media(max-width:720px){.cycle-board-top{padding:12px}.cycle-table{min-width:860px}.cycle-money-box{min-width:78px}.cycle-screen-name{max-width:135px}}
 </style>
 </head>
 <body>
@@ -253,9 +272,21 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     </main>
   </div>
 
-  <section class="card dashboard-view" style="margin-top:14px">
-    <h2 style="margin-top:0">Todos os clientes</h2>
-    <div class="grid clients-grid" id="clientsGrid"></div>
+  <section class="dashboard-view cycle-board" style="margin-top:14px">
+    <div class="cycle-board-top">
+      <div><div class="cycle-board-kicker">OPERAÇÃO</div><h2>Resumo por tela</h2></div>
+      <div class="cycle-board-legend"><span class="dot"></span> Valores atualizados pelos lançamentos salvos</div>
+    </div>
+    <div class="cycle-table-wrap">
+      <table class="cycle-table">
+        <thead><tr><th>TELA</th><th>1º depósito</th><th>2º depósito</th><th>Saque filha</th><th class="cycle-bau-head">Baú</th><th>Lucro</th><th>ROI</th><th></th></tr></thead>
+        <tbody id="cycleRows"></tbody>
+        <tfoot>
+          <tr class="cycle-total-row"><td><strong>TOTAL DO CICLO</strong><span id="cycleTotalScreens">0 telas</span></td><td id="cycleFirstDepTotal">R$ 0,00</td><td id="cycleSecondDepTotal">R$ 0,00</td><td id="cycleWithdrawTotal">R$ 0,00</td><td id="cycleChestTotal">R$ 0,00</td><td class="cycle-profit" id="cycleProfitTotal">R$ 0,00</td><td class="cycle-roi" id="cycleRoiTotal">0%</td><td></td></tr>
+          <tr class="cycle-wallet-row"><td colspan="2"></td><td colspan="2"><span>SAI DO BOLSO</span> <strong id="cycleOutPocket">R$ 0,00</strong></td><td colspan="3"><span>VOLTA PRO BOLSO</span> <strong id="cycleBackPocket">R$ 0,00</strong></td><td></td></tr>
+        </tfoot>
+      </table>
+    </div>
   </section>
 
   <section id="profitView" class="hidden">
@@ -799,6 +830,71 @@ $("deleteClient").onclick=async()=>{
 window.deleteEntry=async id=>{if(!confirm("Excluir lançamento?"))return;const {error}=await sb.from("cpa_entries").delete().eq("id",id);if(error)return alert(error.message);await loadData()}
 window.openClient=id=>{selectedClientId=id;render();window.scrollTo({top:0,behavior:"smooth"})}
 
+function cycleClientData(c){
+  const ce=entries.filter(e=>e.client_id===c.id);
+  const deposits=ce.filter(e=>e.entry_type==="deposito").slice().sort((a,b)=>{
+    const da=String(a.entry_date||"")+" "+String(a.created_at||"");
+    const db=String(b.entry_date||"")+" "+String(b.created_at||"");
+    return da.localeCompare(db);
+  });
+  const withdrawals=ce.filter(e=>e.entry_type==="saque");
+  const chests=ce.filter(e=>e.entry_type==="bau");
+  const first=Number(deposits[0]?.value||0);
+  const second=Number(deposits[1]?.value||0);
+  const depTotal=deposits.reduce((s,e)=>s+Number(e.value||0),0);
+  const withdraw=withdrawals.reduce((s,e)=>s+Number(e.value||0),0);
+  const chest=chests.reduce((s,e)=>s+Number(e.value||0),0);
+  const profit=withdraw+chest-depTotal;
+  const roi=depTotal>0?(profit/depTotal)*100:0;
+  return {deposits,first,second,depTotal,withdraw,chest,profit,roi,extraDeposits:Math.max(0,deposits.length-2)};
+}
+function renderCycleBoard(){
+  const data=clients.map((c,i)=>Object.assign({c,i},cycleClientData(c)));
+  if(data.length){
+    $("cycleRows").innerHTML=data.map(x=>{
+      const link=x.c.house_link ? "<a class=\"cycle-house linked\" href=\""+esc(x.c.house_link)+"\" target=\"_blank\" rel=\"noopener\" onclick=\"event.stopPropagation()\">↗ abrir casa</a>" : "<span class=\"cycle-house\">🔗 sem casa vinculada</span>";
+      const extra=x.extraDeposits ? "<span class=\"cycle-extra\">+"+x.extraDeposits+" depósito(s)</span>" : "";
+      const first=x.first ? fmt(x.first) : "—";
+      const second=x.second ? fmt(x.second) : "—";
+      const withdraw=x.withdraw ? fmt(x.withdraw) : "—";
+      const chest=x.chest ? fmt(x.chest) : "—";
+      const profit=(x.profit>=0?"+":"")+fmt(x.profit);
+      const roi=(x.roi>=0?"+":"")+x.roi.toFixed(0)+"%";
+      return "<tr onclick=\"openClient(\'"+x.c.id+"\')\" style=\"cursor:pointer\">"+
+        "<td><div class=\"cycle-screen-main\"><span class=\"cycle-screen-num\">#"+String(x.i+1).padStart(2,"0")+"</span><div class=\"cycle-screen-info\"><span class=\"cycle-screen-name\">"+esc(x.c.name)+"</span>"+link+"</div></div></td>"+
+        "<td><span class=\"cycle-money-box "+(x.first?"":"empty")+"\">"+first+"</span></td>"+
+        "<td><span class=\"cycle-money-box "+(x.second?"":"empty")+"\">"+second+"</span>"+extra+"</td>"+
+        "<td><span class=\"cycle-money-box "+(x.withdraw?"":"empty")+"\">"+withdraw+"</span></td>"+
+        "<td><span class=\"cycle-money-box chest "+(x.chest?"":"empty")+"\">"+chest+"</span></td>"+
+        "<td class=\"cycle-profit "+(x.profit<0?"negative":"")+"\">"+profit+"</td>"+
+        "<td class=\"cycle-roi "+(x.roi<0?"negative":"")+"\">"+roi+"</td>"+
+        "<td><button class=\"cycle-trash\" title=\"Excluir cliente\" onclick=\"event.stopPropagation();deleteCycleClient(\'"+x.c.id+"\')\">🗑</button></td></tr>";
+    }).join("");
+  }else{
+    $("cycleRows").innerHTML="<tr class=\"cycle-empty-row\"><td colspan=\"8\">Nenhuma tela cadastrada ainda.</td></tr>";
+  }
+  const t=data.reduce((a,x)=>{a.first+=x.first;a.second+=x.second;a.dep+=x.depTotal;a.withdraw+=x.withdraw;a.chest+=x.chest;a.profit+=x.profit;return a;},{first:0,second:0,dep:0,withdraw:0,chest:0,profit:0});
+  const roi=t.dep>0?(t.profit/t.dep)*100:0;
+  $("cycleTotalScreens").textContent=data.length+" "+(data.length===1?"tela":"telas");
+  $("cycleFirstDepTotal").textContent=fmt(t.first);
+  $("cycleSecondDepTotal").textContent=fmt(t.second);
+  $("cycleWithdrawTotal").textContent=fmt(t.withdraw);
+  $("cycleChestTotal").textContent=fmt(t.chest);
+  $("cycleProfitTotal").textContent=(t.profit>=0?"+":"")+fmt(t.profit);
+  $("cycleRoiTotal").textContent=(roi>=0?"+":"")+roi.toFixed(0)+"%";
+  $("cycleProfitTotal").classList.toggle("negative",t.profit<0);
+  $("cycleRoiTotal").classList.toggle("negative",roi<0);
+  $("cycleOutPocket").textContent=fmt(t.dep);
+  $("cycleBackPocket").textContent=fmt(t.withdraw+t.chest);
+}
+window.deleteCycleClient=async id=>{
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  if(!confirm("Excluir "+c.name+" e todo o histórico?"))return;
+  const {error}=await sb.from("cpa_clients").delete().eq("id",id).eq("user_id",user.id);
+  if(error)return alert(error.message);
+  if(selectedClientId===id)selectedClientId=null;
+  await loadData();
+};
 function render(){
   $("mClientes").textContent=clients.length;
   const gt=totals(entries);$("mDep").textContent=fmt(gt.d);$("mSaq").textContent=fmt(gt.s);$("mBau").textContent=fmt(gt.b);$("mLucro").textContent=fmt(gt.s+gt.b-gt.d);
@@ -809,7 +905,7 @@ function render(){
     $("selectedLink").innerHTML=link;$("detailName").textContent=c.name;$("detailLink").innerHTML=link;
     $("cDep").textContent=fmt(t.d);$("cSaq").textContent=fmt(t.s);$("cBau").textContent=fmt(t.b);$("cLucro").textContent=fmt(t.s+t.b-t.d);
   }else{$("selectedLink").textContent="";$("detailName").textContent="Visão do cliente";["cDep","cSaq","cBau","cLucro"].forEach(x=>$(x).textContent=fmt(0))}
-  $("clientsGrid").innerHTML=clients.map(c=>{const t=totals(entries.filter(e=>e.client_id===c.id));return `<div class="client-card"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.house_link||"Sem link")}</div><div class="vals"><div><span>Depósito</span><strong>${fmt(t.d)}</strong></div><div><span>Saque</span><strong>${fmt(t.s)}</strong></div><div><span>Baú</span><strong>${fmt(t.b)}</strong></div><div><span>Lucro</span><strong>${fmt(t.s+t.b-t.d)}</strong></div></div><div class="actions"><button class="secondary" onclick="openClient('${c.id}')">Abrir</button></div></div>`}).join("");
+  renderCycleBoard();
   renderHistory();
 }
 function renderHistory(){
