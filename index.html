@@ -519,7 +519,7 @@ function hideAll(){
 }
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
-function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.toggle("hidden",isRicoAdmin())}
+function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden")}
 function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
 function showNetworkInvite(){
   $("networkInvite").classList.remove("hidden");
@@ -556,11 +556,11 @@ async function checkAccess(){
     if(data.access_status==="paid"){
       $("lockBadge").textContent="Assinatura vencida";
       $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
-      $("lockText").textContent="Renove sua mensalidade de R$ 59,90 para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
+      $("lockText").textContent="Renove sua mensalidade de R$ 59,90 e use uma nova key para liberar mais 30 dias.";
     }else{
-      $("lockBadge").textContent="Teste grátis encerrado";
-      $("lockTitle").textContent="Seu período de 24 horas terminou";
-      $("lockText").textContent="Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, faça o pagamento da mensalidade de R$ 59,90 pelo botão abaixo.";
+      $("lockBadge").textContent="Acesso bloqueado";
+      $("lockTitle").textContent="Ative seu Dashboard";
+      $("lockText").textContent="A mensalidade é R$ 59,90. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";
     }
     showPaywall();
     return;
