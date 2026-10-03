@@ -119,6 +119,13 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .cycle-wallet-row td{background:#102733!important;border-top:0;border-bottom:0;padding-top:3px;padding-bottom:11px;color:#9baeb7}.cycle-wallet-row span{font-size:9px;letter-spacing:.1em;margin-right:7px}.cycle-wallet-row strong{font-size:12px;color:#d4dee3}.cycle-wallet-row td:nth-child(5) strong{color:#ffd136}
 .cycle-empty-row td{text-align:center!important;padding:28px!important;color:#8aa1ac;font-weight:700}
 @media(max-width:720px){.cycle-board-top{padding:12px}.cycle-table{min-width:860px}.cycle-money-box{min-width:78px}.cycle-screen-name{max-width:135px}}
+
+.monthly-payment-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 18px;margin:0 0 14px;border-radius:18px;border:1px solid rgba(49,230,124,.38);background:linear-gradient(135deg,rgba(17,63,36,.9),rgba(9,30,18,.96));box-shadow:0 16px 34px rgba(0,0,0,.2),inset 0 0 30px rgba(49,230,124,.04);flex-wrap:wrap}
+.monthly-payment-copy{min-width:0}.monthly-payment-kicker{font-size:10px;font-weight:950;letter-spacing:.14em;color:#99cfaa}.monthly-payment-title{font-size:28px;font-weight:950;color:#f5fff7;margin-top:3px}.monthly-payment-title span{font-size:14px;color:#9bc4aa;font-weight:800}.monthly-payment-sub{font-size:12px;color:#9bc4aa;margin-top:3px}
+.monthly-payment-btn{display:inline-flex;align-items:center;justify-content:center;min-width:170px;padding:13px 18px;border-radius:13px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;text-decoration:none;font-weight:950;box-shadow:0 8px 22px rgba(49,230,124,.16)}
+.monthly-payment-btn:hover{filter:brightness(1.05)}
+@media(max-width:620px){.monthly-payment-banner{align-items:stretch}.monthly-payment-btn{width:100%}.monthly-payment-title{font-size:25px}}
+
 </style>
 </head>
 <body>
@@ -140,9 +147,9 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 <section id="paywallScreen" class="paywall card hidden">
   <div class="trialbadge" id="lockBadge">Acesso encerrado</div>
   <h2 id="lockTitle">Seu período de acesso terminou</h2>
-  <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove seu acesso pelo botão abaixo.</p>
+  <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 59,90 pelo botão abaixo.</p>
 
-  <a class="paybtn" id="paymentBtn" href="https://mpago.la/1ANfxPo" target="_blank" rel="noopener noreferrer">Fazer pagamento</a>
+  <a class="paybtn" id="paymentBtn" href="https://mpago.la/1ANfxPo" target="_blank" rel="noopener noreferrer">Pagar mensalidade — R$ 59,90</a>
 
   <div id="paidArea" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:none">
     <h3 style="margin:0 0 8px">Pagamento realizado?</h3>
@@ -174,6 +181,16 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
   <div class="top">
     <div><h1>Dashboard de Lucro CPA <span>— Equipe Rico</span></h1><div class="muted">Banco online conectado. Dados salvos no Supabase.</div></div>
     <div><span class="trialbadge" id="trialStatus">Verificando acesso...</span> <span class="muted" id="userEmail"></span> <button class="secondary" id="logoutBtn">Sair</button></div>
+  </div>
+
+
+  <div id="monthlyPaymentBanner" class="monthly-payment-banner hidden">
+    <div class="monthly-payment-copy">
+      <div class="monthly-payment-kicker">MENSALIDADE DO DASHBOARD</div>
+      <div class="monthly-payment-title">R$ 59,90 <span>/ mês</span></div>
+      <div class="monthly-payment-sub">Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.</div>
+    </div>
+    <a class="monthly-payment-btn" href="https://mpago.la/1ANfxPo" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90</a>
   </div>
 
   <div class="app-tabs">
@@ -502,7 +519,7 @@ function hideAll(){
 }
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
-function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin())}
+function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.toggle("hidden",isRicoAdmin())}
 function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
 function showNetworkInvite(){
   $("networkInvite").classList.remove("hidden");
@@ -539,11 +556,11 @@ async function checkAccess(){
     if(data.access_status==="paid"){
       $("lockBadge").textContent="Assinatura vencida";
       $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
-      $("lockText").textContent="Renove sua assinatura para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
+      $("lockText").textContent="Renove sua mensalidade de R$ 59,90 para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
     }else{
       $("lockBadge").textContent="Teste grátis encerrado";
       $("lockTitle").textContent="Seu período de 24 horas terminou";
-      $("lockText").textContent="Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, faça o pagamento pelo botão abaixo.";
+      $("lockText").textContent="Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, faça o pagamento da mensalidade de R$ 59,90 pelo botão abaixo.";
     }
     showPaywall();
     return;
