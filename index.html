@@ -74,6 +74,13 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .ach-bronze{--ach-color:#cd7f32}.ach-silver{--ach-color:#d7dee8}.ach-gold{--ach-color:#ffd34e}.ach-diamond{--ach-color:#58d6ff}.ach-elite{--ach-color:#ff5570}
 @media(max-width:1050px){.achievement-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.achievement-grid{grid-template-columns:1fr}.achievement-card{min-height:0}}
 
+
+.admin-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.admin-metrics{grid-template-columns:repeat(4,1fr);margin:14px 0}.admin-metric{padding:16px}.admin-metric span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.09em}.admin-metric strong{display:block;font-size:27px;margin-top:5px}
+.admin-status{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid var(--line);white-space:nowrap}
+.admin-status.paid{color:#58e991;background:rgba(49,230,124,.08);border-color:rgba(49,230,124,.28)}.admin-status.trial{color:#ffc857;background:rgba(255,200,87,.08);border-color:rgba(255,200,87,.28)}.admin-status.expired{color:#ff909a;background:rgba(255,101,115,.08);border-color:rgba(255,101,115,.28)}
+.admin-email{font-weight:800;color:var(--text)}.admin-small{font-size:11px;color:var(--muted)}#adminUsersTable{min-width:900px}
+@media(max-width:800px){.admin-metrics{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -135,6 +142,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     <button class="primary" id="dashboardTab">Visão geral</button>
     <button class="secondary" id="profitTab">Lucros</button>
     <button class="secondary" id="achievementsTab">🏆 Conquistas</button>
+    <button class="secondary hidden" id="adminTab">👑 Admin</button>
   </div>
 
   <div class="grid metrics dashboard-view">
@@ -315,6 +323,39 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
       <div class="muted" style="margin-top:6px;line-height:1.6">A barra acompanha o lucro total salvo no Dashboard de Lucro CPA — Equipe Rico. Ao alcançar uma meta, a placa é liberada automaticamente para baixar e imprimir.</div>
     </div>
   </section>
+
+
+  <section id="adminView" class="hidden">
+    <div class="card">
+      <div class="admin-head">
+        <div>
+          <h2 style="margin:0 0 5px">👑 Painel Admin — Equipe Rico</h2>
+          <div class="muted">Área privada da conta principal para acompanhar os usuários cadastrados.</div>
+        </div>
+        <button class="secondary" id="adminRefreshBtn">Atualizar</button>
+      </div>
+    </div>
+
+    <div class="grid admin-metrics">
+      <div class="card admin-metric"><span>Contas cadastradas</span><strong id="adminTotalUsers">0</strong></div>
+      <div class="card admin-metric"><span>Acessos ativos</span><strong id="adminActiveUsers">0</strong></div>
+      <div class="card admin-metric"><span>Em teste</span><strong id="adminTrialUsers">0</strong></div>
+      <div class="card admin-metric"><span>Clientes adicionados</span><strong id="adminTotalClients">0</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <input id="adminSearch" placeholder="Buscar por e-mail...">
+      </div>
+      <div class="table-wrap">
+        <table id="adminUsersTable">
+          <thead><tr><th>E-mail</th><th>Cadastro</th><th>Último acesso</th><th>Status</th><th>Vencimento</th><th>Clientes</th></tr></thead>
+          <tbody id="adminUsersBody"></tbody>
+        </table>
+      </div>
+      <div class="muted" id="adminUpdatedAt" style="margin-top:10px"></div>
+    </div>
+  </section>
 </section>
 
 <div id="networkInvite" class="network-invite-overlay hidden">
@@ -334,6 +375,8 @@ const SUPABASE_KEY='sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let mode="login", user=null, clients=[], entries=[], selectedClientId=null;
+const RICO_ADMIN_USER_ID="2f2e9b50-79c2-4bd2-9ffc-1ae3c7b3b63e";
+let adminRows=[];
 const $=id=>document.getElementById(id);
 const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const localDateKey=(d=new Date())=>{
@@ -370,7 +413,8 @@ function hideAll(){
   $("appScreen").classList.add("hidden");
 }
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
-function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||""}
+function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
+function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin())}
 function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
 function showNetworkInvite(){
   $("networkInvite").classList.remove("hidden");
@@ -380,6 +424,15 @@ function hideNetworkInvite(){
 }
 $("networkLaterBtn").onclick=hideNetworkInvite;
 $("networkJoinBtn").onclick=()=>setTimeout(hideNetworkInvite,300);
+
+async function touchAccount(){
+  if(!user)return;
+  try{
+    await sb.from("cpa_accounts")
+      .update({email:user.email||"",last_seen_at:new Date().toISOString()})
+      .eq("user_id",user.id);
+  }catch(_){}
+}
 
 async function checkAccess(){
   const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();
@@ -408,6 +461,7 @@ async function checkAccess(){
     return;
   }
   showApp();
+  await touchAccount();
   startCountdown();
   await loadData();
 }
@@ -921,37 +975,113 @@ window.downloadAchievement=value=>{
   const a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download=`Equipe-Rico-${level.label}-${sizeKey}.png`;document.body.appendChild(a);a.click();a.remove();
 };
 
+
+async function loadAdminData(){
+  if(!isRicoAdmin())return;
+  $("adminUpdatedAt").textContent="Carregando...";
+  const [accountsRes,accessRes,clientsRes]=await Promise.all([
+    sb.from("cpa_accounts").select("user_id,email,created_at,last_seen_at").order("created_at",{ascending:false}),
+    sb.from("cpa_access").select("user_id,access_status,trial_started_at,trial_ends_at,paid_until"),
+    sb.from("cpa_clients").select("id,user_id")
+  ]);
+  if(accountsRes.error||accessRes.error||clientsRes.error){
+    console.error(accountsRes.error||accessRes.error||clientsRes.error);
+    $("adminUpdatedAt").textContent="Não foi possível carregar o painel administrativo.";
+    return;
+  }
+  const accessBy=new Map((accessRes.data||[]).map(x=>[x.user_id,x]));
+  const clientCount=new Map();
+  for(const c of (clientsRes.data||[]))clientCount.set(c.user_id,(clientCount.get(c.user_id)||0)+1);
+  const now=Date.now();
+  adminRows=(accountsRes.data||[]).map(a=>{
+    const ac=accessBy.get(a.user_id)||null;
+    let status="Sem acesso",statusClass="expired",active=false,trial=false,expires="-";
+    if(ac){
+      const trialEnd=ac.trial_ends_at?new Date(ac.trial_ends_at).getTime():0;
+      const paidEnd=ac.paid_until?new Date(ac.paid_until).getTime():null;
+      if(ac.access_status==="paid"&&(!paidEnd||paidEnd>now)){
+        status="Pago";statusClass="paid";active=true;expires=paidEnd?new Date(ac.paid_until).toLocaleString("pt-BR"):"Permanente";
+      }else if(ac.access_status==="trial"&&trialEnd>now){
+        status="Teste grátis";statusClass="trial";active=true;trial=true;expires=new Date(ac.trial_ends_at).toLocaleString("pt-BR");
+      }else{
+        status="Vencido";statusClass="expired";expires=ac.paid_until?new Date(ac.paid_until).toLocaleString("pt-BR"):(ac.trial_ends_at?new Date(ac.trial_ends_at).toLocaleString("pt-BR"):"-");
+      }
+    }
+    return {...a,status,statusClass,active,trial,expires,clientCount:clientCount.get(a.user_id)||0};
+  });
+  $("adminTotalUsers").textContent=adminRows.length;
+  $("adminActiveUsers").textContent=adminRows.filter(x=>x.active).length;
+  $("adminTrialUsers").textContent=adminRows.filter(x=>x.trial).length;
+  $("adminTotalClients").textContent=(clientsRes.data||[]).length;
+  renderAdminRows();
+  $("adminUpdatedAt").textContent="Atualizado em "+new Date().toLocaleString("pt-BR");
+}
+function renderAdminRows(){
+  const q=($("adminSearch")?.value||"").trim().toLowerCase();
+  const rows=adminRows.filter(x=>String(x.email||"").toLowerCase().includes(q));
+  $("adminUsersBody").innerHTML=rows.map(x=>`
+    <tr>
+      <td><div class="admin-email">${esc(x.email||"-")}</div><div class="admin-small">${esc(x.user_id)}</div></td>
+      <td>${x.created_at?new Date(x.created_at).toLocaleString("pt-BR"):"-"}</td>
+      <td>${x.last_seen_at?new Date(x.last_seen_at).toLocaleString("pt-BR"):"-"}</td>
+      <td><span class="admin-status ${x.statusClass}">${x.status}</span></td>
+      <td>${x.expires}</td>
+      <td><strong>${x.clientCount}</strong></td>
+    </tr>`).join("") || '<tr><td colspan="6" class="muted">Nenhuma conta encontrada.</td></tr>';
+}
+function showAdminView(){
+  if(!isRicoAdmin())return showDashboardView();
+  document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
+  $("profitView").classList.add("hidden");
+  $("achievementsView").classList.add("hidden");
+  $("adminView").classList.remove("hidden");
+  $("dashboardTab").className="secondary";
+  $("profitTab").className="secondary";
+  $("achievementsTab").className="secondary";
+  $("adminTab").className="primary";
+  loadAdminData();
+}
+
 function showDashboardView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.remove("hidden"));
   $("profitView").classList.add("hidden");
   $("achievementsView").classList.add("hidden");
+  $("adminView").classList.add("hidden");
   $("dashboardTab").className="primary";
   $("profitTab").className="secondary";
   $("achievementsTab").className="secondary";
+  $("adminTab").className="secondary";
 }
 function showProfitView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
   $("achievementsView").classList.add("hidden");
+  $("adminView").classList.add("hidden");
   $("profitView").classList.remove("hidden");
   $("profitOverview").classList.remove("hidden");
   $("monthDetailView").classList.add("hidden");
   $("dashboardTab").className="secondary";
   $("profitTab").className="primary";
   $("achievementsTab").className="secondary";
+  $("adminTab").className="secondary";
   renderProfitReport();
 }
 function showAchievementsView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
   $("profitView").classList.add("hidden");
+  $("adminView").classList.add("hidden");
   $("achievementsView").classList.remove("hidden");
   $("dashboardTab").className="secondary";
   $("profitTab").className="secondary";
   $("achievementsTab").className="primary";
+  $("adminTab").className="secondary";
   renderAchievements();
 }
 $("dashboardTab").onclick=showDashboardView;
 $("profitTab").onclick=showProfitView;
 $("achievementsTab").onclick=showAchievementsView;
+$("adminTab").onclick=showAdminView;
+$("adminRefreshBtn").onclick=loadAdminData;
+$("adminSearch").oninput=renderAdminRows;
 $("profitRefreshBtn").onclick=async()=>{await loadData();renderProfitReport()};
 $("monthProfitCard").onclick=openMonthDetail;
 $("monthProfitCard").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openMonthDetail()}};
