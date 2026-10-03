@@ -41,7 +41,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .month-chart-wrap svg{width:100%;height:100%;display:block}.month-gridline{stroke:rgba(255,255,255,.07);stroke-width:1}.month-area{fill:url(#monthAreaGradient)}.month-line{fill:none;stroke:var(--green);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 7px rgba(49,230,124,.3))}
 .month-mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px}.month-mini-stat{padding:12px;border:1px solid var(--line);background:#08140d;border-radius:13px}.month-mini-stat span{display:block;color:var(--muted);font-size:11px}.month-mini-stat strong{display:block;margin-top:5px;font-size:17px}
 .month-side{display:grid;gap:10px;align-content:start}.month-side-title{margin:0 0 4px}.month-side-box{padding:14px;border:1px solid var(--line);border-radius:14px;background:#08140d}.month-side-box span{display:block;font-size:11px;color:var(--muted)}.month-side-box strong{display:block;font-size:20px;margin-top:5px}
-.month-positive{color:var(--green)}.month-negative{color:var(--danger)}
+.month-positive{color:var(--green)}.month-negative{color:var(--danger)}.profit-positive{color:var(--green)!important}.profit-negative{color:var(--danger)!important}
 @media(max-width:1000px){.metrics{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.clients-grid{grid-template-columns:repeat(2,1fr)}.month-grid{grid-template-columns:1fr}}
 @media(max-width:650px){.metrics,.clients-grid,.client-stats,.money,.row,.report-grid,.month-mini-stats{grid-template-columns:1fr}.month-main{min-height:auto}.month-chart-wrap{height:230px}}
 
@@ -485,6 +485,7 @@ const PAYMENT_URL="https://nubank.com.br/cobrar/fvuvf2/6ac183ff-3511-4769-83bc-6
 let adminRows=[];
 const $=id=>document.getElementById(id);
 const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+function setProfitTone(id,value){const el=$(id);if(!el)return;el.classList.toggle("profit-negative",Number(value)<0);el.classList.toggle("profit-positive",Number(value)>=0)}
 const localDateKey=(d=new Date())=>{
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${day}`;
@@ -920,14 +921,14 @@ window.deleteCycleClient=async id=>{
 };
 function render(){
   $("mClientes").textContent=clients.length;
-  const gt=totals(entries);$("mDep").textContent=fmt(gt.d);$("mSaq").textContent=fmt(gt.s);$("mBau").textContent=fmt(gt.b);$("mLucro").textContent=fmt(gt.s+gt.b-gt.d);
+  const gt=totals(entries),generalProfit=gt.s+gt.b-gt.d;$("mDep").textContent=fmt(gt.d);$("mSaq").textContent=fmt(gt.s);$("mBau").textContent=fmt(gt.b);$("mLucro").textContent=fmt(generalProfit);setProfitTone("mLucro",generalProfit);
   $("clientSelect").innerHTML=clients.length?clients.map(c=>`<option value="${c.id}" ${c.id===selectedClientId?"selected":""}>${esc(c.name)}</option>`).join(""):`<option>Nenhum cliente</option>`;
   const c=selected();
   if(c){
     const ce=entries.filter(e=>e.client_id===c.id),t=totals(ce),link=c.house_link?`<a target="_blank" rel="noopener" style="color:var(--green)" href="${esc(c.house_link)}">${esc(c.house_link)}</a>`:"Sem link";
     $("selectedLink").innerHTML=link;$("detailName").textContent=c.name;$("detailLink").innerHTML=link;
-    $("cDep").textContent=fmt(t.d);$("cSaq").textContent=fmt(t.s);$("cBau").textContent=fmt(t.b);$("cLucro").textContent=fmt(t.s+t.b-t.d);
-  }else{$("selectedLink").textContent="";$("detailName").textContent="Visão do cliente";["cDep","cSaq","cBau","cLucro"].forEach(x=>$(x).textContent=fmt(0))}
+    const clientProfit=t.s+t.b-t.d;$("cDep").textContent=fmt(t.d);$("cSaq").textContent=fmt(t.s);$("cBau").textContent=fmt(t.b);$("cLucro").textContent=fmt(clientProfit);setProfitTone("cLucro",clientProfit);
+  }else{$("selectedLink").textContent="";$("detailName").textContent="Visão do cliente";["cDep","cSaq","cBau","cLucro"].forEach(x=>$(x).textContent=fmt(0));setProfitTone("cLucro",0)}
   renderCycleBoard();
   renderHistory();
 }
@@ -1046,6 +1047,7 @@ function renderMonthDetail(){
   $("monthSideBau").textContent=fmt(t.b);
   $("monthSideProfit").textContent=fmt(profit);
   $("monthSideProfit").className=profit>=0?"month-positive":"month-negative";
+  $("monthLinePath").style.stroke=profit<0?"var(--danger)":"var(--green)";
   buildMonthChart(cumulative);
 }
 function openMonthDetail(){
@@ -1070,6 +1072,10 @@ function renderProfitReport(){
   $("profitWeek").textContent=fmt(week.profit);
   $("profitMonth").textContent=fmt(month.profit);
   $("profitTotal").textContent=fmt(total.profit);
+  setProfitTone("profitToday",day.profit);
+  setProfitTone("profitWeek",week.profit);
+  setProfitTone("profitMonth",month.profit);
+  setProfitTone("profitTotal",total.profit);
 
   $("rangeToday").textContent=formatDateKey(p.today.start);
   $("rangeWeek").textContent=`${formatDateKey(p.week.start)} até ${formatDateKey(p.week.end)}`;
@@ -1087,7 +1093,7 @@ function renderProfitReport(){
       <td>${fmt(r.d)}</td>
       <td>${fmt(r.s)}</td>
       <td>${fmt(r.b)}</td>
-      <td><strong>${fmt(r.profit)}</strong></td>
+      <td><strong class="${r.profit<0?"profit-negative":"profit-positive"}">${fmt(r.profit)}</strong></td>
     </tr>`).join("");
   $("profitUpdatedAt").textContent=`Atualizado em ${new Date().toLocaleString("pt-BR")}. Os valores vêm dos lançamentos salvos no Supabase.`;
   if(!$("monthDetailView").classList.contains("hidden")) renderMonthDetail();
