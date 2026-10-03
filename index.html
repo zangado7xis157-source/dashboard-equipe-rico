@@ -51,6 +51,12 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .paybtn{display:inline-block;text-decoration:none;margin-top:14px;padding:14px 18px;border-radius:13px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:900}
 .trialbadge{display:inline-block;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,200,87,.08);color:var(--yellow);font-size:12px;font-weight:800}
 .cycle-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.notify-ok{color:var(--green)!important;border-color:rgba(49,230,124,.55)!important}
+.network-invite-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999;backdrop-filter:blur(6px)}
+.network-invite-card{width:min(430px,100%);background:linear-gradient(180deg,#102418,#0b1710);border:1px solid rgba(49,230,124,.4);border-radius:24px;padding:24px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.network-invite-icon{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:grid;place-items:center;background:rgba(49,230,124,.12);border:1px solid rgba(49,230,124,.28);font-size:30px}
+.network-invite-card h2{margin:0 0 8px;font-size:27px}.network-invite-card p{margin:0 0 18px;line-height:1.55}
+.network-join-btn{display:block;width:100%;text-decoration:none;text-align:center;border-radius:13px;padding:14px 16px;font-weight:900;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a}
+.network-later-btn{margin-top:9px;width:100%}
 </style>
 </head>
 <body>
@@ -271,6 +277,16 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
   </section>
 </section>
 
+<div id="networkInvite" class="network-invite-overlay hidden">
+  <div class="network-invite-card">
+    <div class="network-invite-icon">💬</div>
+    <h2>Meu Network CPA</h2>
+    <p class="muted">Entre no nosso grupo para acompanhar avisos, novidades e conteúdos da network.</p>
+    <a id="networkJoinBtn" class="network-join-btn" href="https://chat.whatsapp.com/FjzcEKlJ1fCLaoBKexpUXf?s=cl&p=i&mlu=0&ilr=4" target="_blank" rel="noopener noreferrer">Entrar no grupo</a>
+    <button id="networkLaterBtn" class="secondary network-later-btn">Agora não</button>
+  </div>
+</div>
+
 </div>
 <script>
 const SUPABASE_URL='https://ytjwwgskilygayjrycfk.supabase.co';
@@ -316,6 +332,14 @@ function hideAll(){
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||""}
 function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
+function showNetworkInvite(){
+  $("networkInvite").classList.remove("hidden");
+}
+function hideNetworkInvite(){
+  $("networkInvite").classList.add("hidden");
+}
+$("networkLaterBtn").onclick=hideNetworkInvite;
+$("networkJoinBtn").onclick=()=>setTimeout(hideNetworkInvite,300);
 
 async function checkAccess(){
   const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();
@@ -435,7 +459,9 @@ $("authSubmit").onclick=async()=>{
     }
 
     user=res.data.user;
+    const createdNow=mode==="signup";
     await checkAccess();
+    if(createdNow)setTimeout(showNetworkInvite,450);
   }finally{
     btn.disabled=false;
     btn.textContent=mode==="login"?"Entrar":"Criar conta";
