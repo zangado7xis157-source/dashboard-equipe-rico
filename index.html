@@ -308,12 +308,57 @@ function startCountdown(){
 $("loginTab").onclick=()=>{mode="login";$("loginTab").className="primary";$("signupTab").className="secondary";$("authSubmit").textContent="Entrar";$("authMsg").textContent=""}
 $("signupTab").onclick=()=>{mode="signup";$("signupTab").className="primary";$("loginTab").className="secondary";$("authSubmit").textContent="Criar conta";$("authMsg").textContent="Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar."}
 $("authSubmit").onclick=async()=>{
-  const email=$("authEmail").value.trim(),password=$("authPassword").value;
-  $("authMsg").textContent="Processando...";
-  const res=mode==="login"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});
-  if(res.error){$("authMsg").textContent=res.error.message;return}
-  if(mode==="signup"&&!res.data.session){$("authMsg").textContent="Conta criada. Confira seu e-mail para confirmar o cadastro.";return}
-  user=res.data.user;await checkAccess();
+  const email=$("authEmail").value.trim().toLowerCase();
+  const password=$("authPassword").value;
+  const btn=$("authSubmit");
+
+  if(!email || !email.includes("@")){
+    $("authMsg").textContent="Digite um e-mail válido.";
+    return;
+  }
+  if(password.length<6){
+    $("authMsg").textContent="A senha precisa ter pelo menos 6 caracteres.";
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent="Processando...";
+  $("authMsg").textContent="";
+
+  try{
+    const res=mode==="login"
+      ? await sb.auth.signInWithPassword({email,password})
+      : await sb.auth.signUp({email,password});
+
+    if(res.error){
+      const code=res.error.code||"";
+      const msg=String(res.error.message||"").toLowerCase();
+
+      if(code==="over_email_send_rate_limit" || res.error.status===429 || msg.includes("rate limit")){
+        $("authMsg").textContent="Muitas contas foram criadas em pouco tempo. O envio de e-mail do Supabase atingiu o limite. Aguarde e tente novamente.";
+      }else if(code==="invalid_credentials" || msg.includes("invalid login credentials")){
+        $("authMsg").textContent="E-mail ou senha incorretos, ou o cadastro ainda não foi concluído.";
+      }else if(code==="email_not_confirmed" || msg.includes("email not confirmed")){
+        $("authMsg").textContent="Confirme seu e-mail antes de entrar.";
+      }else if(code==="user_already_exists" || msg.includes("already registered")){
+        $("authMsg").textContent="Este e-mail já possui uma conta. Clique em Entrar.";
+      }else{
+        $("authMsg").textContent="Não foi possível concluir. Tente novamente em instantes.";
+      }
+      return;
+    }
+
+    if(mode==="signup"&&!res.data.session){
+      $("authMsg").textContent="Conta criada. Confira seu e-mail para confirmar o cadastro antes de entrar.";
+      return;
+    }
+
+    user=res.data.user;
+    await checkAccess();
+  }finally{
+    btn.disabled=false;
+    btn.textContent=mode==="login"?"Entrar":"Criar conta";
+  }
 }
 $("logoutBtn").onclick=async()=>{await sb.auth.signOut();user=null;clients=[];entries=[];showAuth()};
 $("paywallLogout").onclick=async()=>{await sb.auth.signOut();user=null;clients=[];entries=[];showAuth()};
