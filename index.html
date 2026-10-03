@@ -81,6 +81,25 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .admin-status.paid{color:#58e991;background:rgba(49,230,124,.08);border-color:rgba(49,230,124,.28)}.admin-status.trial{color:#ffc857;background:rgba(255,200,87,.08);border-color:rgba(255,200,87,.28)}.admin-status.expired{color:#ff909a;background:rgba(255,101,115,.08);border-color:rgba(255,101,115,.28)}
 .admin-email{font-weight:800;color:var(--text)}.admin-small{font-size:11px;color:var(--muted)}#adminUsersTable{min-width:900px}
 @media(max-width:800px){.admin-metrics{grid-template-columns:repeat(2,1fr)}}
+
+.china-history-decor{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 14px;min-height:62px;overflow:hidden;border:1px solid rgba(255,255,255,.05);border-radius:16px;background:linear-gradient(90deg,rgba(183,28,28,.06),rgba(255,215,0,.035),rgba(49,230,124,.03))}
+.china-symbol{font-size:30px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}.china-word{font-weight:950;letter-spacing:.12em;color:#ffd54f;font-size:18px;text-shadow:0 0 16px rgba(255,213,79,.18)}
+.china-mascot{position:relative;width:54px;height:54px;display:grid;place-items:center;animation:chinaMascotBob 2.4s ease-in-out infinite}.china-face{font-size:40px;filter:drop-shadow(0 5px 8px rgba(0,0,0,.4));animation:chinaTearShake 1.8s ease-in-out infinite}.china-badge{position:absolute;right:-1px;bottom:-1px;font-size:18px;background:#08140d;border:1px solid var(--line);border-radius:999px;padding:2px 4px}
+.china-float{animation:chinaFlagFloat 3s ease-in-out infinite}
+@keyframes chinaFlagFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(3deg)}}
+@keyframes chinaMascotBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes chinaTearShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+.history-sections{display:grid;gap:14px}.history-panel{border:1px solid var(--line);border-radius:16px;background:#09150f;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.history-panel:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.2)}
+.history-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 15px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.history-panel-head>div:first-child{display:flex;align-items:center;gap:9px;font-size:15px}.history-icon{font-size:18px;display:inline-block;animation:historyIconPulse 2.6s ease-in-out infinite}
+@keyframes historyIconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.history-total{text-align:right}.history-total span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em}.history-total strong{display:block;font-size:18px;margin-top:2px}
+.history-deposit .history-panel-head{background:linear-gradient(90deg,rgba(255,200,87,.08),transparent)}.history-deposit .history-total strong{color:var(--yellow)}.history-deposit:hover{border-color:rgba(255,200,87,.35)}
+.history-withdraw .history-panel-head{background:linear-gradient(90deg,rgba(101,183,255,.08),transparent)}.history-withdraw .history-total strong{color:var(--blue)}.history-withdraw:hover{border-color:rgba(101,183,255,.35)}
+.history-chest .history-panel-head{background:linear-gradient(90deg,rgba(197,156,255,.08),transparent)}.history-chest .history-total strong{color:var(--purple)}.history-chest:hover{border-color:rgba(197,156,255,.35)}
+.history-panel .table-wrap{border:0;border-radius:0}.history-table{min-width:620px}.history-table th:last-child,.history-table td:last-child{text-align:right}.history-empty{text-align:center!important;color:var(--muted);padding:22px!important}
+@media(prefers-reduced-motion:reduce){.china-float,.china-mascot,.china-face,.history-icon{animation:none!important}.history-panel{transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -190,8 +209,46 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
         <div class="mini"><span>Lucro</span><strong id="cLucro">R$ 0,00</strong></div>
       </div>
       <div class="toolbar"><input id="search" placeholder="Buscar histórico..."><button class="secondary" id="refreshBtn">Atualizar</button></div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="tbody"></tbody></table>
+
+      <div class="china-history-decor" aria-hidden="true">
+        <div class="china-symbol china-float">🇨🇳</div>
+        <div class="china-word">中国</div>
+        <div class="china-mascot">
+          <div class="china-face">😭</div>
+          <div class="china-badge">🇨🇳</div>
+        </div>
+      </div>
+
+      <div class="history-sections">
+        <section class="history-panel history-deposit">
+          <div class="history-panel-head">
+            <div><span class="history-icon">💰</span><strong>Depósitos</strong></div>
+            <div class="history-total"><span>Total</span><strong id="historyDepTotal">R$ 0,00</strong></div>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="depositBody"></tbody></table>
+          </div>
+        </section>
+
+        <section class="history-panel history-withdraw">
+          <div class="history-panel-head">
+            <div><span class="history-icon">💸</span><strong>Saques</strong></div>
+            <div class="history-total"><span>Total</span><strong id="historySaqTotal">R$ 0,00</strong></div>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="withdrawBody"></tbody></table>
+          </div>
+        </section>
+
+        <section class="history-panel history-chest">
+          <div class="history-panel-head">
+            <div><span class="history-icon">🧰</span><strong>Baús</strong></div>
+            <div class="history-total"><span>Total</span><strong id="historyBauTotal">R$ 0,00</strong></div>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="chestBody"></tbody></table>
+          </div>
+        </section>
       </div>
     </main>
   </div>
@@ -566,8 +623,8 @@ $("paywallLogout").onclick=async()=>{await sb.auth.signOut();user=null;clients=[
 
 async function loadData(){
   const [c,e]=await Promise.all([
-    sb.from("cpa_clients").select("*").order("created_at",{ascending:false}),
-    sb.from("cpa_entries").select("*").order("entry_date",{ascending:false})
+    sb.from("cpa_clients").select("*").eq("user_id",user.id).order("created_at",{ascending:false}),
+    sb.from("cpa_entries").select("*").eq("user_id",user.id).order("entry_date",{ascending:false})
   ]);
   if(c.error||e.error){await checkAccess();return}
   clients=c.data||[];entries=e.data||[];
@@ -756,9 +813,24 @@ function render(){
   renderHistory();
 }
 function renderHistory(){
-  const c=selected(),q=$("search").value.trim().toLowerCase();let list=c?entries.filter(e=>e.client_id===c.id):[];
+  const c=selected(),q=$("search").value.trim().toLowerCase();
+  let list=c?entries.filter(e=>e.client_id===c.id):[];
   list=list.filter(e=>[e.entry_type,e.note,e.entry_date,e.value].join(" ").toLowerCase().includes(q));
-  $("tbody").innerHTML=list.map(e=>`<tr><td>${esc(String(e.entry_date).split("-").reverse().join("/"))}</td><td>${e.entry_type==="deposito"?"Depósito":e.entry_type==="saque"?"Saque":"Baú"}</td><td>${fmt(e.value)}</td><td>${esc(e.note||"-")}</td><td><button class="danger" onclick="deleteEntry('${e.id}')">Excluir</button></td></tr>`).join("");
+
+  const deposits=list.filter(e=>e.entry_type==="deposito");
+  const withdrawals=list.filter(e=>e.entry_type==="saque");
+  const chests=list.filter(e=>e.entry_type==="bau");
+
+  const row=e=>`<tr><td>${esc(String(e.entry_date).split("-").reverse().join("/"))}</td><td><strong>${fmt(e.value)}</strong></td><td>${esc(e.note||"-")}</td><td><button class="danger" onclick="deleteEntry('${e.id}')">Excluir</button></td></tr>`;
+  const empty=label=>`<tr><td colspan="4" class="history-empty">Nenhum ${label} encontrado.</td></tr>`;
+
+  $("depositBody").innerHTML=deposits.length?deposits.map(row).join(""):empty("depósito");
+  $("withdrawBody").innerHTML=withdrawals.length?withdrawals.map(row).join(""):empty("saque");
+  $("chestBody").innerHTML=chests.length?chests.map(row).join(""):empty("baú");
+
+  $("historyDepTotal").textContent=fmt(deposits.reduce((s,e)=>s+Number(e.value||0),0));
+  $("historySaqTotal").textContent=fmt(withdrawals.reduce((s,e)=>s+Number(e.value||0),0));
+  $("historyBauTotal").textContent=fmt(chests.reduce((s,e)=>s+Number(e.value||0),0));
 }
 
 
