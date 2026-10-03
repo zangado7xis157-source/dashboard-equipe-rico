@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#07110c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Equipe Rico">
+<link rel="manifest" href="/manifest.webmanifest">
 <title>Dashboard de Lucro CPA — Equipe Rico</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -44,6 +48,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .countdown{font-size:24px;font-weight:900;color:var(--yellow);margin:10px 0}
 .paybtn{display:inline-block;text-decoration:none;margin-top:14px;padding:14px 18px;border-radius:13px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:900}
 .trialbadge{display:inline-block;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,200,87,.08);color:var(--yellow);font-size:12px;font-weight:800}
+.cycle-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.notify-ok{color:var(--green)!important;border-color:rgba(49,230,124,.55)!important}
 </style>
 </head>
 <body>
@@ -138,7 +143,11 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     <main class="card">
       <div class="top" style="margin-bottom:10px">
         <div><h2 id="detailName" style="margin:0">Visão do cliente</h2><div id="detailLink" class="muted"></div></div>
-        <button class="danger" id="deleteClient">Excluir cliente</button>
+        <div class="cycle-tools">
+      <button class="secondary" id="enableNotificationsBtn">Ativar notificações</button>
+      <button class="primary" id="finishCycleBtn">Finalizar ciclo</button>
+      <button class="danger" id="deleteClient">Excluir cliente</button>
+    </div>
       </div>
       <div class="grid client-stats">
         <div class="mini"><span>Depositado</span><strong id="cDep">R$ 0,00</strong></div>
@@ -466,6 +475,49 @@ $("clientSelect").onchange=()=>{selectedClientId=$("clientSelect").value||null;r
 $("refreshBtn").onclick=loadData;
 $("search").oninput=renderHistory;
 
+async function registerRicoWorker(){
+  if(!("serviceWorker" in navigator)) return null;
+  try{return await navigator.serviceWorker.register("/sw.js")}catch(e){return null}
+}
+function ricoStandalone(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
+}
+function refreshNotifyButton(){
+  const b=$("enableNotificationsBtn");
+  if(!b)return;
+  if(!("Notification" in window)){b.textContent="Notificação indisponível";b.disabled=true;return}
+  if(Notification.permission==="granted"){b.textContent="Notificações ativadas";b.classList.add("notify-ok")}
+  else {b.textContent="Ativar notificações";b.classList.remove("notify-ok")}
+}
+$("enableNotificationsBtn").onclick=async()=>{
+  if(!("Notification" in window))return alert("Este navegador não oferece notificações.");
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !ricoStandalone()){
+    return alert("No iPhone: toque em Compartilhar → Adicionar à Tela de Início. Depois abra o painel pelo ícone e ative as notificações.");
+  }
+  await registerRicoWorker();
+  const p=await Notification.requestPermission();
+  refreshNotifyButton();
+  if(p==="granted"){
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification("Equipe Rico",{body:"Notificações ativadas com sucesso.",data:{url:"/"}});
+  }
+};
+
+$("finishCycleBtn").onclick=async()=>{
+  const c=selected();
+  if(!c)return alert("Selecione um cliente.");
+  const ce=entries.filter(e=>e.client_id===c.id);
+  if(!ce.length)return alert("Esse cliente ainda não possui lançamentos.");
+  const t=totals(ce), lucro=t.s+t.b-t.d;
+  if(!confirm(`Finalizar ciclo de ${c.name}?\nLucro: ${fmt(lucro)}`))return;
+  if("Notification" in window && Notification.permission==="granted"){
+    await registerRicoWorker();
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification("✅ Ciclo finalizado",{body:`${c.name} • Lucro: ${fmt(lucro)}`,data:{url:"/"}});
+  }
+  alert(`Ciclo finalizado. Lucro: ${fmt(lucro)}`);
+};
+
 $("deleteClient").onclick=async()=>{
   const c=selected();if(!c)return;
   if(!confirm(`Excluir ${c.name} e todo o histórico?`))return;
@@ -719,6 +771,7 @@ $("unlockBtn").onclick=async()=>{
   setTimeout(async()=>{showApp();startCountdown();await loadData();},500);
 };
 
+registerRicoWorker().then(refreshNotifyButton);
 boot();
 </script>
 </body>
