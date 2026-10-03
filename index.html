@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard de Lucro CPA — Equipe Rico</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#07110c;--panel:#0d1c14;--line:#1d3b2a;--text:#f4fff7;--muted:#9bc4aa;--green:#31e67c;--green2:#19b95c;--blue:#65b7ff;--purple:#c59cff;--yellow:#ffc857;--danger:#ff6573}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#06100b,#09150f);color:var(--text);min-height:100vh}
+.wrap{max-width:1300px;margin:auto;padding:24px 16px 48px}.hidden{display:none!important}
+.card{background:#0d1c14;border:1px solid var(--line);border-radius:20px;padding:18px}h1{margin:0;font-size:clamp(28px,4vw,44px)}h1 span{color:var(--green)}.muted{color:var(--muted);font-size:13px}
+.top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap}
+button{border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:pointer}.primary{background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a}.secondary{background:#13271a;color:var(--text);border:1px solid var(--line)}.danger{background:rgba(255,101,115,.12);color:#ff909a;border:1px solid rgba(255,101,115,.25)}
+input,select{width:100%;padding:12px 13px;border:1px solid var(--line);background:#08140d;color:var(--text);border-radius:12px;outline:none}label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.field{margin-bottom:12px}
+.auth{max-width:430px;margin:8vh auto}.tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button{flex:1}.msg{margin-top:10px;font-size:13px;color:var(--muted)}
+.grid{display:grid;gap:14px}.metrics{grid-template-columns:repeat(5,1fr);margin-bottom:14px}.metric .label{color:var(--muted);font-size:12px}.metric .value{font-size:25px;font-weight:850;margin-top:6px}.layout{grid-template-columns:390px 1fr;align-items:start}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.money{grid-template-columns:repeat(3,1fr)}.box{padding:12px;border:1px solid var(--line);border-radius:14px;background:#08140d}.box h3{margin:0 0 8px;font-size:14px}.box button{width:100%;margin-top:8px}
+.client-stats{grid-template-columns:repeat(4,1fr);margin-bottom:12px}.mini{padding:12px;border:1px solid var(--line);border-radius:13px;background:#08140d}.mini span{color:var(--muted);font-size:11px;display:block}.mini strong{display:block;margin-top:4px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:12px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}th{color:var(--muted);background:#0a1710}
+.clients-grid{grid-template-columns:repeat(3,1fr);margin-top:12px}.client-card{padding:14px;border:1px solid var(--line);border-radius:15px;background:#0a1710}.client-card h3{margin:0 0 6px}.vals{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.vals div{padding:8px;border:1px solid var(--line);border-radius:10px;background:#08140d}.vals span{display:block;color:var(--muted);font-size:10px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.toolbar input{flex:1;min-width:200px}
+@media(max-width:1000px){.metrics{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.clients-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.metrics,.clients-grid,.client-stats,.money,.row{grid-template-columns:1fr}}
+
+.paywall{max-width:560px;margin:7vh auto;text-align:center}
+.paywall h2{font-size:30px;margin:0 0 8px}
+.countdown{font-size:24px;font-weight:900;color:var(--yellow);margin:10px 0}
+.paybtn{display:inline-block;text-decoration:none;margin-top:14px;padding:14px 18px;border-radius:13px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:900}
+.trialbadge{display:inline-block;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,200,87,.08);color:var(--yellow);font-size:12px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="authScreen" class="auth card">
+  <h1>Equipe <span>Rico</span></h1>
+  <p class="muted">Entre para acessar seu Dashboard de Lucro CPA online.</p>
+  <div class="tabs">
+    <button class="primary" id="loginTab">Entrar</button>
+    <button class="secondary" id="signupTab">Criar conta</button>
+  </div>
+  <div class="field"><label>E-mail</label><input id="authEmail" type="email" placeholder="seuemail@exemplo.com"></div>
+  <div class="field"><label>Senha</label><input id="authPassword" type="password" placeholder="mínimo 6 caracteres"></div>
+  <button class="primary" style="width:100%" id="authSubmit">Entrar</button>
+  <div id="authMsg" class="msg"></div>
+</section>
+
+<section id="paywallScreen" class="paywall card hidden">
+  <div class="trialbadge" id="lockBadge">Acesso encerrado</div>
+  <h2 id="lockTitle">Seu período de acesso terminou</h2>
+  <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove seu acesso pelo botão abaixo.</p>
+
+  <a class="paybtn" id="paymentBtn" href="https://mpago.la/1ANfxPo" target="_blank" rel="noopener noreferrer">Fazer pagamento</a>
+
+  <div id="paidArea" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:none">
+    <h3 style="margin:0 0 8px">Pagamento realizado?</h3>
+    <p class="muted" style="line-height:1.55">
+      Depois de concluir o pagamento ou renovação, clique em <strong style="color:var(--text)">Liberar acesso</strong>. Você será direcionado ao WhatsApp para solicitar sua key do dashboard.
+    </p>
+    <a class="paybtn" id="alreadyPaidBtn" href="#" target="_blank" rel="noopener noreferrer"
+       style="display:block;margin-top:12px;text-align:center">
+      Liberar acesso
+    </a>
+
+    <div style="margin-top:18px">
+      <p class="muted" style="line-height:1.55">
+        Quando receber sua key, digite abaixo para continuar. Cada key funciona uma única vez e libera 30 dias.
+      </p>
+      <div class="field" style="text-align:left;margin-top:12px">
+        <label>Key de liberação</label>
+        <input id="unlockCode" type="password" placeholder="Digite a senha recebida no WhatsApp">
+      </div>
+      <button class="primary" id="unlockBtn" style="width:100%">Liberar acesso</button>
+      <div id="unlockMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <button class="secondary" id="paywallLogout" style="margin-top:16px">Sair da conta</button>
+</section>
+
+<section id="appScreen" class="hidden">
+  <div class="top">
+    <div><h1>Dashboard de Lucro CPA <span>— Equipe Rico</span></h1><div class="muted">Banco online conectado. Dados salvos no Supabase.</div></div>
+    <div><span class="trialbadge" id="trialStatus">Verificando acesso...</span> <span class="muted" id="userEmail"></span> <button class="secondary" id="logoutBtn">Sair</button></div>
+  </div>
+
+  <div class="grid metrics">
+    <div class="card metric"><div class="label">Clientes</div><div class="value" id="mClientes">0</div></div>
+    <div class="card metric"><div class="label">Depósitos</div><div class="value" id="mDep">R$ 0,00</div></div>
+    <div class="card metric"><div class="label">Saques</div><div class="value" id="mSaq">R$ 0,00</div></div>
+    <div class="card metric"><div class="label">Baús</div><div class="value" id="mBau">R$ 0,00</div></div>
+    <div class="card metric"><div class="label">Lucro geral</div><div class="value" id="mLucro">R$ 0,00</div></div>
+  </div>
+
+  <div class="grid layout">
+    <aside class="card">
+      <h2>Cadastrar cliente</h2>
+      <div class="field"><label>Nome</label><input id="clientName"></div>
+      <div class="field"><label>Link da casa de aposta</label><input id="houseLink" placeholder="https://..."></div>
+      <div class="field"><label>Observação</label><input id="clientObs"></div>
+      <button class="primary" style="width:100%" id="addClient">Salvar cliente</button>
+
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <div class="field"><label>Cliente selecionado</label><select id="clientSelect"></select></div>
+      <div id="selectedLink" class="muted"></div>
+
+      <div class="grid money" style="margin-top:12px">
+        <div class="box"><h3 style="color:var(--yellow)">Depósito</h3><input id="depValue" placeholder="R$ 0,00"><button class="secondary" id="addDep">Adicionar</button></div>
+        <div class="box"><h3 style="color:var(--blue)">Saque</h3><input id="saqValue" placeholder="R$ 0,00"><button class="secondary" id="addSaq">Adicionar</button></div>
+        <div class="box"><h3 style="color:var(--purple)">Baú</h3><input id="bauValue" placeholder="R$ 0,00"><button class="secondary" id="addBau">Adicionar</button></div>
+      </div>
+      <div class="field" style="margin-top:12px"><label>Data</label><input id="entryDate" type="date"></div>
+      <div class="field"><label>Observação do lançamento</label><input id="entryObs"></div>
+    </aside>
+
+    <main class="card">
+      <div class="top" style="margin-bottom:10px">
+        <div><h2 id="detailName" style="margin:0">Visão do cliente</h2><div id="detailLink" class="muted"></div></div>
+        <button class="danger" id="deleteClient">Excluir cliente</button>
+      </div>
+      <div class="grid client-stats">
+        <div class="mini"><span>Depositado</span><strong id="cDep">R$ 0,00</strong></div>
+        <div class="mini"><span>Sacado</span><strong id="cSaq">R$ 0,00</strong></div>
+        <div class="mini"><span>Baús</span><strong id="cBau">R$ 0,00</strong></div>
+        <div class="mini"><span>Lucro</span><strong id="cLucro">R$ 0,00</strong></div>
+      </div>
+      <div class="toolbar"><input id="search" placeholder="Buscar histórico..."><button class="secondary" id="refreshBtn">Atualizar</button></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="tbody"></tbody></table>
+      </div>
+    </main>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <h2 style="margin-top:0">Todos os clientes</h2>
+    <div class="grid clients-grid" id="clientsGrid"></div>
+  </section>
+</section>
+
+</div>
+<script>
+const SUPABASE_URL='https://ytjwwgskilygayjrycfk.supabase.co';
+const SUPABASE_KEY='sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let mode="login", user=null, clients=[], entries=[], selectedClientId=null;
+const $=id=>document.getElementById(id);
+const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const today=()=>new Date().toISOString().slice(0,10);
+$("entryDate").value=today();
+
+function money(v){let s=String(v||"").trim().replace(/\s/g,"");if(s.includes(",")&&s.includes("."))s=s.replace(/\./g,"").replace(",",".");else if(s.includes(","))s=s.replace(",",".");let n=Number(s);return Number.isFinite(n)?Math.round(n*100)/100:NaN}
+function selected(){return clients.find(c=>c.id===selectedClientId)||null}
+function totals(list){return list.reduce((a,e)=>{if(e.entry_type==="deposito")a.d+=Number(e.value);if(e.entry_type==="saque")a.s+=Number(e.value);if(e.entry_type==="bau")a.b+=Number(e.value);return a},{d:0,s:0,b:0})}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+let accessRow=null, countdownTimer=null;
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){user=session.user;await checkAccess()} else showAuth();
+}
+function hideAll(){
+  $("authScreen").classList.add("hidden");
+  $("paywallScreen").classList.add("hidden");
+  $("appScreen").classList.add("hidden");
+}
+function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
+function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||""}
+function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
+
+async function checkAccess(){
+  const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();
+  if(error){
+    $("authMsg").textContent="Não foi possível verificar o acesso.";
+    showAuth();
+    return;
+  }
+  accessRow=data;
+  const now=Date.now();
+  const trialEnd=new Date(data.trial_ends_at).getTime();
+  const paidEnd=data.paid_until?new Date(data.paid_until).getTime():null;
+  const active=(data.access_status==="trial" && now<trialEnd) ||
+               (data.access_status==="paid" && (!paidEnd || now<paidEnd));
+  if(!active){
+    if(data.access_status==="paid"){
+      $("lockBadge").textContent="Assinatura vencida";
+      $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
+      $("lockText").textContent="Renove sua assinatura para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
+    }else{
+      $("lockBadge").textContent="Teste grátis encerrado";
+      $("lockTitle").textContent="Seu período de 24 horas terminou";
+      $("lockText").textContent="Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, faça o pagamento pelo botão abaixo.";
+    }
+    showPaywall();
+    return;
+  }
+  showApp();
+  startCountdown();
+  await loadData();
+}
+
+function startCountdown(){
+  if(countdownTimer) clearInterval(countdownTimer);
+  const tick=()=>{
+    if(!accessRow)return;
+    if(accessRow.access_status==="paid"){
+      if(!accessRow.paid_until){
+        $("trialStatus").textContent="Acesso pago ativo";
+        return;
+      }
+      const paidLeft=new Date(accessRow.paid_until).getTime()-Date.now();
+      if(paidLeft<=0){
+        clearInterval(countdownTimer);
+        $("lockBadge").textContent="Assinatura vencida";
+        $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
+        $("lockText").textContent="Renove sua assinatura para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
+        showPaywall();
+        return;
+      }
+      const days=Math.floor(paidLeft/86400000);
+      const hours=Math.floor((paidLeft%86400000)/3600000);
+      $("trialStatus").textContent=`Assinatura: ${days}d ${hours}h restantes`;
+      return;
+    }
+    const left=new Date(accessRow.trial_ends_at).getTime()-Date.now();
+    if(left<=0){
+      clearInterval(countdownTimer);
+      showPaywall();
+      return;
+    }
+    const h=Math.floor(left/3600000);
+    const m=Math.floor((left%3600000)/60000);
+    const s=Math.floor((left%60000)/1000);
+    $("trialStatus").textContent=`Teste grátis: ${h}h ${m}m ${s}s`;
+  };
+  tick();
+  countdownTimer=setInterval(tick,1000);
+}
+
+$("loginTab").onclick=()=>{mode="login";$("loginTab").className="primary";$("signupTab").className="secondary";$("authSubmit").textContent="Entrar";$("authMsg").textContent=""}
+$("signupTab").onclick=()=>{mode="signup";$("signupTab").className="primary";$("loginTab").className="secondary";$("authSubmit").textContent="Criar conta";$("authMsg").textContent="Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar."}
+$("authSubmit").onclick=async()=>{
+  const email=$("authEmail").value.trim(),password=$("authPassword").value;
+  $("authMsg").textContent="Processando...";
+  const res=mode==="login"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});
+  if(res.error){$("authMsg").textContent=res.error.message;return}
+  if(mode==="signup"&&!res.data.session){$("authMsg").textContent="Conta criada. Confira seu e-mail para confirmar o cadastro.";return}
+  user=res.data.user;await checkAccess();
+}
+$("logoutBtn").onclick=async()=>{await sb.auth.signOut();user=null;clients=[];entries=[];showAuth()};
+$("paywallLogout").onclick=async()=>{await sb.auth.signOut();user=null;clients=[];entries=[];showAuth()};
+
+async function loadData(){
+  const [c,e]=await Promise.all([
+    sb.from("cpa_clients").select("*").order("created_at",{ascending:false}),
+    sb.from("cpa_entries").select("*").order("entry_date",{ascending:false})
+  ]);
+  if(c.error||e.error){await checkAccess();return}
+  clients=c.data||[];entries=e.data||[];
+  if(!selectedClientId||!clients.some(x=>x.id===selectedClientId)) selectedClientId=clients[0]?.id||null;
+  render();
+}
+
+$("addClient").onclick=async()=>{
+  const name=$("clientName").value.trim(); if(!name)return alert("Digite o nome do cliente.");
+  const {data,error}=await sb.from("cpa_clients").insert({user_id:user.id,name,house_link:$("houseLink").value.trim()||null,note:$("clientObs").value.trim()||null}).select().single();
+  if(error)return alert(error.message);
+  $("clientName").value="";$("houseLink").value="";$("clientObs").value=""; selectedClientId=data.id; await loadData();
+}
+
+async function addEntry(type,input){
+  const c=selected();if(!c)return alert("Selecione um cliente.");
+  const value=money($(input).value);if(!Number.isFinite(value)||value<=0)return alert("Valor inválido.");
+  const {error}=await sb.from("cpa_entries").insert({user_id:user.id,client_id:c.id,entry_type:type,value,entry_date:$("entryDate").value||today(),note:$("entryObs").value.trim()||null});
+  if(error)return alert(error.message);
+  $(input).value="";$("entryObs").value="";await loadData();
+}
+$("addDep").onclick=()=>addEntry("deposito","depValue");
+$("addSaq").onclick=()=>addEntry("saque","saqValue");
+$("addBau").onclick=()=>addEntry("bau","bauValue");
+$("clientSelect").onchange=()=>{selectedClientId=$("clientSelect").value||null;render()}
+$("refreshBtn").onclick=loadData;
+$("search").oninput=renderHistory;
+
+$("deleteClient").onclick=async()=>{
+  const c=selected();if(!c)return;
+  if(!confirm(`Excluir ${c.name} e todo o histórico?`))return;
+  const {error}=await sb.from("cpa_clients").delete().eq("id",c.id);
+  if(error)return alert(error.message);
+  selectedClientId=null;await loadData();
+}
+
+window.deleteEntry=async id=>{if(!confirm("Excluir lançamento?"))return;const {error}=await sb.from("cpa_entries").delete().eq("id",id);if(error)return alert(error.message);await loadData()}
+window.openClient=id=>{selectedClientId=id;render();window.scrollTo({top:0,behavior:"smooth"})}
+
+function render(){
+  $("mClientes").textContent=clients.length;
+  const gt=totals(entries);$("mDep").textContent=fmt(gt.d);$("mSaq").textContent=fmt(gt.s);$("mBau").textContent=fmt(gt.b);$("mLucro").textContent=fmt(gt.s+gt.b-gt.d);
+  $("clientSelect").innerHTML=clients.length?clients.map(c=>`<option value="${c.id}" ${c.id===selectedClientId?"selected":""}>${esc(c.name)}</option>`).join(""):`<option>Nenhum cliente</option>`;
+  const c=selected();
+  if(c){
+    const ce=entries.filter(e=>e.client_id===c.id),t=totals(ce),link=c.house_link?`<a target="_blank" rel="noopener" style="color:var(--green)" href="${esc(c.house_link)}">${esc(c.house_link)}</a>`:"Sem link";
+    $("selectedLink").innerHTML=link;$("detailName").textContent=c.name;$("detailLink").innerHTML=link;
+    $("cDep").textContent=fmt(t.d);$("cSaq").textContent=fmt(t.s);$("cBau").textContent=fmt(t.b);$("cLucro").textContent=fmt(t.s+t.b-t.d);
+  }else{$("selectedLink").textContent="";$("detailName").textContent="Visão do cliente";["cDep","cSaq","cBau","cLucro"].forEach(x=>$(x).textContent=fmt(0))}
+  $("clientsGrid").innerHTML=clients.map(c=>{const t=totals(entries.filter(e=>e.client_id===c.id));return `<div class="client-card"><h3>${esc(c.name)}</h3><div class="muted">${esc(c.house_link||"Sem link")}</div><div class="vals"><div><span>Depósito</span><strong>${fmt(t.d)}</strong></div><div><span>Saque</span><strong>${fmt(t.s)}</strong></div><div><span>Baú</span><strong>${fmt(t.b)}</strong></div><div><span>Lucro</span><strong>${fmt(t.s+t.b-t.d)}</strong></div></div><div class="actions"><button class="secondary" onclick="openClient('${c.id}')">Abrir</button></div></div>`}).join("");
+  renderHistory();
+}
+function renderHistory(){
+  const c=selected(),q=$("search").value.trim().toLowerCase();let list=c?entries.filter(e=>e.client_id===c.id):[];
+  list=list.filter(e=>[e.entry_type,e.note,e.entry_date,e.value].join(" ").toLowerCase().includes(q));
+  $("tbody").innerHTML=list.map(e=>`<tr><td>${esc(String(e.entry_date).split("-").reverse().join("/"))}</td><td>${e.entry_type==="deposito"?"Depósito":e.entry_type==="saque"?"Saque":"Baú"}</td><td>${fmt(e.value)}</td><td>${esc(e.note||"-")}</td><td><button class="danger" onclick="deleteEntry('${e.id}')">Excluir</button></td></tr>`).join("");
+}
+
+
+function setupPaymentFlow(){
+  const key = user ? `payment_started_${user.id}` : "payment_started";
+  const paidArea = $("paidArea");
+  const paymentBtn = $("paymentBtn");
+  const alreadyPaidBtn = $("alreadyPaidBtn");
+
+  if(localStorage.getItem(key)==="1"){
+    paidArea.style.display="block";
+  }
+
+  paymentBtn.addEventListener("click",()=>{
+    localStorage.setItem(key,"1");
+    setTimeout(()=>{ paidArea.style.display="block"; },300);
+  });
+
+  alreadyPaidBtn.href = "https://wa.me/5535910238277?text=gostaria%20de%20saber%20minha%20key%20do%20dashabord%0A";
+}
+
+async function sha256Hex(text){
+  const data=new TextEncoder().encode(text);
+  const digest=await crypto.subtle.digest("SHA-256",data);
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+$("unlockBtn").onclick=async()=>{
+  const code=$("unlockCode").value.trim();
+  if(!code){
+    $("unlockMsg").textContent="Digite a key de liberação.";
+    return;
+  }
+
+  $("unlockMsg").textContent="Verificando key...";
+  const hash=await sha256Hex(code);
+
+  const {data:result,error}=await sb.rpc("redeem_cpa_key",{p_key_hash:hash});
+
+  if(error){
+    $("unlockMsg").textContent="Não foi possível validar a key.";
+    return;
+  }
+
+  if(!result || result.ok!==true){
+    $("unlockMsg").textContent="Key inválida ou já utilizada.";
+    return;
+  }
+
+  const {data:check,error:checkError}=await sb.from("cpa_access")
+    .select("*")
+    .eq("user_id",user.id)
+    .single();
+
+  if(checkError){
+    $("unlockMsg").textContent="Acesso liberado, mas não foi possível atualizar a tela.";
+    return;
+  }
+
+  accessRow=check;
+  $("unlockMsg").textContent="Acesso liberado por 30 dias. Esta key já foi consumida e não poderá ser usada novamente.";
+  setTimeout(async()=>{showApp();startCountdown();await loadData();},500);
+};
+
+boot();
+</script>
+</body>
+</html>
