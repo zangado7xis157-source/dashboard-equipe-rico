@@ -1,0 +1,8 @@
+{
+  "name": "Dashboard de Lucro CPA - Equipe Rico",
+  "short_name": "Equipe Rico",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07110c",
+  "theme_color": "#07110c"
+}
