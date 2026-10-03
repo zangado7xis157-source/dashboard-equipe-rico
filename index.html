@@ -475,31 +475,110 @@ $("clientSelect").onchange=()=>{selectedClientId=$("clientSelect").value||null;r
 $("refreshBtn").onclick=loadData;
 $("search").oninput=renderHistory;
 
+const RICO_VAPID_PUBLIC_KEY="BF7Buo7ebrK6dGyW7d_RYMU8eu-Ia0kl-RcFt5lKIw1MhK9t0xEkrMmTBQie-wzrls0BjGjtV2XJ32l8lKB_YjE";
+
+function urlBase64ToUint8Array(base64String){
+  const padding="=".repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,"+").replace(/_/g,"/");
+  const raw=atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
 async function registerRicoWorker(){
   if(!("serviceWorker" in navigator)) return null;
-  try{return await navigator.serviceWorker.register("/sw.js")}catch(e){return null}
+  try{
+    const reg=await navigator.serviceWorker.register("/sw.js");
+    try{await reg.update()}catch(_){}
+    return reg;
+  }catch(e){
+    console.warn("Service worker:",e);
+    return null;
+  }
 }
 function ricoStandalone(){
   return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
 }
-function refreshNotifyButton(){
+async function getRicoPushSubscription(){
+  if(!("serviceWorker" in navigator))return null;
+  const reg=await navigator.serviceWorker.ready;
+  if(!reg.pushManager)return null;
+  return await reg.pushManager.getSubscription();
+}
+async function refreshNotifyButton(){
   const b=$("enableNotificationsBtn");
   if(!b)return;
-  if(!("Notification" in window)){b.textContent="Notificação indisponível";b.disabled=true;return}
-  if(Notification.permission==="granted"){b.textContent="Notificações ativadas";b.classList.add("notify-ok")}
-  else {b.textContent="Ativar notificações";b.classList.remove("notify-ok")}
+  if(!("Notification" in window)){
+    b.textContent="Notificação indisponível";
+    b.disabled=true;
+    return;
+  }
+  if(Notification.permission!=="granted"){
+    b.textContent="Ativar notificações";
+    b.classList.remove("notify-ok");
+    return;
+  }
+  const sub=await getRicoPushSubscription().catch(()=>null);
+  if(sub){
+    b.textContent="Notificações ativadas";
+    b.classList.add("notify-ok");
+  }else{
+    b.textContent="Concluir ativação";
+    b.classList.remove("notify-ok");
+  }
+}
+async function saveRicoSubscription(sub){
+  const j=sub.toJSON();
+  const keys=j.keys||{};
+  if(!j.endpoint||!keys.p256dh||!keys.auth)throw new Error("Assinatura push incompleta");
+  const {error}=await sb.from("cpa_push_subscriptions").upsert({
+    user_id:user.id,
+    endpoint:j.endpoint,
+    p256dh:keys.p256dh,
+    auth_key:keys.auth
+  },{onConflict:"user_id,endpoint"});
+  if(error)throw error;
+}
+async function sendRicoPush(title,body){
+  const {data,error}=await sb.functions.invoke("send-cycle-push",{
+    body:{title,body,url:"/"}
+  });
+  if(error)throw error;
+  return data;
 }
 $("enableNotificationsBtn").onclick=async()=>{
   if(!("Notification" in window))return alert("Este navegador não oferece notificações.");
   if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !ricoStandalone()){
-    return alert("No iPhone: toque em Compartilhar → Adicionar à Tela de Início. Depois abra o painel pelo ícone e ative as notificações.");
+    return alert("No iPhone: toque em Compartilhar → Adicionar à Tela de Início. Abra o painel pelo ícone criado e toque novamente em Ativar notificações.");
   }
-  await registerRicoWorker();
-  const p=await Notification.requestPermission();
-  refreshNotifyButton();
-  if(p==="granted"){
-    const reg=await navigator.serviceWorker.ready;
-    await reg.showNotification("Equipe Rico",{body:"Notificações ativadas com sucesso.",data:{url:"/"}});
+
+  const reg=await registerRicoWorker();
+  if(!reg||!reg.pushManager)return alert("Não foi possível preparar as notificações neste aparelho.");
+
+  const permission=await Notification.requestPermission();
+  if(permission!=="granted"){
+    await refreshNotifyButton();
+    return alert("A permissão de notificações não foi liberada.");
+  }
+
+  try{
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){
+      sub=await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(RICO_VAPID_PUBLIC_KEY)
+      });
+    }
+    await saveRicoSubscription(sub);
+    await refreshNotifyButton();
+
+    const test=await sendRicoPush("Equipe Rico","✅ Notificações ativadas com sucesso.");
+    if(test?.ok){
+      alert("Notificações ativadas. Um teste foi enviado para este celular.");
+    }else{
+      alert("A notificação foi ativada, mas o teste não pôde ser entregue. Tente novamente em alguns segundos.");
+    }
+  }catch(e){
+    console.error(e);
+    alert("Não foi possível ativar o push neste aparelho. Feche e abra o painel pela Tela de Início e tente novamente.");
   }
 };
 
@@ -508,14 +587,25 @@ $("finishCycleBtn").onclick=async()=>{
   if(!c)return alert("Selecione um cliente.");
   const ce=entries.filter(e=>e.client_id===c.id);
   if(!ce.length)return alert("Esse cliente ainda não possui lançamentos.");
-  const t=totals(ce), lucro=t.s+t.b-t.d;
+  const t=totals(ce),lucro=t.s+t.b-t.d;
   if(!confirm(`Finalizar ciclo de ${c.name}?\nLucro: ${fmt(lucro)}`))return;
-  if("Notification" in window && Notification.permission==="granted"){
-    await registerRicoWorker();
-    const reg=await navigator.serviceWorker.ready;
-    await reg.showNotification("✅ Ciclo finalizado",{body:`${c.name} • Lucro: ${fmt(lucro)}`,data:{url:"/"}});
+
+  let pushed=false;
+  try{
+    const result=await sendRicoPush("✅ Ciclo finalizado",`${c.name} • Lucro: ${fmt(lucro)}`);
+    pushed=!!result?.ok;
+  }catch(e){
+    console.warn("Push falhou:",e);
   }
-  alert(`Ciclo finalizado. Lucro: ${fmt(lucro)}`);
+
+  if(!pushed && "Notification" in window && Notification.permission==="granted"){
+    try{
+      const reg=await navigator.serviceWorker.ready;
+      await reg.showNotification("✅ Ciclo finalizado",{body:`${c.name} • Lucro: ${fmt(lucro)}`,data:{url:"/"}});
+    }catch(_){}
+  }
+
+  alert(`Ciclo finalizado. Lucro: ${fmt(lucro)}${pushed?"\nNotificação enviada para o celular.":"\nAtive as notificações para receber o aviso push."}`);
 };
 
 $("deleteClient").onclick=async()=>{
@@ -771,7 +861,7 @@ $("unlockBtn").onclick=async()=>{
   setTimeout(async()=>{showApp();startCountdown();await loadData();},500);
 };
 
-registerRicoWorker().then(refreshNotifyButton);
+registerRicoWorker().then(()=>refreshNotifyButton());
 boot();
 </script>
 </body>
