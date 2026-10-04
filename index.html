@@ -173,6 +173,32 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .games-tab-locked:after{content:" PREMIUM";font-size:9px;margin-left:5px;padding:2px 5px;border-radius:5px;background:rgba(255,255,255,.08);color:#9fb1a5}
 @media(max-width:620px){.games-lock-box{padding:22px 16px}.games-lock-actions{flex-direction:column}.games-lock-pay,.games-lock-key{width:100%}}
 
+
+/* ===== Menu lateral hambúrguer ===== */
+.main-menu-bar{display:flex;align-items:center;gap:12px;margin:0 0 16px}
+.menu-toggle-btn{width:48px;height:44px;border:1px solid var(--line);border-radius:13px;background:#07100b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.menu-toggle-btn span{display:block;width:24px;height:3px;border-radius:999px;background:#dfffea;transition:.18s ease}
+.menu-toggle-btn:hover{border-color:rgba(49,230,124,.55);background:#0b1710}
+.menu-toggle-label{font-size:13px;color:#8ca495;font-weight:800}
+.side-menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:1998;opacity:0;pointer-events:none;transition:.2s ease}
+.side-menu-overlay.open{opacity:1;pointer-events:auto}
+.side-menu{position:fixed;left:0;top:0;bottom:0;width:min(310px,86vw);z-index:1999;background:linear-gradient(180deg,#050a07,#08110c);border-right:1px solid var(--line);transform:translateX(-102%);transition:.24s ease;box-shadow:24px 0 70px rgba(0,0,0,.4);display:flex;flex-direction:column}
+.side-menu.open{transform:translateX(0)}
+.side-menu-head{display:flex;align-items:center;justify-content:space-between;padding:20px 18px;border-bottom:1px solid var(--line)}
+.side-menu-brand{font-size:18px;font-weight:950}.side-menu-brand span{color:var(--green)}
+.side-menu-close{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#0a1510;color:#eaffef;font-size:20px;cursor:pointer}
+.side-menu-nav{padding:14px;display:flex;flex-direction:column;gap:8px}
+.side-menu-item{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:1px solid transparent;background:transparent;color:#a7b9ad;text-align:left;font:inherit;font-weight:850;cursor:pointer}
+.side-menu-item:hover{background:#0b1710;color:#effff4;border-color:var(--line)}
+.side-menu-item.active{background:linear-gradient(90deg,rgba(49,230,124,.18),rgba(49,230,124,.06));color:#ecfff2;border-color:rgba(49,230,124,.34)}
+.side-menu-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#0d1a12;border:1px solid var(--line);font-size:16px;flex:0 0 auto}
+.side-menu-copy{display:flex;flex-direction:column;gap:2px}
+.side-menu-title{font-size:14px}.side-menu-sub{font-size:10px;color:#708579;font-weight:650}
+.side-menu-foot{margin-top:auto;padding:16px 18px;border-top:1px solid var(--line);font-size:11px;color:#6f8477;line-height:1.5}
+.app-tabs.menu-legacy-tabs{display:none!important}
+body.side-menu-open{overflow:hidden}
+@media(min-width:900px){.main-menu-bar{margin-bottom:18px}.menu-toggle-btn{width:52px}}
+
 </style>
 </head>
 <body>
@@ -240,7 +266,45 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     <a class="monthly-payment-btn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank</a>
   </div>
 
-  <div class="app-tabs">
+  <div class="main-menu-bar">
+    <button id="mainMenuToggle" class="menu-toggle-btn" aria-label="Abrir menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="menu-toggle-label">Menu</div>
+  </div>
+
+  <div id="sideMenuOverlay" class="side-menu-overlay"></div>
+  <aside id="sideMenu" class="side-menu" aria-hidden="true">
+    <div class="side-menu-head">
+      <div class="side-menu-brand">Equipe <span>Rico</span></div>
+      <button id="sideMenuClose" class="side-menu-close" aria-label="Fechar menu">×</button>
+    </div>
+    <nav class="side-menu-nav">
+      <button id="sideDashboardItem" class="side-menu-item active" data-side-view="dashboard">
+        <span class="side-menu-icon">▦</span>
+        <span class="side-menu-copy"><span class="side-menu-title">Visão Geral</span><span class="side-menu-sub">Dashboard principal</span></span>
+      </button>
+      <button id="sideProfitItem" class="side-menu-item" data-side-view="profit">
+        <span class="side-menu-icon">📈</span>
+        <span class="side-menu-copy"><span class="side-menu-title">Rendimento do Mês</span><span class="side-menu-sub">Lucros e desempenho</span></span>
+      </button>
+      <button id="sideGamesItem" class="side-menu-item" data-side-view="games">
+        <span class="side-menu-icon">🎮</span>
+        <span class="side-menu-copy"><span class="side-menu-title">Jogos</span><span class="side-menu-sub">Jogos para rollover</span></span>
+      </button>
+      <button id="sideAchievementsItem" class="side-menu-item" data-side-view="achievements">
+        <span class="side-menu-icon">🏆</span>
+        <span class="side-menu-copy"><span class="side-menu-title">Plaquinhas</span><span class="side-menu-sub">Conquistas e metas</span></span>
+      </button>
+      <button id="sideAdminItem" class="side-menu-item hidden" data-side-view="admin">
+        <span class="side-menu-icon">👑</span>
+        <span class="side-menu-copy"><span class="side-menu-title">Admin</span><span class="side-menu-sub">Área administrativa</span></span>
+      </button>
+    </nav>
+    <div class="side-menu-foot">Use o menu para navegar entre as áreas sem misturar jogos, rendimento e plaquinhas.</div>
+  </aside>
+
+  <div class="app-tabs menu-legacy-tabs" aria-hidden="true">
     <button class="primary" id="dashboardTab">Visão geral</button>
     <button class="secondary" id="profitTab">Lucros</button>
     <button class="secondary" id="gamesTab">🎮 Jogos</button>
@@ -594,7 +658,7 @@ function hideAll(){
 }
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
-function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden");syncGamesAccessUI()}
+function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("sideAdminItem")?.classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden");syncGamesAccessUI()}
 function applyPaymentUrl(){
   const ids=["paymentBtn"];
   ids.forEach(id=>{const el=$(id);if(el)el.href=PAYMENT_URL});
@@ -1428,6 +1492,24 @@ function renderGameCatalog(){
     catch{prompt("Copie o nome do jogo:",name)}
   });
 }
+function openSideMenu(){
+  $("sideMenu")?.classList.add("open");
+  $("sideMenuOverlay")?.classList.add("open");
+  $("mainMenuToggle")?.setAttribute("aria-expanded","true");
+  $("sideMenu")?.setAttribute("aria-hidden","false");
+  document.body.classList.add("side-menu-open");
+}
+function closeSideMenu(){
+  $("sideMenu")?.classList.remove("open");
+  $("sideMenuOverlay")?.classList.remove("open");
+  $("mainMenuToggle")?.setAttribute("aria-expanded","false");
+  $("sideMenu")?.setAttribute("aria-hidden","true");
+  document.body.classList.remove("side-menu-open");
+}
+function setSideNavActive(view){
+  document.querySelectorAll("[data-side-view]").forEach(el=>el.classList.toggle("active",el.dataset.sideView===view));
+}
+
 function showGamesView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
   $("profitView").classList.add("hidden");
@@ -1441,6 +1523,7 @@ function showGamesView(){
   $("adminTab").className="secondary";
   renderGameCatalog();
   syncGamesAccessUI();
+  setSideNavActive("games");
 }
 
 function showAdminView(){
@@ -1456,6 +1539,7 @@ function showAdminView(){
   $("achievementsTab").className="secondary";
   $("adminTab").className="primary";
   loadAdminData();
+  setSideNavActive("admin");
 }
 
 function showDashboardView(){
@@ -1469,6 +1553,7 @@ function showDashboardView(){
   $("gamesTab").className="secondary";
   $("achievementsTab").className="secondary";
   $("adminTab").className="secondary";
+  setSideNavActive("dashboard");
 }
 function showProfitView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
@@ -1484,6 +1569,7 @@ function showProfitView(){
   $("achievementsTab").className="secondary";
   $("adminTab").className="secondary";
   renderProfitReport();
+  setSideNavActive("profit");
 }
 function showAchievementsView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
@@ -1497,7 +1583,18 @@ function showAchievementsView(){
   $("achievementsTab").className="primary";
   $("adminTab").className="secondary";
   renderAchievements();
+  setSideNavActive("achievements");
 }
+$("mainMenuToggle").onclick=openSideMenu;
+$("sideMenuClose").onclick=closeSideMenu;
+$("sideMenuOverlay").onclick=closeSideMenu;
+$("sideDashboardItem").onclick=()=>{showDashboardView();closeSideMenu()};
+$("sideProfitItem").onclick=()=>{showProfitView();closeSideMenu()};
+$("sideGamesItem").onclick=()=>{showGamesView();closeSideMenu()};
+$("sideAchievementsItem").onclick=()=>{showAchievementsView();closeSideMenu()};
+$("sideAdminItem").onclick=()=>{showAdminView();closeSideMenu()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSideMenu()});
+
 $("dashboardTab").onclick=showDashboardView;
 $("profitTab").onclick=showProfitView;
 $("gamesTab").onclick=showGamesView;
