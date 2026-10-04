@@ -3,150 +3,241 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#040b16">
 <title>RicoCPA • Painel Operacional</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/ricocpa-icon.svg" type="image/svg+xml">
 <style>
-:root{--bg:#0b0b0b;--panel:#151515;--panel2:#0f0f0f;--line:#363636;--line2:#594300;--gold:#d4a600;--gold2:#8b6800;--text:#f2f2f2;--muted:#8b8b8b;--green:#20d96f;--red:#ff4d4d;--blue:#5fb2ff}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#090909;color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}button,input,select,textarea{font:inherit}.app{max-width:1380px;margin:auto;padding:0 10px 14px}.top{height:70px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #222}.brand{display:flex;align-items:center;gap:10px;min-width:210px}.logo{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-weight:1000;font-size:16px;color:#1d1600;background:radial-gradient(circle at 35% 25%,#f4d55d,#b58800 55%,#4e3900);border:2px solid #d8b335;box-shadow:0 0 22px rgba(212,166,0,.18)}.brandtxt b{display:block;color:#e8c244;font-size:20px;letter-spacing:.8px}.brandtxt span{font-size:10px;color:#777}.tabs{display:flex;gap:8px;flex:1;overflow:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{border:1px solid #292929;background:#181818;color:#eee;padding:10px 16px;border-radius:5px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap}.tab.active{background:linear-gradient(#9d7600,#3e2f00);border-color:#b48800;color:#fff}.status{margin-left:auto;text-align:right;line-height:1.35;font-size:10px;color:#777;min-width:175px}.status strong{color:#20d96f}.layout{display:grid;grid-template-columns:1fr 1.12fr .98fr;gap:8px;margin-top:10px}.panel{background:linear-gradient(#181818,#121212);border:1px solid #343434;border-radius:6px;padding:8px;min-height:160px}.panel-title{height:24px;border:1px solid #3a3a3a;border-radius:5px;background:linear-gradient(#2a2a2a,#151515);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;margin-bottom:8px}.section{border-top:1px solid #2c2c2c;margin-top:10px;padding-top:8px}.section-title{text-align:center;color:#b78c00;font-size:11px;margin-top:-15px;margin-bottom:7px}.section-title span{background:#151515;padding:0 8px}.goldbtn,.darkbtn,.dangerbtn,.greenbtn{border-radius:5px;padding:8px 10px;font-size:11px;font-weight:900;cursor:pointer;border:1px solid}.goldbtn{background:linear-gradient(#a27a00,#4e3a00);border-color:#8e6c00;color:#fff}.darkbtn{background:linear-gradient(#292929,#171717);border-color:#373737;color:#eee}.dangerbtn{background:linear-gradient(#521313,#2b0909);border-color:#7f2020;color:#fff}.greenbtn{background:linear-gradient(#13783a,#0a4521);border-color:#1d8d4a;color:#fff}.btnrow{display:flex;gap:7px;flex-wrap:wrap}.stack{display:grid;gap:7px}.field label{display:block;color:#a9881c;font-size:10px;margin-bottom:4px}.field input,.field select,.field textarea{width:100%;background:#202020;color:#eee;border:1px solid #393939;border-radius:5px;padding:8px;outline:none;font-size:11px}.field textarea{min-height:74px;resize:vertical}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:7px}.toggle{display:flex;align-items:center;gap:8px;font-size:11px;color:#ddd;padding:4px 0}.toggle input{accent-color:#c69b00}.logs{height:365px;background:#0c0c0c;border:1px solid #333;border-radius:12px;padding:12px;overflow:auto;color:#7c8e99;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}.hero{margin-top:8px;height:132px;border:1px solid #333;border-radius:7px;background:radial-gradient(circle at 50% 35%,rgba(212,166,0,.16),transparent 35%),linear-gradient(135deg,#081015,#121212);display:grid;place-items:center;text-align:center}.hero strong{font-size:27px;color:#dfbd48;letter-spacing:2px}.hero span{display:block;color:#62737f;font-size:10px;margin-top:6px}.view{display:none}.view.active{display:block}.wide{display:grid;grid-template-columns:1.5fr .9fr;gap:8px;margin-top:10px}.tablewrap{overflow:auto;border:1px solid #333;border-radius:6px}table{width:100%;border-collapse:collapse;min-width:650px;font-size:11px}th,td{padding:9px;border-bottom:1px solid #2d2d2d;text-align:left}th{color:#c79e19;background:#111}td{color:#d5d5d5}.badge{display:inline-flex;padding:4px 7px;border-radius:999px;background:#14261b;color:#38d879;border:1px solid #245f39;font-size:9px;font-weight:900}.muted{color:#777}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}.stat{padding:12px;background:#131313;border:1px solid #333;border-radius:6px}.stat span{display:block;color:#777;font-size:9px;text-transform:uppercase}.stat b{display:block;font-size:20px;margin-top:5px;color:#e8c244}.screen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.screen{border:1px solid #333;background:#111;border-radius:6px;padding:10px;min-height:110px}.screen h4{margin:0 0 6px;font-size:12px}.screen p{margin:0;color:#777;font-size:10px}.bottom-action{margin-top:8px;width:100%;padding:9px;border:1px solid #866500;background:linear-gradient(#8e6b00,#3b2d00);color:#fff;border-radius:5px;font-weight:900;cursor:pointer}.helper{font-size:9px;color:#6e6e6e;line-height:1.5;margin-top:6px}.toast{position:fixed;right:18px;bottom:18px;background:#171717;border:1px solid #5b4700;color:#f0d36e;padding:10px 14px;border-radius:8px;font-size:11px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}.toast.show{opacity:1;transform:none}@media(max-width:1000px){.layout,.wide{grid-template-columns:1fr}.status{display:none}.screen-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.app{padding:0 6px 12px}.top{height:auto;padding:8px 0;align-items:flex-start;flex-wrap:wrap}.brand{min-width:100%}.tabs{order:3;min-width:100%}.statgrid{grid-template-columns:1fr 1fr}.screen-grid{grid-template-columns:1fr}.twocol{grid-template-columns:1fr}.logo{width:46px;height:46px}.brandtxt b{font-size:17px}}
+:root{--bg:#030711;--bg2:#07111f;--panel:#091522;--panel2:#0c1c2c;--line:#173a59;--line2:#215784;--blue:#1597ff;--blue2:#0b63d1;--cyan:#55c8ff;--text:#eef8ff;--muted:#7893aa;--green:#2bdc87;--red:#ff5463;--yellow:#ffd35a;--shadow:0 18px 45px rgba(0,0,0,.28)}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -20%,#0d2843 0,#07111f 32%,#030711 72%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}button,input,select,textarea{font:inherit}button{user-select:none}.app{max-width:1500px;margin:0 auto;padding:0 12px 18px}.top{position:sticky;top:0;z-index:40;min-height:78px;display:flex;align-items:center;gap:14px;background:rgba(3,7,17,.94);backdrop-filter:blur(14px);border-bottom:1px solid rgba(62,155,227,.16)}.brand{display:flex;align-items:center;gap:11px;min-width:225px}.logo{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-weight:1000;font-size:15px;letter-spacing:.7px;color:white;background:linear-gradient(145deg,#1597ff,#073a83);border:1px solid #2bb4ff;box-shadow:0 0 28px rgba(21,151,255,.22),inset 0 0 20px rgba(255,255,255,.08)}.brandtxt b{display:block;color:#66c9ff;font-size:21px;letter-spacing:.8px}.brandtxt span{font-size:9px;color:#5d7890;letter-spacing:1.4px}.tabs{display:flex;gap:7px;flex:1;overflow:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{border:1px solid #16344f;background:#091522;color:#a9c3d7;padding:10px 15px;border-radius:8px;font-weight:850;font-size:11px;cursor:pointer;white-space:nowrap}.tab:hover{border-color:#246b9f;color:#d9f2ff}.tab.active{background:linear-gradient(180deg,#137fd8,#084b96);border-color:#2aa8ff;color:#fff;box-shadow:0 0 18px rgba(21,151,255,.14)}.status{margin-left:auto;text-align:right;line-height:1.4;font-size:9px;color:#6d879d;min-width:165px}.status strong{color:var(--green)}.installbtn{border:1px solid #2271a7;background:#0b3351;color:#dff5ff;border-radius:7px;padding:7px 9px;font-weight:900;font-size:9px;cursor:pointer}.installbtn.hidden{display:none}.view{display:none}.view.active{display:block}.layout{display:grid;grid-template-columns:.95fr 1.12fr .98fr;gap:9px;margin-top:10px}.panel{background:linear-gradient(180deg,rgba(12,28,44,.96),rgba(7,18,30,.96));border:1px solid #173a59;border-radius:9px;padding:9px;min-height:150px;box-shadow:var(--shadow)}.panel-title{min-height:28px;border:1px solid #1a466c;border-radius:7px;background:linear-gradient(180deg,#12304a,#0a1a2a);display:flex;align-items:center;justify-content:center;color:#d8f2ff;font-size:10px;font-weight:950;letter-spacing:.3px;margin-bottom:9px}.section{border-top:1px solid #14334d;margin-top:12px;padding-top:10px}.section-title{text-align:center;color:#46baff;font-size:10px;margin-top:-17px;margin-bottom:8px}.section-title span{background:#0b1a29;padding:0 8px}.bluebtn,.darkbtn,.dangerbtn,.greenbtn,.ghostbtn{border-radius:7px;padding:8px 10px;font-size:10px;font-weight:900;cursor:pointer;border:1px solid;transition:.15s}.bluebtn{background:linear-gradient(180deg,#137fd8,#084b96);border-color:#269ee8;color:#fff}.bluebtn:hover{filter:brightness(1.12)}.darkbtn{background:linear-gradient(#12283b,#0a1928);border-color:#1b4567;color:#dcefff}.darkbtn:hover{border-color:#2d6f9f}.dangerbtn{background:linear-gradient(#6b1822,#351017);border-color:#8f2832;color:#fff}.greenbtn{background:linear-gradient(#15854f,#0a4b2b);border-color:#239861;color:#fff}.ghostbtn{background:#07111d;border-color:#193c59;color:#9eb8cc}.btnrow{display:flex;gap:7px;flex-wrap:wrap}.stack{display:grid;gap:7px}.field label{display:block;color:#6abff1;font-size:9px;margin-bottom:4px}.field input,.field select,.field textarea{width:100%;background:#06101b;color:#eaf7ff;border:1px solid #173e5d;border-radius:7px;padding:8px 9px;outline:none;font-size:10px}.field input:focus,.field select:focus,.field textarea:focus{border-color:#1d91e4;box-shadow:0 0 0 2px rgba(21,151,255,.1)}.field textarea{min-height:78px;resize:vertical}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toggle{display:flex;align-items:center;gap:8px;font-size:10px;color:#c8deeb;padding:5px 0}.toggle input{accent-color:#168ee6}.logs{height:350px;background:#02060c;border:1px solid #17334c;border-radius:10px;padding:11px;overflow:auto;color:#7194ad;font:10px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}.hero{margin-top:8px;height:126px;border:1px solid #173b59;border-radius:8px;background:radial-gradient(circle at 50% 30%,rgba(21,151,255,.18),transparent 38%),linear-gradient(135deg,#040b14,#0a1725);display:grid;place-items:center;text-align:center}.hero strong{font-size:27px;color:#5bc5ff;letter-spacing:3px}.hero span{display:block;color:#58768d;font-size:9px;margin-top:6px}.wide{display:grid;grid-template-columns:1.55fr .95fr;gap:9px;margin-top:10px}.tablewrap{overflow:auto;border:1px solid #173a59;border-radius:8px}table{width:100%;border-collapse:collapse;min-width:690px;font-size:10px}th,td{padding:9px;border-bottom:1px solid #102f49;text-align:left;vertical-align:middle}th{color:#6bc9ff;background:#07111c;position:sticky;top:0}td{color:#d4e6f2}.badge{display:inline-flex;padding:4px 7px;border-radius:999px;background:#0d2f24;color:#45e696;border:1px solid #1d6548;font-size:8px;font-weight:900}.badge.off{background:#30151a;color:#ff7985;border-color:#71303a}.muted{color:#6b8396}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 8px}.stat{padding:12px;background:#081521;border:1px solid #173957;border-radius:8px}.stat span{display:block;color:#688197;font-size:8px;text-transform:uppercase;letter-spacing:.7px}.stat b{display:block;font-size:20px;margin-top:5px;color:#63caff}.screen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.screen{border:1px solid #173957;background:#07131f;border-radius:8px;padding:10px;min-height:120px}.screen h4{margin:0 0 5px;font-size:11px}.screen p{margin:0 0 8px;color:#6f8799;font-size:9px;word-break:break-word}.bottom-action{margin-top:9px;width:100%;padding:9px;border:1px solid #2387c6;background:linear-gradient(#116cb4,#083d76);color:#fff;border-radius:7px;font-weight:900;font-size:10px;cursor:pointer}.helper{font-size:8.5px;color:#60778b;line-height:1.55;margin-top:6px}.toast{position:fixed;right:18px;bottom:18px;z-index:100;background:#071522;border:1px solid #2072a9;color:#9ddbff;padding:10px 14px;border-radius:8px;font-size:10px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;box-shadow:var(--shadow)}.toast.show{opacity:1;transform:none}.modal{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.66);display:none;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.modalbox{width:min(520px,100%);background:#081521;border:1px solid #1b4f76;border-radius:12px;padding:14px;box-shadow:0 28px 90px rgba(0,0,0,.55)}.modalbox h3{margin:0 0 12px;color:#65c9ff;font-size:15px}.safe-note{padding:8px 10px;border:1px solid #254865;background:#091b2b;border-radius:7px;color:#84a9c2;font-size:8.5px;line-height:1.5}.action-mini{padding:5px 7px;font-size:8px}.hidden{display:none!important}@media(max-width:1040px){.layout,.wide{grid-template-columns:1fr}.status{display:none}.screen-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.app{padding:0 6px 12px}.top{position:static;height:auto;padding:8px 0;align-items:flex-start;flex-wrap:wrap}.brand{min-width:100%}.tabs{order:3;min-width:100%}.statgrid{grid-template-columns:1fr 1fr}.screen-grid{grid-template-columns:1fr}.twocol{grid-template-columns:1fr}.logo{width:48px;height:48px}.brandtxt b{font-size:17px}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="top">
-    <div class="brand"><div class="logo">RICO</div><div class="brandtxt"><b>RicoCPA</b><span>PAINEL OPERACIONAL</span></div></div>
-    <nav class="tabs" id="tabs">
-      <button class="tab active" data-view="inicio">Início</button>
-      <button class="tab" data-view="pix">Chaves PIX</button>
-      <button class="tab" data-view="contas">Contas</button>
-      <button class="tab" data-view="proxies">Proxies</button>
-      <button class="tab" data-view="telas">Telas</button>
-      <button class="tab" data-view="operacao">Operação</button>
-    </nav>
-    <div class="status">Versão: <b>1.0.0</b><br>Usuário: <b>local</b><br><strong>● Painel ativo</strong></div>
-  </header>
+<header class="top">
+  <div class="brand"><div class="logo">RICO</div><div class="brandtxt"><b>RicoCPA</b><span>PAINEL OPERACIONAL</span></div></div>
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-view="inicio">Início</button>
+    <button class="tab" data-view="pix">Chaves PIX</button>
+    <button class="tab" data-view="contas">Contas</button>
+    <button class="tab" data-view="proxies">Proxies</button>
+    <button class="tab" data-view="telas">Telas</button>
+    <button class="tab" data-view="operacao">Operação</button>
+  </nav>
+  <button id="installBtn" class="installbtn hidden">⬇ Instalar no PC</button>
+  <div class="status">Versão: <b>2.0.0</b><br>Modo: <b>Desktop/PWA</b><br><strong>● Painel ativo</strong></div>
+</header>
 
-  <section class="view active" id="inicio">
-    <div class="layout">
-      <div class="panel">
-        <div class="panel-title">Configuração de Navegação</div>
-        <div class="stack">
-          <button class="goldbtn" data-toggle-label>Modo Mobile (Android e iOS)</button>
-          <button class="goldbtn" data-toggle-label>Abrir links em nova guia</button>
-          <button class="goldbtn" data-view-jump="contas">Gerenciar Contas</button>
-          <button class="goldbtn" data-view-jump="proxies">Gerenciar Proxies</button>
-        </div>
-        <div class="section"><div class="section-title"><span>Ajustes de Sessão</span></div>
-          <div class="field"><label>Delay entre perfis</label><input id="delay" type="number" value="30" min="0"></div>
-          <div class="field" style="margin-top:7px"><label>Quantidade de sessões</label><input id="sessionQty" type="number" value="1" min="1" max="20"></div>
-        </div>
+<section class="view active" id="inicio">
+  <div class="layout">
+    <div class="panel">
+      <div class="panel-title">Configuração do Painel</div>
+      <div class="stack">
+        <button class="bluebtn" id="toggleMobileBtn">Modo Mobile: <span>OFF</span></button>
+        <button class="bluebtn" id="toggleNewWindowBtn">Abrir links em janela: <span>ON</span></button>
+        <button class="bluebtn" data-view-jump="contas">Gerenciar Contas</button>
+        <button class="bluebtn" data-view-jump="proxies">Gerenciar Proxies</button>
       </div>
-
-      <div class="panel">
-        <div class="panel-title">Funcionalidades</div>
-        <div class="twocol">
-          <label class="toggle"><input type="checkbox" id="proxyEnabled"> Proxy ativado</label>
-          <label class="toggle"><input type="checkbox" checked> Múltiplos links</label>
-          <label class="toggle"><input type="checkbox"> Modo retrato</label>
-          <label class="toggle"><input type="checkbox" checked> DNS Cloudflare</label>
-          <label class="toggle"><input type="checkbox" checked> Gerenciar sessões</label>
-          <label class="toggle"><input type="checkbox"> Iniciar painel automaticamente</label>
-        </div>
-        <div class="section"><div class="section-title"><span>Links de Trabalho</span></div>
-          <div class="field"><label>Novo link</label><input id="quickLink" placeholder="https://..."></div>
-          <button class="goldbtn" id="addQuickLink" style="width:100%;margin-top:7px">Adicionar Link</button>
-        </div>
-        <div class="btnrow" style="margin-top:9px"><button class="darkbtn" data-view-jump="pix">Chaves PIX</button><button class="darkbtn" id="savePrefs">Salvar Preferências</button></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-title">Log do Sistema</div>
-        <div class="logs" id="homeLogs"></div>
-        <div class="btnrow" style="margin-top:8px"><button class="darkbtn" id="downloadLogs">Abrir</button><button class="dangerbtn" data-clear-logs>Clear</button></div>
-        <div class="hero"><div><strong>RICO CPA</strong><span>PAINEL DE GESTÃO E ORGANIZAÇÃO</span></div></div>
+      <div class="section"><div class="section-title"><span>Ajustes de Execução</span></div>
+        <div class="field"><label>Delay entre aberturas (segundos)</label><input id="delay" type="number" value="3" min="0" max="300"></div>
+        <div class="field" style="margin-top:7px"><label>Quantidade de telas</label><input id="sessionQty" type="number" value="1" min="1" max="20"></div>
+        <button class="darkbtn" id="savePrefs" style="width:100%;margin-top:7px">Salvar preferências</button>
       </div>
     </div>
-    <button class="bottom-action" data-focus-link>Adicionar / gerenciar links de trabalho</button>
-  </section>
 
-  <section class="view" id="contas">
-    <div class="statgrid"><div class="stat"><span>Contas</span><b id="countAccounts">0</b></div><div class="stat"><span>Ativas</span><b id="countActive">0</b></div><div class="stat"><span>Links</span><b id="countLinks">0</b></div><div class="stat"><span>Proxies</span><b id="countProxies">0</b></div></div>
-    <div class="wide">
-      <div class="panel"><div class="panel-title">Contas cadastradas</div><div class="tablewrap"><table><thead><tr><th>Plataforma</th><th>Login</th><th>Status</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="accountsBody"></tbody></table></div></div>
-      <div class="panel"><div class="panel-title">Adicionar conta</div><div class="stack">
-        <div class="field"><label>Plataforma</label><input id="accPlatform" placeholder="Nome da plataforma"></div>
-        <div class="field"><label>Login</label><input id="accLogin" placeholder="e-mail ou usuário"></div>
-        <div class="field"><label>Senha</label><input id="accPass" type="password" placeholder="senha"></div>
-        <div class="field"><label>Link</label><input id="accUrl" placeholder="https://..."></div>
-        <div class="field"><label>Observação</label><textarea id="accNote"></textarea></div>
-        <button class="goldbtn" id="addAccount">Salvar conta</button>
-        <div class="helper">Os dados deste protótipo ficam salvos apenas neste navegador.</div>
-      </div></div>
+    <div class="panel">
+      <div class="panel-title">Funcionalidades</div>
+      <div class="twocol">
+        <label class="toggle"><input type="checkbox" id="proxyInventoryEnabled"> Inventário de proxies</label>
+        <label class="toggle"><input type="checkbox" id="multiLinks" checked> Múltiplos links</label>
+        <label class="toggle"><input type="checkbox" id="portraitMode"> Layout retrato</label>
+        <label class="toggle"><input type="checkbox" id="sessionManager" checked> Gerenciar telas</label>
+        <label class="toggle"><input type="checkbox" id="autoStart"> Abrir última aba ao iniciar</label>
+        <label class="toggle"><input type="checkbox" id="logActions" checked> Registrar operações</label>
+      </div>
+      <div class="section"><div class="section-title"><span>Links de Trabalho</span></div>
+        <div class="field"><label>Novo link</label><input id="quickLink" placeholder="https://..."></div>
+        <button class="bluebtn" id="addQuickLink" style="width:100%;margin-top:7px">Adicionar Link</button>
+      </div>
+      <div class="btnrow" style="margin-top:9px"><button class="darkbtn" data-view-jump="pix">Chaves PIX</button><button class="darkbtn" data-view-jump="operacao">Abrir Operação</button></div>
+      <div class="safe-note" style="margin-top:9px">O painel organiza contas, links, chaves, proxies e janelas autorizadas. Ele não altera resultados de jogos, não resolve CAPTCHA e não burla antifraude ou KYC.</div>
     </div>
-  </section>
 
-  <section class="view" id="proxies">
-    <div class="wide">
-      <div class="panel"><div class="panel-title">Lista de Proxies</div><div class="tablewrap"><table><thead><tr><th>Nome</th><th>Endereço</th><th>Tipo</th><th>Status</th><th>Ação</th></tr></thead><tbody id="proxyBody"></tbody></table></div></div>
-      <div class="panel"><div class="panel-title">Adicionar Proxy</div><div class="stack">
-        <div class="field"><label>Nome</label><input id="proxyName" placeholder="Proxy 01"></div>
-        <div class="field"><label>Host / endereço</label><input id="proxyHost" placeholder="host:porta"></div>
-        <div class="field"><label>Tipo</label><select id="proxyType"><option>HTTP</option><option>HTTPS</option><option>SOCKS5</option></select></div>
-        <button class="goldbtn" id="addProxy">Salvar proxy</button>
-      </div></div>
+    <div class="panel">
+      <div class="panel-title">Log do Sistema</div>
+      <div class="logs" id="homeLogs"></div>
+      <div class="btnrow" style="margin-top:8px"><button class="darkbtn" id="downloadLogs">Baixar logs</button><button class="dangerbtn" id="clearLogs">Limpar</button></div>
+      <div class="hero"><div><strong>RICO CPA</strong><span>GESTÃO • CONTAS • LINKS • TELAS</span></div></div>
     </div>
-  </section>
+  </div>
+  <button class="bottom-action" data-view-jump="operacao">Gerenciar links e operação</button>
+</section>
 
-  <section class="view" id="pix">
-    <div class="wide">
-      <div class="panel"><div class="panel-title">Chaves PIX</div><div class="tablewrap"><table><thead><tr><th>Identificação</th><th>Tipo</th><th>Chave</th><th>Ação</th></tr></thead><tbody id="pixBody"></tbody></table></div></div>
-      <div class="panel"><div class="panel-title">Cadastrar Chave PIX</div><div class="stack">
-        <div class="field"><label>Identificação</label><input id="pixName" placeholder="Conta principal"></div>
-        <div class="field"><label>Tipo</label><select id="pixType"><option>CPF</option><option>E-mail</option><option>Telefone</option><option>Aleatória</option></select></div>
-        <div class="field"><label>Chave</label><input id="pixKey" placeholder="Digite a chave"></div>
-        <button class="goldbtn" id="addPix">Salvar chave</button>
-      </div></div>
-    </div>
-  </section>
+<section class="view" id="contas">
+  <div class="statgrid"><div class="stat"><span>Contas</span><b id="countAccounts">0</b></div><div class="stat"><span>Ativas</span><b id="countActive">0</b></div><div class="stat"><span>Links</span><b id="countLinks">0</b></div><div class="stat"><span>Proxies salvos</span><b id="countProxies">0</b></div></div>
+  <div class="wide">
+    <div class="panel"><div class="panel-title">Contas cadastradas</div><div class="tablewrap"><table><thead><tr><th>Plataforma</th><th>Login</th><th>Status</th><th>Proxy</th><th>Ações</th></tr></thead><tbody id="accountsBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-title">Adicionar / editar conta</div><div class="stack">
+      <input id="accEditId" type="hidden">
+      <div class="field"><label>Plataforma</label><input id="accPlatform" placeholder="Nome da plataforma"></div>
+      <div class="field"><label>Login</label><input id="accLogin" placeholder="e-mail ou usuário"></div>
+      <div class="field"><label>Senha</label><input id="accPass" type="password" placeholder="senha"></div>
+      <div class="field"><label>Link</label><input id="accUrl" placeholder="https://..."></div>
+      <div class="field"><label>Proxy vinculado (apenas organização)</label><select id="accProxy"><option value="">Nenhum</option></select></div>
+      <div class="field"><label>Observação</label><textarea id="accNote"></textarea></div>
+      <button class="bluebtn" id="saveAccount">Salvar conta</button><button class="ghostbtn hidden" id="cancelAccountEdit">Cancelar edição</button>
+      <div class="helper">Os dados ficam neste navegador. Para uso real com senhas, o ideal é usar armazenamento criptografado/backend.</div>
+    </div></div>
+  </div>
+</section>
 
-  <section class="view" id="telas">
-    <div class="panel" style="margin-top:10px"><div class="panel-title">Telas / Sessões cadastradas</div><div class="screen-grid" id="screenGrid"></div></div>
-  </section>
+<section class="view" id="proxies">
+  <div class="wide">
+    <div class="panel"><div class="panel-title">Inventário de Proxies</div><div class="tablewrap"><table><thead><tr><th>Nome</th><th>Endereço</th><th>Tipo</th><th>Status</th><th>Ações</th></tr></thead><tbody id="proxyBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-title">Adicionar / editar Proxy</div><div class="stack">
+      <input id="proxyEditId" type="hidden">
+      <div class="field"><label>Nome</label><input id="proxyName" placeholder="Proxy 01"></div>
+      <div class="field"><label>Host / endereço</label><input id="proxyHost" placeholder="host:porta"></div>
+      <div class="field"><label>Tipo</label><select id="proxyType"><option>HTTP</option><option>HTTPS</option><option>SOCKS5</option></select></div>
+      <button class="bluebtn" id="saveProxy">Salvar proxy</button><button class="ghostbtn hidden" id="cancelProxyEdit">Cancelar edição</button>
+      <div class="helper">Este módulo é um inventário. Um site/PWA não consegue configurar o proxy global do navegador ou do Windows.</div>
+    </div></div>
+  </div>
+</section>
 
-  <section class="view" id="operacao">
-    <div class="wide">
-      <div class="panel"><div class="section-title" style="margin-top:0"><span>Log de Operações</span></div><div class="logs" id="operationLogs" style="height:430px"></div><div class="btnrow" style="margin-top:8px"><button class="darkbtn" id="refreshLogs">Atualizar</button><button class="dangerbtn" data-clear-logs>Clear</button></div></div>
-      <div class="panel"><div class="section-title" style="margin-top:0"><span>Ferramentas</span></div><div class="stack">
-        <button class="darkbtn" id="mirrorBtn">Modo Espelho: OFF</button>
-        <button class="darkbtn" id="showDataBtn">Exibir Dados</button>
-        <button class="darkbtn" id="refreshScreensBtn">Atualizar Sessões</button>
-        <div class="section"><div class="section-title"><span>Velocidade visual</span></div><input id="speed" type="range" min="1" max="2" value="1" step="0.25" style="width:100%"><div class="helper" id="speedLabel">1.00x — altera apenas animações deste painel.</div></div>
-        <div class="section"><div class="section-title"><span>Navegação</span></div><button class="goldbtn" data-view-jump="telas">Abrir telas cadastradas</button></div>
-      </div></div>
-    </div>
-  </section>
+<section class="view" id="pix">
+  <div class="wide">
+    <div class="panel"><div class="panel-title">Chaves PIX</div><div class="tablewrap"><table><thead><tr><th>Identificação</th><th>Tipo</th><th>Chave</th><th>Ações</th></tr></thead><tbody id="pixBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-title">Cadastrar Chave PIX</div><div class="stack">
+      <div class="field"><label>Identificação</label><input id="pixName" placeholder="Conta principal"></div>
+      <div class="field"><label>Tipo</label><select id="pixType"><option>CPF</option><option>E-mail</option><option>Telefone</option><option>Aleatória</option></select></div>
+      <div class="field"><label>Chave</label><input id="pixKey" placeholder="Digite a chave"></div>
+      <button class="bluebtn" id="addPix">Salvar chave</button>
+    </div></div>
+  </div>
+</section>
+
+<section class="view" id="telas">
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-title">Telas / Janelas abertas pelo RicoCPA</div>
+    <div class="btnrow" style="margin-bottom:9px"><button class="bluebtn" id="openSelectedScreens">Abrir selecionadas</button><button class="darkbtn" id="openAllScreens">Abrir todos os links</button><button class="dangerbtn" id="closeOpenedScreens">Fechar janelas abertas</button></div>
+    <div class="screen-grid" id="screenGrid"></div>
+  </div>
+</section>
+
+<section class="view" id="operacao">
+  <div class="wide">
+    <div class="panel"><div class="panel-title">Links de Operação</div><div class="tablewrap"><table><thead><tr><th></th><th>Nome</th><th>Link</th><th>Status</th><th>Ações</th></tr></thead><tbody id="linksBody"></tbody></table></div></div>
+    <div class="panel"><div class="panel-title">Ferramentas</div><div class="stack">
+      <div class="field"><label>Nome do link</label><input id="linkName" placeholder="Casa / plataforma"></div>
+      <div class="field"><label>URL</label><input id="linkUrl" placeholder="https://..."></div>
+      <button class="bluebtn" id="addLink">Adicionar link</button>
+      <div class="section"><div class="section-title"><span>Dados</span></div>
+        <button class="darkbtn" id="exportData">Exportar backup JSON</button>
+        <button class="darkbtn" id="importDataBtn">Importar backup JSON</button>
+        <input id="importFile" type="file" accept="application/json" class="hidden">
+      </div>
+      <div class="section"><div class="section-title"><span>Sessão</span></div>
+        <button class="darkbtn" id="refreshPanel">Atualizar painel</button>
+        <button class="dangerbtn" id="clearAllData">Apagar dados locais</button>
+      </div>
+    </div></div>
+  </div>
+</section>
 </div>
+
+<div class="modal" id="passwordModal"><div class="modalbox"><h3>Dados da conta</h3><div id="passwordContent" class="stack"></div><div class="btnrow" style="margin-top:12px"><button class="darkbtn" id="closePasswordModal">Fechar</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const state={accounts:JSON.parse(localStorage.getItem('ricocpa_accounts')||'[]'),proxies:JSON.parse(localStorage.getItem('ricocpa_proxies')||'[]'),pix:JSON.parse(localStorage.getItem('ricocpa_pix')||'[]'),links:JSON.parse(localStorage.getItem('ricocpa_links')||'[]'),logs:JSON.parse(localStorage.getItem('ricocpa_logs')||'[]')};
-function save(){localStorage.setItem('ricocpa_accounts',JSON.stringify(state.accounts));localStorage.setItem('ricocpa_proxies',JSON.stringify(state.proxies));localStorage.setItem('ricocpa_pix',JSON.stringify(state.pix));localStorage.setItem('ricocpa_links',JSON.stringify(state.links));localStorage.setItem('ricocpa_logs',JSON.stringify(state.logs));renderAll()}
+const KEY='ricocpa_v2';
+let deferredPrompt=null;
+let openedWindows=[];
+let state={accounts:[],proxies:[],pix:[],links:[],logs:[],prefs:{mobile:false,newWindow:true,delay:3,sessions:1,proxyInventory:false,multiLinks:true,portrait:false,sessionManager:true,autoStart:false,logActions:true,lastView:'inicio'}};
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1600)}
-function log(t){state.logs.unshift({at:new Date().toLocaleString('pt-BR'),text:t});state.logs=state.logs.slice(0,150);localStorage.setItem('ricocpa_logs',JSON.stringify(state.logs));renderLogs()}
-function view(id){$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if(id==='telas')renderScreens();if(id==='operacao')renderLogs()}
-$$('.tab').forEach(b=>b.onclick=()=>view(b.dataset.view));$$('[data-view-jump]').forEach(b=>b.onclick=()=>view(b.dataset.viewJump));
-function renderLogs(){const txt=state.logs.length?state.logs.map(x=>`[${esc(x.at)}] ${esc(x.text)}`).join('\n'):'Logs do sistema aparecerão aqui...';$('#homeLogs').textContent=txt;$('#operationLogs').textContent=txt}
-function renderAccounts(){$('#accountsBody').innerHTML=state.accounts.map((a,i)=>`<tr><td>${esc(a.platform)}</td><td>${esc(a.login)}</td><td><span class="badge">Ativa</span></td><td>${esc(a.note||'-')}</td><td><button class="darkbtn" onclick="openAccount(${i})">Abrir</button> <button class="dangerbtn" onclick="delAccount(${i})">Excluir</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">Nenhuma conta cadastrada.</td></tr>';$('#countAccounts').textContent=state.accounts.length;$('#countActive').textContent=state.accounts.length;$('#countLinks').textContent=state.links.length+state.accounts.filter(a=>a.url).length;$('#countProxies').textContent=state.proxies.length}
-function renderProxies(){ $('#proxyBody').innerHTML=state.proxies.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.host)}</td><td>${esc(p.type)}</td><td><span class="badge">Salvo</span></td><td><button class="dangerbtn" onclick="delProxy(${i})">Excluir</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">Nenhum proxy cadastrado.</td></tr>' }
-function renderPix(){ $('#pixBody').innerHTML=state.pix.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.type)}</td><td>${esc(p.key)}</td><td><button class="darkbtn" onclick="copyPix(${i})">Copiar</button> <button class="dangerbtn" onclick="delPix(${i})">Excluir</button></td></tr>`).join('')||'<tr><td colspan="4" class="muted">Nenhuma chave cadastrada.</td></tr>' }
-function renderScreens(){const items=[...state.links.map((url,i)=>({platform:'Link '+(i+1),url})),...state.accounts.filter(a=>a.url).map(a=>({platform:a.platform,url:a.url}))];$('#screenGrid').innerHTML=items.map((x,i)=>`<div class="screen"><h4>${esc(x.platform)}</h4><p>${esc(x.url)}</p><button class="goldbtn" style="margin-top:12px" onclick="window.open('${esc(x.url)}','_blank','noopener')">Abrir sessão ↗</button></div>`).join('')||'<div class="muted">Adicione links ou contas com URL para montar suas telas.</div>'}
-function renderAll(){renderAccounts();renderProxies();renderPix();renderScreens();renderLogs()}
-$('#addAccount').onclick=()=>{const a={platform:$('#accPlatform').value.trim(),login:$('#accLogin').value.trim(),pass:$('#accPass').value,note:$('#accNote').value.trim(),url:$('#accUrl').value.trim()};if(!a.platform||!a.login)return toast('Preencha plataforma e login');state.accounts.push(a);['#accPlatform','#accLogin','#accPass','#accNote','#accUrl'].forEach(s=>$(s).value='');log('Conta adicionada: '+a.platform);save()};
-$('#addProxy').onclick=()=>{const p={name:$('#proxyName').value.trim(),host:$('#proxyHost').value.trim(),type:$('#proxyType').value};if(!p.name||!p.host)return toast('Preencha nome e endereço');state.proxies.push(p);$('#proxyName').value='';$('#proxyHost').value='';log('Proxy salvo: '+p.name);save()};
-$('#addPix').onclick=()=>{const p={name:$('#pixName').value.trim(),type:$('#pixType').value,key:$('#pixKey').value.trim()};if(!p.name||!p.key)return toast('Preencha identificação e chave');state.pix.push(p);$('#pixName').value='';$('#pixKey').value='';log('Chave PIX cadastrada: '+p.name);save()};
-$('#addQuickLink').onclick=()=>{const u=$('#quickLink').value.trim();if(!/^https?:\/\//i.test(u))return toast('Digite um link válido');state.links.push(u);$('#quickLink').value='';log('Link adicionado ao painel');save()};
-window.delAccount=i=>{const n=state.accounts[i]?.platform;state.accounts.splice(i,1);log('Conta removida: '+n);save()};window.openAccount=i=>{const a=state.accounts[i];if(a?.url)window.open(a.url,'_blank','noopener');else toast('Essa conta não possui link')};window.delProxy=i=>{state.proxies.splice(i,1);log('Proxy removido');save()};window.delPix=i=>{state.pix.splice(i,1);log('Chave PIX removida');save()};window.copyPix=i=>navigator.clipboard.writeText(state.pix[i].key).then(()=>toast('Chave copiada'));
-$$('[data-clear-logs]').forEach(b=>b.onclick=()=>{state.logs=[];save();toast('Logs limpos')});$('#refreshLogs').onclick=renderLogs;$('#refreshScreensBtn').onclick=()=>{renderScreens();toast('Sessões atualizadas')};$('#showDataBtn').onclick=()=>toast(`${state.accounts.length} contas • ${state.proxies.length} proxies • ${state.pix.length} chaves`);$('#mirrorBtn').onclick=e=>{e.target.dataset.on=e.target.dataset.on==='1'?'0':'1';e.target.textContent='Modo Espelho: '+(e.target.dataset.on==='1'?'ON':'OFF');log('Modo Espelho '+(e.target.dataset.on==='1'?'ativado':'desativado'))};$('#speed').oninput=e=>{$('#speedLabel').textContent=Number(e.target.value).toFixed(2)+'x — altera apenas animações deste painel.';document.documentElement.style.setProperty('scroll-behavior',Number(e.target.value)>1.5?'auto':'smooth')};$('#savePrefs').onclick=()=>{localStorage.setItem('ricocpa_delay',$('#delay').value);localStorage.setItem('ricocpa_sessions',$('#sessionQty').value);log('Preferências salvas');toast('Preferências salvas')};$('#downloadLogs').onclick=()=>{const blob=new Blob([state.logs.map(x=>`[${x.at}] ${x.text}`).join('\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ricocpa-logs.txt';a.click();URL.revokeObjectURL(a.href)};$$('[data-toggle-label]').forEach(b=>b.onclick=()=>{b.classList.toggle('greenbtn');toast(b.classList.contains('greenbtn')?'Ativado':'Desativado')});$$('[data-focus-link]').forEach(b=>b.onclick=()=>{view('inicio');$('#quickLink').focus()});
-$('#delay').value=localStorage.getItem('ricocpa_delay')||30;$('#sessionQty').value=localStorage.getItem('ricocpa_sessions')||1;log('RicoCPA iniciado');renderAll();
+function normalizeUrl(v){v=(v||'').trim();if(!v)return'';if(!/^https?:\/\//i.test(v))v='https://'+v;try{return new URL(v).href}catch{return''}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)state={...state,...s,prefs:{...state.prefs,...(s.prefs||{})}}}catch(e){}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));renderAll()}
+function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1700)}
+function log(msg){if(!state.prefs.logActions&&state.logs.length)return;state.logs.unshift({at:new Date().toISOString(),msg});state.logs=state.logs.slice(0,500);localStorage.setItem(KEY,JSON.stringify(state));renderLogs()}
+function showView(id){$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===id));state.prefs.lastView=id;localStorage.setItem(KEY,JSON.stringify(state));if(id==='telas')renderScreens()}
+function setPrefsUI(){
+ $('#delay').value=state.prefs.delay;$('#sessionQty').value=state.prefs.sessions;
+ $('#proxyInventoryEnabled').checked=state.prefs.proxyInventory;$('#multiLinks').checked=state.prefs.multiLinks;$('#portraitMode').checked=state.prefs.portrait;$('#sessionManager').checked=state.prefs.sessionManager;$('#autoStart').checked=state.prefs.autoStart;$('#logActions').checked=state.prefs.logActions;
+ $('#toggleMobileBtn span').textContent=state.prefs.mobile?'ON':'OFF';$('#toggleNewWindowBtn span').textContent=state.prefs.newWindow?'ON':'OFF';
+ document.body.style.maxWidth=state.prefs.portrait?'760px':'';document.body.style.margin=state.prefs.portrait?'0 auto':'';
+}
+function renderLogs(){const el=$('#homeLogs');el.innerHTML=state.logs.length?state.logs.map(x=>`<div>[${new Date(x.at).toLocaleString('pt-BR')}] ${esc(x.msg)}</div>`).join(''):'<div>Nenhuma operação registrada.</div>'}
+function renderStats(){$('#countAccounts').textContent=state.accounts.length;$('#countActive').textContent=state.accounts.filter(x=>x.active!==false).length;$('#countLinks').textContent=state.links.length;$('#countProxies').textContent=state.proxies.length}
+function proxyName(id){return state.proxies.find(p=>p.id===id)?.name||'—'}
+function renderAccounts(){
+ const body=$('#accountsBody');body.innerHTML=state.accounts.length?state.accounts.map(a=>`<tr><td><b>${esc(a.platform)}</b><div class="muted">${esc(a.url||'')}</div></td><td>${esc(a.login)}</td><td><span class="badge ${a.active===false?'off':''}">${a.active===false?'PAUSADA':'ATIVA'}</span></td><td>${esc(proxyName(a.proxyId))}</td><td><div class="btnrow"><button class="darkbtn action-mini" data-acc-open="${a.id}">Abrir</button><button class="darkbtn action-mini" data-acc-view="${a.id}">Dados</button><button class="darkbtn action-mini" data-acc-edit="${a.id}">Editar</button><button class="ghostbtn action-mini" data-acc-toggle="${a.id}">${a.active===false?'Ativar':'Pausar'}</button><button class="dangerbtn action-mini" data-acc-del="${a.id}">Excluir</button></div></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhuma conta cadastrada.</td></tr>';
+ $$('[data-acc-open]').forEach(b=>b.onclick=()=>{const a=state.accounts.find(x=>x.id===b.dataset.accOpen);if(a?.url)openUrl(a.url,a.platform)});
+ $$('[data-acc-view]').forEach(b=>b.onclick=()=>showAccountData(b.dataset.accView));
+ $$('[data-acc-edit]').forEach(b=>b.onclick=()=>editAccount(b.dataset.accEdit));
+ $$('[data-acc-toggle]').forEach(b=>b.onclick=()=>{const a=state.accounts.find(x=>x.id===b.dataset.accToggle);if(a){a.active=a.active===false;log(`Conta ${a.platform} ${a.active?'ativada':'pausada'}`);save()}});
+ $$('[data-acc-del]').forEach(b=>b.onclick=()=>{const i=state.accounts.findIndex(x=>x.id===b.dataset.accDel);if(i>-1&&confirm('Excluir esta conta?')){log(`Conta ${state.accounts[i].platform} excluída`);state.accounts.splice(i,1);save()}});
+}
+function renderProxies(){
+ const body=$('#proxyBody');body.innerHTML=state.proxies.length?state.proxies.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.host)}</td><td>${esc(p.type)}</td><td><span class="badge ${p.active===false?'off':''}">${p.active===false?'INATIVO':'SALVO'}</span></td><td><div class="btnrow"><button class="darkbtn action-mini" data-proxy-edit="${p.id}">Editar</button><button class="ghostbtn action-mini" data-proxy-toggle="${p.id}">${p.active===false?'Ativar':'Desativar'}</button><button class="dangerbtn action-mini" data-proxy-del="${p.id}">Excluir</button></div></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhum proxy salvo.</td></tr>';
+ $$('[data-proxy-edit]').forEach(b=>b.onclick=()=>editProxy(b.dataset.proxyEdit));
+ $$('[data-proxy-toggle]').forEach(b=>b.onclick=()=>{const p=state.proxies.find(x=>x.id===b.dataset.proxyToggle);if(p){p.active=p.active===false;log(`Proxy ${p.name} ${p.active?'ativado':'desativado'}`);save()}});
+ $$('[data-proxy-del]').forEach(b=>b.onclick=()=>{const i=state.proxies.findIndex(x=>x.id===b.dataset.proxyDel);if(i>-1&&confirm('Excluir este proxy?')){state.accounts.forEach(a=>{if(a.proxyId===state.proxies[i].id)a.proxyId=''});log(`Proxy ${state.proxies[i].name} excluído`);state.proxies.splice(i,1);save()}});
+ const sel=$('#accProxy'),cur=sel.value;sel.innerHTML='<option value="">Nenhum</option>'+state.proxies.map(p=>`<option value="${p.id}">${esc(p.name)} • ${esc(p.host)}</option>`).join('');sel.value=cur;
+}
+function renderPix(){
+ const body=$('#pixBody');body.innerHTML=state.pix.length?state.pix.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.type)}</td><td>${esc(p.key)}</td><td><div class="btnrow"><button class="darkbtn action-mini" data-pix-copy="${p.id}">Copiar</button><button class="dangerbtn action-mini" data-pix-del="${p.id}">Excluir</button></div></td></tr>`).join(''):'<tr><td colspan="4" class="muted">Nenhuma chave cadastrada.</td></tr>';
+ $$('[data-pix-copy]').forEach(b=>b.onclick=async()=>{const p=state.pix.find(x=>x.id===b.dataset.pixCopy);if(p){await copyText(p.key);log(`Chave PIX ${p.name} copiada`)}});
+ $$('[data-pix-del]').forEach(b=>b.onclick=()=>{const i=state.pix.findIndex(x=>x.id===b.dataset.pixDel);if(i>-1&&confirm('Excluir esta chave PIX?')){log(`Chave PIX ${state.pix[i].name} excluída`);state.pix.splice(i,1);save()}});
+}
+function renderLinks(){
+ const body=$('#linksBody');body.innerHTML=state.links.length?state.links.map(l=>`<tr><td><input type="checkbox" data-link-check="${l.id}" ${l.selected?'checked':''}></td><td><b>${esc(l.name)}</b></td><td>${esc(l.url)}</td><td><span class="badge ${l.active===false?'off':''}">${l.active===false?'PAUSADO':'ATIVO'}</span></td><td><div class="btnrow"><button class="darkbtn action-mini" data-link-open="${l.id}">Abrir</button><button class="ghostbtn action-mini" data-link-toggle="${l.id}">${l.active===false?'Ativar':'Pausar'}</button><button class="dangerbtn action-mini" data-link-del="${l.id}">Excluir</button></div></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nenhum link cadastrado.</td></tr>';
+ $$('[data-link-check]').forEach(b=>b.onchange=()=>{const l=state.links.find(x=>x.id===b.dataset.linkCheck);if(l){l.selected=b.checked;localStorage.setItem(KEY,JSON.stringify(state));renderScreens()}});
+ $$('[data-link-open]').forEach(b=>b.onclick=()=>{const l=state.links.find(x=>x.id===b.dataset.linkOpen);if(l)openUrl(l.url,l.name)});
+ $$('[data-link-toggle]').forEach(b=>b.onclick=()=>{const l=state.links.find(x=>x.id===b.dataset.linkToggle);if(l){l.active=l.active===false;log(`Link ${l.name} ${l.active?'ativado':'pausado'}`);save()}});
+ $$('[data-link-del]').forEach(b=>b.onclick=()=>{const i=state.links.findIndex(x=>x.id===b.dataset.linkDel);if(i>-1&&confirm('Excluir este link?')){log(`Link ${state.links[i].name} excluído`);state.links.splice(i,1);save()}});
+}
+function renderScreens(){
+ const grid=$('#screenGrid');const links=state.links.filter(l=>l.active!==false);grid.innerHTML=links.length?links.map((l,i)=>`<div class="screen"><h4>${i+1}. ${esc(l.name)}</h4><p>${esc(l.url)}</p><label class="toggle"><input type="checkbox" data-screen-select="${l.id}" ${l.selected?'checked':''}> Selecionar</label><div class="btnrow"><button class="bluebtn action-mini" data-screen-open="${l.id}">Abrir tela</button></div></div>`).join(''):'<div class="muted">Adicione links na aba Operação.</div>';
+ $$('[data-screen-select]').forEach(b=>b.onchange=()=>{const l=state.links.find(x=>x.id===b.dataset.screenSelect);if(l){l.selected=b.checked;localStorage.setItem(KEY,JSON.stringify(state));renderLinks()}});
+ $$('[data-screen-open]').forEach(b=>b.onclick=()=>{const l=state.links.find(x=>x.id===b.dataset.screenOpen);if(l)openUrl(l.url,l.name)});
+}
+function renderAll(){setPrefsUI();renderLogs();renderStats();renderProxies();renderAccounts();renderPix();renderLinks();renderScreens()}
+async function copyText(t){try{await navigator.clipboard.writeText(t);toast('Copiado')}catch{prompt('Copie:',t)}}
+function openUrl(url,name='Link'){const u=normalizeUrl(url);if(!u)return toast('URL inválida');const target=state.prefs.newWindow?'_blank':'_self';const w=window.open(u,target,'noopener,noreferrer');if(state.prefs.newWindow&&w)openedWindows.push(w);log(`${name} aberto`)}
+function showAccountData(id){const a=state.accounts.find(x=>x.id===id);if(!a)return;$('#passwordContent').innerHTML=`<div class="field"><label>Plataforma</label><input value="${esc(a.platform)}" readonly></div><div class="field"><label>Login</label><input value="${esc(a.login)}" readonly></div><div class="field"><label>Senha</label><input value="${esc(a.pass)}" readonly></div><div class="btnrow"><button class="darkbtn" id="copyLoginNow">Copiar login</button><button class="darkbtn" id="copyPassNow">Copiar senha</button></div>`;$('#passwordModal').classList.add('show');$('#copyLoginNow').onclick=()=>copyText(a.login);$('#copyPassNow').onclick=()=>copyText(a.pass)}
+function editAccount(id){const a=state.accounts.find(x=>x.id===id);if(!a)return;$('#accEditId').value=a.id;$('#accPlatform').value=a.platform;$('#accLogin').value=a.login;$('#accPass').value=a.pass;$('#accUrl').value=a.url||'';$('#accProxy').value=a.proxyId||'';$('#accNote').value=a.note||'';$('#cancelAccountEdit').classList.remove('hidden');showView('contas')}
+function clearAccountForm(){$('#accEditId').value='';$('#accPlatform').value='';$('#accLogin').value='';$('#accPass').value='';$('#accUrl').value='';$('#accProxy').value='';$('#accNote').value='';$('#cancelAccountEdit').classList.add('hidden')}
+function editProxy(id){const p=state.proxies.find(x=>x.id===id);if(!p)return;$('#proxyEditId').value=p.id;$('#proxyName').value=p.name;$('#proxyHost').value=p.host;$('#proxyType').value=p.type;$('#cancelProxyEdit').classList.remove('hidden');showView('proxies')}
+function clearProxyForm(){$('#proxyEditId').value='';$('#proxyName').value='';$('#proxyHost').value='';$('#proxyType').value='HTTP';$('#cancelProxyEdit').classList.add('hidden')}
+$$('.tab').forEach(b=>b.onclick=()=>showView(b.dataset.view));$$('[data-view-jump]').forEach(b=>b.onclick=()=>showView(b.dataset.viewJump));
+$('#toggleMobileBtn').onclick=()=>{state.prefs.mobile=!state.prefs.mobile;save();toast('Modo mobile '+(state.prefs.mobile?'ativado':'desativado'))};
+$('#toggleNewWindowBtn').onclick=()=>{state.prefs.newWindow=!state.prefs.newWindow;save()};
+$('#savePrefs').onclick=()=>{state.prefs.delay=Math.max(0,+$('#delay').value||0);state.prefs.sessions=Math.max(1,+$('#sessionQty').value||1);state.prefs.proxyInventory=$('#proxyInventoryEnabled').checked;state.prefs.multiLinks=$('#multiLinks').checked;state.prefs.portrait=$('#portraitMode').checked;state.prefs.sessionManager=$('#sessionManager').checked;state.prefs.autoStart=$('#autoStart').checked;state.prefs.logActions=$('#logActions').checked;save();log('Preferências atualizadas');toast('Preferências salvas')};
+$('#addQuickLink').onclick=()=>{const u=normalizeUrl($('#quickLink').value);if(!u)return toast('Digite um link válido');state.links.push({id:uid(),name:new URL(u).hostname,url:u,active:true,selected:false});$('#quickLink').value='';log('Link rápido adicionado');save()};
+$('#saveAccount').onclick=()=>{const platform=$('#accPlatform').value.trim(),login=$('#accLogin').value.trim();if(!platform||!login)return toast('Preencha plataforma e login');const id=$('#accEditId').value;const data={platform,login,pass:$('#accPass').value,url:normalizeUrl($('#accUrl').value),proxyId:$('#accProxy').value,note:$('#accNote').value.trim(),active:true};if(id){const i=state.accounts.findIndex(x=>x.id===id);if(i>-1)state.accounts[i]={...state.accounts[i],...data};log(`Conta ${platform} atualizada`)}else{state.accounts.push({id:uid(),...data});log(`Conta ${platform} adicionada`)}clearAccountForm();save()};
+$('#cancelAccountEdit').onclick=clearAccountForm;
+$('#saveProxy').onclick=()=>{const name=$('#proxyName').value.trim(),host=$('#proxyHost').value.trim();if(!name||!host)return toast('Preencha nome e endereço');const id=$('#proxyEditId').value,data={name,host,type:$('#proxyType').value,active:true};if(id){const i=state.proxies.findIndex(x=>x.id===id);if(i>-1)state.proxies[i]={...state.proxies[i],...data};log(`Proxy ${name} atualizado`)}else{state.proxies.push({id:uid(),...data});log(`Proxy ${name} salvo`)}clearProxyForm();save()};
+$('#cancelProxyEdit').onclick=clearProxyForm;
+$('#addPix').onclick=()=>{const name=$('#pixName').value.trim(),key=$('#pixKey').value.trim();if(!name||!key)return toast('Preencha identificação e chave');state.pix.push({id:uid(),name,type:$('#pixType').value,key});$('#pixName').value='';$('#pixKey').value='';log(`Chave PIX ${name} adicionada`);save()};
+$('#addLink').onclick=()=>{const url=normalizeUrl($('#linkUrl').value),name=$('#linkName').value.trim();if(!url)return toast('URL inválida');state.links.push({id:uid(),name:name||new URL(url).hostname,url,active:true,selected:false});$('#linkName').value='';$('#linkUrl').value='';log(`Link ${name||new URL(url).hostname} adicionado`);save()};
+$('#openSelectedScreens').onclick=async()=>{const list=state.links.filter(x=>x.selected&&x.active!==false);if(!list.length)return toast('Selecione pelo menos um link');for(const l of list){openUrl(l.url,l.name);await new Promise(r=>setTimeout(r,(+state.prefs.delay||0)*1000))}};
+$('#openAllScreens').onclick=async()=>{const list=state.links.filter(x=>x.active!==false);if(!list.length)return toast('Nenhum link ativo');for(const l of list){openUrl(l.url,l.name);await new Promise(r=>setTimeout(r,(+state.prefs.delay||0)*1000))}};
+$('#closeOpenedScreens').onclick=()=>{openedWindows.forEach(w=>{try{w.close()}catch{}});openedWindows=[];log('Solicitado fechamento das janelas abertas pelo painel');toast('Janelas fechadas quando permitido pelo navegador')};
+$('#downloadLogs').onclick=()=>{const text=state.logs.map(x=>`[${x.at}] ${x.msg}`).join('\n');downloadBlob('ricocpa-logs.txt',text,'text/plain')};
+$('#clearLogs').onclick=()=>{if(confirm('Limpar todos os logs?')){state.logs=[];save()}};
+function downloadBlob(name,data,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('#exportData').onclick=()=>{downloadBlob('ricocpa-backup.json',JSON.stringify(state,null,2),'application/json');log('Backup exportado')};
+$('#importDataBtn').onclick=()=>$('#importFile').click();
+$('#importFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!data||typeof data!=='object')throw 0;state={...state,...data,prefs:{...state.prefs,...(data.prefs||{})}};save();log('Backup importado');toast('Backup importado')}catch{toast('Arquivo inválido')}e.target.value=''};
+$('#refreshPanel').onclick=()=>{renderAll();log('Painel atualizado');toast('Painel atualizado')};
+$('#clearAllData').onclick=()=>{if(confirm('Apagar TODOS os dados locais do RicoCPA neste navegador?')){localStorage.removeItem(KEY);location.reload()}};
+$('#closePasswordModal').onclick=()=>$('#passwordModal').classList.remove('show');$('#passwordModal').onclick=e=>{if(e.target.id==='passwordModal')$('#passwordModal').classList.remove('show')};
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('#installBtn').classList.remove('hidden')});
+$('#installBtn').onclick=async()=>{if(!deferredPrompt)return toast('Use o menu do navegador → Instalar RicoCPA');deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('#installBtn').classList.add('hidden')};
+window.addEventListener('appinstalled',()=>{log('RicoCPA instalado como aplicativo');toast('RicoCPA instalado no PC')});
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+load();renderAll();if(state.prefs.autoStart&&state.prefs.lastView)showView(state.prefs.lastView);log('RicoCPA 2.0 iniciado');
 </script>
 </body>
 </html>
