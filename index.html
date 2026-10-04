@@ -1304,9 +1304,21 @@ function renderAdminRows(){
 
 function hasPaidGamesAccess(){
   if(isRicoAdmin())return true;
-  if(!accessRow || accessRow.access_status!=="paid")return false;
-  if(!accessRow.paid_until)return true;
-  return Date.now()<new Date(accessRow.paid_until).getTime();
+  if(!accessRow)return false;
+
+  const now=Date.now();
+  const paidEnd=accessRow.paid_until ? new Date(accessRow.paid_until).getTime() : null;
+
+  // Compatibilidade com quem já comprou antes da aba de jogos existir:
+  // qualquer período pago ainda ativo libera os jogos automaticamente,
+  // mesmo que o status legado não esteja exatamente como "paid".
+  if(paidEnd && now<paidEnd)return true;
+
+  // Contas pagas antigas sem data final continuam liberadas.
+  if(accessRow.access_status==="paid" && !paidEnd)return true;
+
+  // Teste grátis de 24h e contas sem período pago ficam bloqueados.
+  return false;
 }
 function syncGamesAccessUI(){
   const unlocked=hasPaidGamesAccess();
