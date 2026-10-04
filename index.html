@@ -424,8 +424,8 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     <div class="card">
       <div class="games-catalog-head">
         <div class="games-catalog-title">
-          <h2>🎮 Jogos recentes — CPA Chinês</h2>
-          <div class="muted">Catálogo visual para consulta de jogos usados em operações de rollover.</div>
+          <h2>🎮 Jogos para Rollover — CPA Chinês</h2>
+          <div class="muted">Lista organizada por provedora, com nome e imagem de cada jogo.</div>
         </div>
         <div class="games-search-box">
           <span>⌕</span>
@@ -435,7 +435,10 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
       <div class="games-filter-row">
         <button class="game-filter-btn active" data-game-provider="Todos">Todos</button>
         <button class="game-filter-btn" data-game-provider="PG">PG</button>
+        <button class="game-filter-btn" data-game-provider="JDB">JDB</button>
+        <button class="game-filter-btn" data-game-provider="FC">FC</button>
         <button class="game-filter-btn" data-game-provider="PP">PP</button>
+        <button class="game-filter-btn" data-game-provider="WG">WG</button>
         <button class="game-filter-btn" data-game-provider="MG">MG</button>
       </div>
       <div class="games-catalog-grid" id="gamesCatalogGrid"></div>
@@ -1264,21 +1267,70 @@ function renderAdminRows(){
 }
 
 const GAME_CATALOG=[
-  {nome:"Grimms’ Bounty: Princess & the Frog",provedor:"PG",data:"28/09/2026",q:"Grimms Bounty Princess Frog PG Soft slot"},
-  {nome:"Lucky Mischief",provedor:"PG",data:"14/09/2026",q:"Lucky Mischief PG Soft slot"},
-  {nome:"Prosperity Lanterns",provedor:"PG",data:"01/09/2026",q:"Prosperity Lanterns PG Soft slot"},
-  {nome:"Farmstead Fortune",provedor:"PG",data:"03/08/2026",q:"Farmstead Fortune PG Soft slot"},
-  {nome:"Tornado Rampage",provedor:"PG",data:"20/07/2026",q:"Tornado Rampage PG Soft slot"},
-  {nome:"Forever Split Megaways™",provedor:"PP",data:"2026",q:"Forever Split Megaways Pragmatic Play slot"},
-  {nome:"Gates of Olympus 2500",provedor:"PP",data:"28/09/2026",q:"Gates of Olympus 2500 Pragmatic Play slot"},
-  {nome:"Big Bass Vegas 1000",provedor:"PP",data:"24/09/2026",q:"Big Bass Vegas 1000 Pragmatic Play slot"},
-  {nome:"Freya 1000",provedor:"PP",data:"2026",q:"Freya 1000 Pragmatic Play slot"},
-  {nome:"Coven Rising",provedor:"PP",data:"2026",q:"Coven Rising Pragmatic Play slot"},
-  {nome:"Cricket Century Kings",provedor:"MG",data:"30/09/2026",q:"Cricket Century Kings Microgaming slot"},
-  {nome:"Mahjong Wilds Link&Merge",provedor:"MG",data:"16/09/2026",q:"Mahjong Wilds Link Merge Microgaming slot"},
-  {nome:"Ne Zha: Triple Powers",provedor:"MG",data:"26/08/2026",q:"Ne Zha Triple Powers Microgaming slot"},
-  {nome:"Whale Rush",provedor:"MG",data:"26/08/2026",q:"Whale Rush Microgaming slot"},
-  {nome:"Clucking Rush",provedor:"MG",data:"12/08/2026",q:"Clucking Rush Microgaming slot"}
+  {nome:"Gem Saviour",provedor:"PG",q:"Gem Saviour PG Soft slot game"},
+  {nome:"Mr. Hallow-Win",provedor:"PG",q:"Mr Hallow-Win PG Soft slot game"},
+  {nome:"Butterfly Blossom",provedor:"PG",q:"Butterfly Blossom PG Soft slot game"},
+  {nome:"Journey to the Wealth",provedor:"PG",q:"Journey to the Wealth PG Soft slot game"},
+  {nome:"Santa Gift Rush",provedor:"PG",q:"Santa Gift Rush PG Soft slot game"},
+  {nome:"Fortune Gems",provedor:"PG",q:"Fortune Gems PG Soft slot game"},
+  {nome:"Plushie Frenzy",provedor:"PG",q:"Plushie Frenzy PG Soft slot game"},
+  {nome:"Hotpot",provedor:"PG",q:"Hotpot PG Soft slot game"},
+  {nome:"Chick Run",provedor:"PG",q:"Chick Run PG Soft slot game"},
+  {nome:"Dragon Hatch",provedor:"PG",q:"Dragon Hatch PG Soft slot game"},
+  {nome:"Medusa II",provedor:"PG",q:"Medusa II PG Soft slot game"},
+  {nome:"Jack the Giant Hunter",provedor:"PG",q:"Jack the Giant Hunter PG Soft slot game"},
+  {nome:"Pig Gold",provedor:"PG",q:"Pig Gold PG Soft slot game"},
+
+  {nome:"Coo Farm",provedor:"JDB",q:"Coo Farm JDB slot game"},
+  {nome:"Treasure Bowl",provedor:"JDB",q:"Treasure Bowl JDB slot game"},
+  {nome:"Fortune Treasure",provedor:"JDB",q:"Fortune Treasure JDB slot game"},
+  {nome:"Super Niubi",provedor:"JDB",q:"Super Niubi JDB slot game"},
+  {nome:"Triple King Kong",provedor:"JDB",q:"Triple King Kong JDB slot game"},
+  {nome:"Funky King Kong",provedor:"JDB",q:"Funky King Kong JDB slot game"},
+  {nome:"Street Fighter",provedor:"JDB",q:"Street Fighter JDB slot game"},
+  {nome:"Color Game",provedor:"JDB",q:"Color Game JDB slot game"},
+  {nome:"Poker King",provedor:"JDB",q:"Poker King JDB slot game"},
+  {nome:"Pop Pop Candy",provedor:"JDB",q:"Pop Pop Candy JDB slot game"},
+  {nome:"Bull Treasure",provedor:"JDB",q:"Bull Treasure JDB slot game"},
+
+  {nome:"Three Little Pigs",provedor:"FC",q:"Three Little Pigs FC slot game"},
+  {nome:"Treasure Raiders",provedor:"FC",q:"Treasure Raiders FC slot game"},
+  {nome:"Golden Panther",provedor:"FC",q:"Golden Panther FC slot game"},
+  {nome:"Rumo à Riqueza",provedor:"FC",q:"Rumo a Riqueza FC slot game"},
+  {nome:"Tower",provedor:"FC",q:"Tower FC slot game"},
+  {nome:"Vento do Oeste",provedor:"FC",q:"Vento do Oeste FC slot game"},
+  {nome:"Gladiatriz de Roma",provedor:"FC",q:"Gladiatriz de Roma FC slot game"},
+
+  {nome:"Triple Tigers",provedor:"PP",q:"Triple Tigers Pragmatic Play slot game"},
+  {nome:"888 GOLD",provedor:"PP",q:"888 GOLD Pragmatic Play slot game"},
+  {nome:"Gold Train",provedor:"PP",q:"Gold Train Pragmatic Play slot game"},
+  {nome:"Fire Strike",provedor:"PP",q:"Fire Strike Pragmatic Play slot game"},
+  {nome:"Juicy Fruits",provedor:"PP",q:"Juicy Fruits Pragmatic Play slot game"},
+  {nome:"888 Tiger",provedor:"PP",q:"888 Tiger Pragmatic Play slot game"},
+  {nome:"Crown of Fire",provedor:"PP",q:"Crown of Fire Pragmatic Play slot game"},
+  {nome:"Hot to Burn",provedor:"PP",q:"Hot to Burn Pragmatic Play slot game"},
+  {nome:"Hot Fire",provedor:"PP",q:"Hot Fire Pragmatic Play slot game"},
+  {nome:"Diamond Strike",provedor:"PP",q:"Diamond Strike Pragmatic Play slot game"},
+  {nome:"Fire Strike 2",provedor:"PP",q:"Fire Strike 2 Pragmatic Play slot game"},
+  {nome:"Joker Jewels",provedor:"PP",q:"Joker Jewels Pragmatic Play slot game"},
+  {nome:"Cash Bonanza",provedor:"PP",q:"Cash Bonanza Pragmatic Play slot game"},
+  {nome:"Hot Safari",provedor:"PP",q:"Hot Safari Pragmatic Play slot game"},
+  {nome:"7 Monkeys",provedor:"PP",q:"7 Monkeys Pragmatic Play slot game"},
+  {nome:"Aztec Bonanza",provedor:"PP",q:"Aztec Bonanza Pragmatic Play slot game"},
+  {nome:"Aztec Blaze",provedor:"PP",q:"Aztec Blaze Pragmatic Play slot game"},
+  {nome:"Phoenix Forge",provedor:"PP",q:"Phoenix Forge Pragmatic Play slot game"},
+  {nome:"Dragon Hero",provedor:"PP",q:"Dragon Hero Pragmatic Play slot game"},
+  {nome:"Diamonds Are Forever",provedor:"PP",q:"Diamonds Are Forever Pragmatic Play slot game"},
+  {nome:"Irish Charms",provedor:"PP",q:"Irish Charms Pragmatic Play slot game"},
+  {nome:"Wild Wild Riches",provedor:"PP",q:"Wild Wild Riches Pragmatic Play slot game"},
+  {nome:"Lucky Dragon Ball",provedor:"PP",q:"Lucky Dragon Ball Pragmatic Play slot game"},
+  {nome:"Piggy Bank",provedor:"PP",q:"Piggy Bank Pragmatic Play slot game"},
+
+  {nome:"Lucky Dog",provedor:"WG",q:"Lucky Dog WG slot game"},
+  {nome:"The Vault",provedor:"WG",q:"The Vault WG slot game"},
+  {nome:"Treasure Dragon",provedor:"WG",q:"Treasure Dragon WG slot game"},
+
+  {nome:"777 Super Big",provedor:"MG",q:"777 Super Big MG slot game"}
 ];
 let gameProviderFilter="Todos";
 function gameThumbUrl(q){
@@ -1298,7 +1350,7 @@ function renderGameCatalog(){
       </div>
       <div class="game-catalog-body">
         <div class="game-catalog-name">${esc(g.nome)}</div>
-        <div class="game-catalog-meta"><span>Slots</span><span>${g.provedor}</span><span>${g.data}</span></div>
+        <div class="game-catalog-meta"><span>${g.provedor}</span></div>
         <button class="game-copy-btn" data-copy-game="${encodeURIComponent(g.nome)}">📋 Copiar nome</button>
       </div>
     </article>`).join("") || '<div class="muted" style="grid-column:1/-1;padding:30px;text-align:center">Nenhum jogo encontrado.</div>';
