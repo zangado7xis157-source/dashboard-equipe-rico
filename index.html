@@ -153,6 +153,26 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 @media(max-width:900px){.games-catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.games-catalog-head{align-items:stretch;flex-direction:column}.games-search-box{min-width:0;width:auto}.games-catalog-grid{grid-template-columns:1fr}.game-catalog-cover{height:220px}}
 
+
+/* ===== Bloqueio premium dos jogos ===== */
+.games-access-card{position:relative;overflow:hidden;min-height:460px}
+.games-paid-content{transition:filter .2s ease,opacity .2s ease;transform:translateZ(0)}
+.games-paid-content.games-locked-blur{filter:blur(9px);opacity:.48;pointer-events:none;user-select:none}
+.games-lock-overlay{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,rgba(3,10,6,.22),rgba(3,10,6,.72))}
+.games-lock-overlay.hidden{display:none}
+.games-lock-box{width:min(520px,100%);text-align:center;background:rgba(5,15,9,.94);border:1px solid rgba(49,230,124,.34);border-radius:20px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.48);backdrop-filter:blur(8px)}
+.games-lock-icon{width:64px;height:64px;border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:30px;background:rgba(49,230,124,.12);border:1px solid rgba(49,230,124,.28)}
+.games-lock-box h2{margin:0 0 8px;font-size:24px}
+.games-lock-box p{margin:0 auto 18px;max-width:430px;color:#9bb2a3;line-height:1.55}
+.games-lock-note{font-size:12px;color:#7f9586;margin-top:12px;line-height:1.5}
+.games-lock-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.games-lock-pay,.games-lock-key{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:11px;text-decoration:none;font-weight:950}
+.games-lock-pay{background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a}
+.games-lock-key{border:1px solid var(--line);background:#0b1710;color:#eaffef}
+.games-tab-locked{position:relative}
+.games-tab-locked:after{content:" PREMIUM";font-size:9px;margin-left:5px;padding:2px 5px;border-radius:5px;background:rgba(255,255,255,.08);color:#9fb1a5}
+@media(max-width:620px){.games-lock-box{padding:22px 16px}.games-lock-actions{flex-direction:column}.games-lock-pay,.games-lock-key{width:100%}}
+
 </style>
 </head>
 <body>
@@ -421,7 +441,8 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 
 
   <section id="gamesView" class="hidden">
-    <div class="card">
+    <div class="card games-access-card">
+      <div id="gamesPaidContent" class="games-paid-content">
       <div class="games-catalog-head">
         <div class="games-catalog-title">
           <h2>🎮 Jogos para Rollover — CPA Chinês</h2>
@@ -443,6 +464,20 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
       </div>
       <div class="games-catalog-grid" id="gamesCatalogGrid"></div>
       <div class="games-note">A contabilização de aposta válida/rollover pode variar conforme a casa e a promoção. Confira sempre as regras da plataforma antes de operar.</div>
+      </div>
+
+      <div id="gamesLockedOverlay" class="games-lock-overlay hidden">
+        <div class="games-lock-box">
+          <div class="games-lock-icon">🔒</div>
+          <h2>Jogos exclusivos para assinantes</h2>
+          <p>Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada após o pagamento e ativação da key de 30 dias.</p>
+          <div class="games-lock-actions">
+            <a class="games-lock-pay games-payment-link" href="#" target="_blank" rel="noopener noreferrer">Liberar jogos — R$ 59,90</a>
+            <a class="games-lock-key" href="https://wa.me/5535910238277?text=ja%20paguei%20a%20mensalidade%20e%20quero%20minha%20key%20do%20dashboard" target="_blank" rel="noopener noreferrer">Já paguei / Pedir key</a>
+          </div>
+          <div class="games-lock-note">Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.</div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -559,11 +594,12 @@ function hideAll(){
 }
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
-function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden")}
+function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden");syncGamesAccessUI()}
 function applyPaymentUrl(){
   const ids=["paymentBtn"];
   ids.forEach(id=>{const el=$(id);if(el)el.href=PAYMENT_URL});
   document.querySelectorAll(".monthly-payment-btn").forEach(el=>el.href=PAYMENT_URL);
+  document.querySelectorAll(".games-payment-link").forEach(el=>el.href=PAYMENT_URL);
 }
 function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
 function showNetworkInvite(){
@@ -1266,6 +1302,26 @@ function renderAdminRows(){
     </tr>`).join("") || '<tr><td colspan="6" class="muted">Nenhuma conta encontrada.</td></tr>';
 }
 
+function hasPaidGamesAccess(){
+  if(isRicoAdmin())return true;
+  if(!accessRow || accessRow.access_status!=="paid")return false;
+  if(!accessRow.paid_until)return true;
+  return Date.now()<new Date(accessRow.paid_until).getTime();
+}
+function syncGamesAccessUI(){
+  const unlocked=hasPaidGamesAccess();
+  const content=$("gamesPaidContent");
+  const overlay=$("gamesLockedOverlay");
+  const tab=$("gamesTab");
+  if(content)content.classList.toggle("games-locked-blur",!unlocked);
+  if(overlay)overlay.classList.toggle("hidden",unlocked);
+  if(tab){
+    tab.classList.toggle("games-tab-locked",!unlocked);
+    tab.textContent=unlocked?"🎮 Jogos":"🔒 Jogos";
+  }
+  return unlocked;
+}
+
 const GAME_CATALOG=[
   {nome:"Gem Saviour",provedor:"PG",q:"Gem Saviour PG Soft slot game"},
   {nome:"Mr. Hallow-Win",provedor:"PG",q:"Mr Hallow-Win PG Soft slot game"},
@@ -1372,6 +1428,7 @@ function showGamesView(){
   $("achievementsTab").className="secondary";
   $("adminTab").className="secondary";
   renderGameCatalog();
+  syncGamesAccessUI();
 }
 
 function showAdminView(){
@@ -1500,6 +1557,7 @@ $("unlockBtn").onclick=async()=>{
   }
 
   accessRow=check;
+  syncGamesAccessUI();
   $("unlockMsg").textContent="Acesso liberado por 30 dias. Esta key já foi consumida e não poderá ser usada novamente.";
   setTimeout(async()=>{showApp();startCountdown();await loadData();},500);
 };
