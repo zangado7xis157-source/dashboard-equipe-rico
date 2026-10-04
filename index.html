@@ -126,6 +126,33 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .monthly-payment-btn:hover{filter:brightness(1.05)}
 @media(max-width:620px){.monthly-payment-banner{align-items:stretch}.monthly-payment-btn{width:100%}.monthly-payment-title{font-size:25px}}
 
+
+/* ===== Catálogo de jogos ===== */
+.games-catalog-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}
+.games-catalog-title h2{margin:0 0 5px;font-size:25px}.games-catalog-title .muted{line-height:1.5}
+.games-search-box{min-width:270px;display:flex;align-items:center;gap:9px;background:#08110c;border:1px solid var(--line);border-radius:13px;padding:0 13px}
+.games-search-box input{border:0!important;background:transparent!important;padding:13px 0!important;box-shadow:none!important}
+.games-filter-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+.game-filter-btn{border:1px solid var(--line);background:#07100b;color:#96ad9e;padding:9px 15px;border-radius:10px;font-weight:850;cursor:pointer}
+.game-filter-btn.active,.game-filter-btn:hover{background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;border-color:transparent}
+.games-catalog-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.game-catalog-card{overflow:hidden;background:linear-gradient(180deg,#0b1710,#07100b);border:1px solid var(--line);border-radius:16px;transition:.18s ease}
+.game-catalog-card:hover{transform:translateY(-2px);border-color:rgba(49,230,124,.5);box-shadow:0 14px 36px rgba(0,0,0,.22)}
+.game-catalog-cover{height:205px;background:#06100a;position:relative;overflow:hidden}
+.game-catalog-cover img{width:100%;height:100%;object-fit:cover;display:block;transition:.2s ease}
+.game-catalog-card:hover .game-catalog-cover img{transform:scale(1.025)}
+.game-catalog-cover:after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(transparent,rgba(3,9,5,.84));pointer-events:none}
+.game-provider-badge,.game-recent-badge{position:absolute;top:10px;z-index:2;font-size:10px;font-weight:950;border-radius:7px;padding:5px 8px}
+.game-provider-badge{left:10px;background:rgba(2,6,4,.88);border:1px solid rgba(255,255,255,.12);color:#e9fff0}
+.game-recent-badge{right:10px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a}
+.game-image-fallback{display:none;position:absolute;inset:0;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(circle at 50% 25%,rgba(49,230,124,.24),transparent 40%),linear-gradient(145deg,#10261a,#06100a);font-weight:950;color:#dffff0;font-size:20px}
+.game-catalog-body{padding:14px}.game-catalog-name{font-weight:950;font-size:15px;line-height:1.35;min-height:41px;margin-bottom:9px}
+.game-catalog-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}.game-catalog-meta span{font-size:10px;color:#9bb2a3;border:1px solid var(--line);background:#09130d;padding:5px 7px;border-radius:6px}
+.game-copy-btn{width:100%;border:1px solid var(--line);background:#0d1a12;color:#f2fff5;border-radius:10px;padding:10px 12px;font-weight:850;cursor:pointer}.game-copy-btn:hover{border-color:var(--green);color:var(--green)}
+.games-note{margin-top:14px;font-size:12px;color:#789083;line-height:1.5}
+@media(max-width:900px){.games-catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.games-catalog-head{align-items:stretch;flex-direction:column}.games-search-box{min-width:0;width:auto}.games-catalog-grid{grid-template-columns:1fr}.game-catalog-cover{height:220px}}
+
 </style>
 </head>
 <body>
@@ -196,6 +223,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
   <div class="app-tabs">
     <button class="primary" id="dashboardTab">Visão geral</button>
     <button class="secondary" id="profitTab">Lucros</button>
+    <button class="secondary" id="gamesTab">🎮 Jogos</button>
     <button class="secondary" id="achievementsTab">🏆 Conquistas</button>
     <button class="secondary hidden" id="adminTab">👑 Admin</button>
   </div>
@@ -390,6 +418,30 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
     </div>
   </section>
 
+
+
+  <section id="gamesView" class="hidden">
+    <div class="card">
+      <div class="games-catalog-head">
+        <div class="games-catalog-title">
+          <h2>🎮 Jogos recentes — CPA Chinês</h2>
+          <div class="muted">Catálogo visual para consulta de jogos usados em operações de rollover.</div>
+        </div>
+        <div class="games-search-box">
+          <span>⌕</span>
+          <input id="gameCatalogSearch" placeholder="Buscar jogo..." autocomplete="off">
+        </div>
+      </div>
+      <div class="games-filter-row">
+        <button class="game-filter-btn active" data-game-provider="Todos">Todos</button>
+        <button class="game-filter-btn" data-game-provider="PG">PG</button>
+        <button class="game-filter-btn" data-game-provider="PP">PP</button>
+        <button class="game-filter-btn" data-game-provider="MG">MG</button>
+      </div>
+      <div class="games-catalog-grid" id="gamesCatalogGrid"></div>
+      <div class="games-note">A contabilização de aposta válida/rollover pode variar conforme a casa e a promoção. Confira sempre as regras da plataforma antes de operar.</div>
+    </div>
+  </section>
 
   <section id="achievementsView" class="hidden">
     <div class="card">
@@ -1210,14 +1262,76 @@ function renderAdminRows(){
       <td><strong>${x.clientCount}</strong></td>
     </tr>`).join("") || '<tr><td colspan="6" class="muted">Nenhuma conta encontrada.</td></tr>';
 }
+
+const GAME_CATALOG=[
+  {nome:"Grimms’ Bounty: Princess & the Frog",provedor:"PG",data:"28/09/2026",q:"Grimms Bounty Princess Frog PG Soft slot"},
+  {nome:"Lucky Mischief",provedor:"PG",data:"14/09/2026",q:"Lucky Mischief PG Soft slot"},
+  {nome:"Prosperity Lanterns",provedor:"PG",data:"01/09/2026",q:"Prosperity Lanterns PG Soft slot"},
+  {nome:"Farmstead Fortune",provedor:"PG",data:"03/08/2026",q:"Farmstead Fortune PG Soft slot"},
+  {nome:"Tornado Rampage",provedor:"PG",data:"20/07/2026",q:"Tornado Rampage PG Soft slot"},
+  {nome:"Forever Split Megaways™",provedor:"PP",data:"2026",q:"Forever Split Megaways Pragmatic Play slot"},
+  {nome:"Gates of Olympus 2500",provedor:"PP",data:"28/09/2026",q:"Gates of Olympus 2500 Pragmatic Play slot"},
+  {nome:"Big Bass Vegas 1000",provedor:"PP",data:"24/09/2026",q:"Big Bass Vegas 1000 Pragmatic Play slot"},
+  {nome:"Freya 1000",provedor:"PP",data:"2026",q:"Freya 1000 Pragmatic Play slot"},
+  {nome:"Coven Rising",provedor:"PP",data:"2026",q:"Coven Rising Pragmatic Play slot"},
+  {nome:"Cricket Century Kings",provedor:"MG",data:"30/09/2026",q:"Cricket Century Kings Microgaming slot"},
+  {nome:"Mahjong Wilds Link&Merge",provedor:"MG",data:"16/09/2026",q:"Mahjong Wilds Link Merge Microgaming slot"},
+  {nome:"Ne Zha: Triple Powers",provedor:"MG",data:"26/08/2026",q:"Ne Zha Triple Powers Microgaming slot"},
+  {nome:"Whale Rush",provedor:"MG",data:"26/08/2026",q:"Whale Rush Microgaming slot"},
+  {nome:"Clucking Rush",provedor:"MG",data:"12/08/2026",q:"Clucking Rush Microgaming slot"}
+];
+let gameProviderFilter="Todos";
+function gameThumbUrl(q){
+  return "https://tse1.mm.bing.net/th?q="+encodeURIComponent(q)+"&w=700&h=430&c=7&rs=1&p=0";
+}
+function renderGameCatalog(){
+  const grid=$("gamesCatalogGrid"); if(!grid)return;
+  const search=($("gameCatalogSearch")?.value||"").trim().toLowerCase();
+  const list=GAME_CATALOG.filter(g=>(gameProviderFilter==="Todos"||g.provedor===gameProviderFilter)&&(!search||g.nome.toLowerCase().includes(search)||g.provedor.toLowerCase().includes(search)));
+  grid.innerHTML=list.map(g=>`
+    <article class="game-catalog-card">
+      <div class="game-catalog-cover">
+        <img src="${gameThumbUrl(g.q)}" alt="${esc(g.nome)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="game-image-fallback">${esc(g.nome)}</div>
+        <span class="game-provider-badge">${g.provedor}</span>
+        <span class="game-recent-badge">RECENTE</span>
+      </div>
+      <div class="game-catalog-body">
+        <div class="game-catalog-name">${esc(g.nome)}</div>
+        <div class="game-catalog-meta"><span>Slots</span><span>${g.provedor}</span><span>${g.data}</span></div>
+        <button class="game-copy-btn" data-copy-game="${encodeURIComponent(g.nome)}">📋 Copiar nome</button>
+      </div>
+    </article>`).join("") || '<div class="muted" style="grid-column:1/-1;padding:30px;text-align:center">Nenhum jogo encontrado.</div>';
+  grid.querySelectorAll("[data-copy-game]").forEach(btn=>btn.onclick=async()=>{
+    const name=decodeURIComponent(btn.dataset.copyGame||"");
+    try{await navigator.clipboard.writeText(name);const old=btn.textContent;btn.textContent="✓ Nome copiado";setTimeout(()=>btn.textContent=old,1200)}
+    catch{prompt("Copie o nome do jogo:",name)}
+  });
+}
+function showGamesView(){
+  document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
+  $("profitView").classList.add("hidden");
+  $("achievementsView").classList.add("hidden");
+  $("adminView").classList.add("hidden");
+  $("gamesView").classList.remove("hidden");
+  $("dashboardTab").className="secondary";
+  $("profitTab").className="secondary";
+  $("gamesTab").className="primary";
+  $("achievementsTab").className="secondary";
+  $("adminTab").className="secondary";
+  renderGameCatalog();
+}
+
 function showAdminView(){
   if(!isRicoAdmin())return showDashboardView();
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
   $("profitView").classList.add("hidden");
   $("achievementsView").classList.add("hidden");
+  $("gamesView").classList.add("hidden");
   $("adminView").classList.remove("hidden");
   $("dashboardTab").className="secondary";
   $("profitTab").className="secondary";
+  $("gamesTab").className="secondary";
   $("achievementsTab").className="secondary";
   $("adminTab").className="primary";
   loadAdminData();
@@ -1227,21 +1341,25 @@ function showDashboardView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.remove("hidden"));
   $("profitView").classList.add("hidden");
   $("achievementsView").classList.add("hidden");
+  $("gamesView").classList.add("hidden");
   $("adminView").classList.add("hidden");
   $("dashboardTab").className="primary";
   $("profitTab").className="secondary";
+  $("gamesTab").className="secondary";
   $("achievementsTab").className="secondary";
   $("adminTab").className="secondary";
 }
 function showProfitView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
   $("achievementsView").classList.add("hidden");
+  $("gamesView").classList.add("hidden");
   $("adminView").classList.add("hidden");
   $("profitView").classList.remove("hidden");
   $("profitOverview").classList.remove("hidden");
   $("monthDetailView").classList.add("hidden");
   $("dashboardTab").className="secondary";
   $("profitTab").className="primary";
+  $("gamesTab").className="secondary";
   $("achievementsTab").className="secondary";
   $("adminTab").className="secondary";
   renderProfitReport();
@@ -1249,16 +1367,21 @@ function showProfitView(){
 function showAchievementsView(){
   document.querySelectorAll(".dashboard-view").forEach(el=>el.classList.add("hidden"));
   $("profitView").classList.add("hidden");
+  $("gamesView").classList.add("hidden");
   $("adminView").classList.add("hidden");
   $("achievementsView").classList.remove("hidden");
   $("dashboardTab").className="secondary";
   $("profitTab").className="secondary";
+  $("gamesTab").className="secondary";
   $("achievementsTab").className="primary";
   $("adminTab").className="secondary";
   renderAchievements();
 }
 $("dashboardTab").onclick=showDashboardView;
 $("profitTab").onclick=showProfitView;
+$("gamesTab").onclick=showGamesView;
+$("gameCatalogSearch").oninput=renderGameCatalog;
+document.querySelectorAll("[data-game-provider]").forEach(btn=>btn.onclick=()=>{document.querySelectorAll("[data-game-provider]").forEach(x=>x.classList.remove("active"));btn.classList.add("active");gameProviderFilter=btn.dataset.gameProvider;renderGameCatalog()});
 $("achievementsTab").onclick=showAchievementsView;
 $("adminTab").onclick=showAdminView;
 $("adminRefreshBtn").onclick=loadAdminData;
