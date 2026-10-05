@@ -684,7 +684,30 @@ async function touchAccount(){
   }catch(_){}
 }
 
+function getTrialDeviceId(){
+  const key="rico_cpa_trial_device_id_v1";
+  let id=localStorage.getItem(key);
+  if(!id){
+    if(window.crypto&&typeof window.crypto.randomUUID==="function") id=window.crypto.randomUUID();
+    else id="dev-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+    localStorage.setItem(key,id);
+  }
+  return id;
+}
+
+async function syncTrialGuard(){
+  try{
+    const {data,error}=await sb.functions.invoke("claim-cpa-trial",{body:{device_id:getTrialDeviceId()}});
+    if(error){console.warn("trial guard",error);return null;}
+    return data||null;
+  }catch(err){
+    console.warn("trial guard",err);
+    return null;
+  }
+}
+
 async function checkAccess(){
+  await syncTrialGuard();
   const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();
   if(error){
     $("authMsg").textContent="Não foi possível verificar o acesso.";
@@ -702,6 +725,10 @@ async function checkAccess(){
       $("lockBadge").textContent="Assinatura vencida";
       $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
       $("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";
+    }else if(data.access_status==="blocked"){
+      $("lockBadge").textContent="Teste grátis indisponível";
+      $("lockTitle").textContent="Este dispositivo ou rede já utilizou o teste";
+      $("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.";
     }else{
       $("lockBadge").textContent="Acesso bloqueado";
       $("lockTitle").textContent="Ative seu Dashboard";
@@ -755,7 +782,7 @@ function startCountdown(){
 }
 
 $("loginTab").onclick=()=>{mode="login";$("loginTab").className="primary";$("signupTab").className="secondary";$("authSubmit").textContent="Entrar";$("authMsg").textContent=""}
-$("signupTab").onclick=()=>{mode="signup";$("signupTab").className="primary";$("loginTab").className="secondary";$("authSubmit").textContent="Criar conta";$("authMsg").textContent="Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar."}
+$("signupTab").onclick=()=>{mode="signup";$("signupTab").className="primary";$("loginTab").className="secondary";$("authSubmit").textContent="Criar conta";$("authMsg").textContent="O teste grátis de 24 horas é limitado a 1 por dispositivo/rede. Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar."}
 $("authSubmit").onclick=async()=>{
   const email=$("authEmail").value.trim().toLowerCase();
   const password=$("authPassword").value;
