@@ -1516,6 +1516,13 @@ function showGamesView(){
   $("achievementsView").classList.add("hidden");
   $("adminView").classList.add("hidden");
   $("gamesView").classList.remove("hidden");
+  window.scrollTo({top:0,left:0,behavior:"auto"});
+  requestAnimationFrame(()=>{
+    const overlay=$("gamesLockedOverlay");
+    if(overlay && !overlay.classList.contains("hidden")){
+      overlay.scrollIntoView({behavior:"auto",block:"center"});
+    }
+  });
   $("dashboardTab").className="secondary";
   $("profitTab").className="secondary";
   $("gamesTab").className="primary";
