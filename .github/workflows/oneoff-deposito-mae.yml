@@ -1,0 +1,110 @@
+name: One-off deposito conta mae update
+
+on:
+  push:
+    paths:
+      - '.github/workflows/oneoff-deposito-mae.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add deposito conta mae option
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace('.money{grid-template-columns:repeat(3,1fr)}','.money{grid-template-columns:repeat(4,1fr)}',1)
+
+          old='''        <div class="box"><h3 style="color:var(--yellow)">Depósito</h3><input id="depValue" placeholder="R$ 0,00"><button class="secondary" id="addDep">Adicionar</button></div>
+        <div class="box"><h3 style="color:var(--blue)">Saque</h3><input id="saqValue" placeholder="R$ 0,00"><button class="secondary" id="addSaq">Adicionar</button></div>'''
+          new='''        <div class="box"><h3 style="color:var(--yellow)">Depósito</h3><input id="depValue" placeholder="R$ 0,00"><button class="secondary" id="addDep">Adicionar</button></div>
+        <div class="box"><h3 style="color:var(--green)">Depósito Conta Mãe</h3><input id="maeDepValue" placeholder="R$ 0,00"><button class="secondary" id="addMaeDep">Adicionar</button></div>
+        <div class="box"><h3 style="color:var(--blue)">Saque</h3><input id="saqValue" placeholder="R$ 0,00"><button class="secondary" id="addSaq">Adicionar</button></div>'''
+          if old not in s: raise SystemExit('money cards anchor not found')
+          s=s.replace(old,new,1)
+
+          old='''    if(e.entry_type==="deposito")a.d+=v;
+    if(e.entry_type==="saque")a.s+=v;'''
+          new='''    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")a.d+=v;
+    if(e.entry_type==="saque")a.s+=v;'''
+          if old not in s: raise SystemExit('totals anchor not found')
+          s=s.replace(old,new,1)
+
+          old='''$("addDep").onclick=()=>addEntry("deposito","depValue");
+$("addSaq").onclick=()=>addEntry("saque","saqValue");'''
+          new='''$("addDep").onclick=()=>addEntry("deposito","depValue");
+$("addMaeDep").onclick=()=>addEntry("deposito_mae","maeDepValue");
+$("addSaq").onclick=()=>addEntry("saque","saqValue");'''
+          if old not in s: raise SystemExit('handlers anchor not found')
+          s=s.replace(old,new,1)
+
+          old='''  const deposits=list.filter(e=>e.entry_type==="deposito");
+  const withdrawals=list.filter(e=>e.entry_type==="saque");'''
+          new='''  const deposits=list.filter(e=>e.entry_type==="deposito");
+  const motherDeposits=list.filter(e=>e.entry_type==="deposito_mae");
+  const withdrawals=list.filter(e=>e.entry_type==="saque");'''
+          if old not in s: raise SystemExit('history filters anchor not found')
+          s=s.replace(old,new,1)
+
+          old='''  $("depositBody").innerHTML=deposits.length?deposits.map(row).join(""):empty("depósito");
+  $("withdrawBody").innerHTML=withdrawals.length?withdrawals.map(row).join(""):empty("saque");
+  $("chestBody").innerHTML=chests.length?chests.map(row).join(""):empty("baú");
+
+  $("historyDepTotal").textContent=fmt(deposits.reduce((s,e)=>s+Number(e.value||0),0));
+  $("historySaqTotal").textContent=fmt(withdrawals.reduce((s,e)=>s+Number(e.value||0),0));'''
+          new='''  $("depositBody").innerHTML=deposits.length?deposits.map(row).join(""):empty("depósito");
+  $("motherDepositBody").innerHTML=motherDeposits.length?motherDeposits.map(row).join(""):empty("depósito da conta mãe");
+  $("withdrawBody").innerHTML=withdrawals.length?withdrawals.map(row).join(""):empty("saque");
+  $("chestBody").innerHTML=chests.length?chests.map(row).join(""):empty("baú");
+
+  $("historyDepTotal").textContent=fmt(deposits.reduce((s,e)=>s+Number(e.value||0),0));
+  $("historyMotherDepTotal").textContent=fmt(motherDeposits.reduce((s,e)=>s+Number(e.value||0),0));
+  $("historySaqTotal").textContent=fmt(withdrawals.reduce((s,e)=>s+Number(e.value||0),0));'''
+          if old not in s: raise SystemExit('history render anchor not found')
+          s=s.replace(old,new,1)
+
+          old='''        </section>
+
+        <section class="history-panel history-withdraw">
+          <div class="history-panel-head">'''
+          mother='''        </section>
+
+        <section class="history-panel history-deposit">
+          <div class="history-panel-head">
+            <div><span class="history-icon">🏦</span><strong>Depósito Conta Mãe</strong></div>
+            <div class="history-total"><span>Total</span><strong id="historyMotherDepTotal">R$ 0,00</strong></div>
+          </div>
+          <div class="table-wrap">
+            <table class="history-table"><thead><tr><th>Data</th><th>Valor</th><th>Observação</th><th>Ação</th></tr></thead><tbody id="motherDepositBody"></tbody></table>
+          </div>
+        </section>
+
+        <section class="history-panel history-withdraw">
+          <div class="history-panel-head">'''
+          if old not in s: raise SystemExit('history panel anchor not found')
+          s=s.replace(old,mother,1)
+
+          old='''    if(e.entry_type==="deposito")byDay[day-1]-=v;
+    if(e.entry_type==="saque"||e.entry_type==="bau")byDay[day-1]+=v;'''
+          new='''    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")byDay[day-1]-=v;
+    if(e.entry_type==="saque"||e.entry_type==="bau")byDay[day-1]+=v;'''
+          if old not in s: raise SystemExit('month chart anchor not found')
+          s=s.replace(old,new,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Add Deposito Conta Mae option to dashboard'
+          git push
