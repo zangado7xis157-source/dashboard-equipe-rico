@@ -1,4 +1,4 @@
-name: One-off lifetime access UI
+name: One-off fix lifetime key button
 
 on:
   push:
@@ -9,51 +9,93 @@ permissions:
   contents: write
 
 jobs:
-  update-lifetime-ui:
+  fix-key-button:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Change monthly access to lifetime access
+      - name: Fix lifetime key activation button
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
-          replacements = [
-            ('Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 29,99 pelo botão abaixo.', 'Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, compre o acesso vitalício por R$ 29,99 pelo botão abaixo.'),
-            ('Pagar R$ 29,99 pelo Nubank pelo Nubank', 'Comprar acesso vitalício — R$ 29,99'),
-            ('Depois de concluir o pagamento ou renovação, clique em <strong style="color:var(--text)">Liberar acesso</strong>. Você será direcionado ao WhatsApp para solicitar sua key do dashboard.', 'Depois de concluir o pagamento, clique em <strong style="color:var(--text)">Liberar acesso</strong>. Você será direcionado ao WhatsApp para solicitar sua key vitalícia do dashboard.'),
-            ('Quando receber sua key, digite abaixo para continuar. Cada key funciona uma única vez e libera 30 dias.', 'Quando receber sua key, digite abaixo para continuar. Cada key funciona uma única vez e libera acesso vitalício.'),
-            ('MENSALIDADE DO DASHBOARD', 'ACESSO VITALÍCIO DO DASHBOARD'),
-            ('R$ 29,99 <span>/ mês</span>', 'R$ 29,99 <span>pagamento único</span>'),
-            ('Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.', 'Pague uma vez e tenha acesso permanente ao Dashboard de Lucro CPA — Equipe Rico.'),
-            ('Pagar R$ 29,99 pelo Nubank', 'Comprar acesso vitalício — R$ 29,99'),
-            ('Jogos exclusivos para assinantes', 'Jogos exclusivos do acesso vitalício'),
-            ('Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada após o pagamento e ativação da key de 30 dias.', 'Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada permanentemente após o pagamento e ativação da key vitalícia.'),
-            ('https://wa.me/5535910238277?text=ja%20paguei%20a%20mensalidade%20e%20quero%20minha%20key%20do%20dashboard', 'https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%2429%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard'),
-            ('Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.', 'Depois que a key vitalícia for validada, os jogos ficam liberados permanentemente.'),
-            ('$("lockBadge").textContent="Assinatura vencida";', '$("lockBadge").textContent="Acesso antigo encerrado";'),
-            ('$("lockTitle").textContent="Seus 30 dias de acesso terminaram";', '$("lockTitle").textContent="Seu acesso anterior terminou";'),
-            ('$("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";', '$("lockText").textContent="Agora o acesso é vitalício por R$ 29,99. Pague uma única vez e use sua key vitalícia.";'),
-            ('$("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.";', '$("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, compre o acesso vitalício por R$ 29,99.";'),
-            ('$("lockText").textContent="A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";', '$("lockText").textContent="O acesso vitalício custa R$ 29,99. Faça o pagamento uma única vez e depois use a key recebida para liberar o acesso permanente.";'),
-            ('$("trialStatus").textContent="Acesso pago ativo";', '$("trialStatus").textContent="Acesso vitalício ativo";'),
-            ('alreadyPaidBtn.href = "https://wa.me/5535910238277?text=gostaria%20de%20saber%20minha%20key%20do%20dashabord%0A";', 'alreadyPaidBtn.href = "https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%2429%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard";')
-          ]
+          p=Path('sw.js')
+          s=p.read_text(encoding='utf-8')
 
-          for name in ('index.html','dashboard-atualizado.html'):
-              p = Path(name)
-              if not p.exists():
-                  continue
-              s = p.read_text(encoding='utf-8')
-              for old,new in replacements:
-                  s = s.replace(old,new)
-              p.write_text(s,encoding='utf-8')
+          new_handler=r'''const GAMES_KEY_HANDLER=`
+function setupGamesLifetimeKey(){
+  const btn=$("gamesUnlockBtn");
+  if(!btn||btn.dataset.bound==="1")return;
+  btn.dataset.bound="1";
+  btn.onclick=async()=>{
+    const input=$("gamesUnlockCode");
+    const msg=$("gamesUnlockMsg");
+    const code=input?input.value.trim():"";
+    if(!code){if(msg)msg.textContent="Digite sua key vitalícia.";return;}
+
+    btn.disabled=true;
+    btn.textContent="Ativando...";
+    if(msg)msg.textContent="Verificando key...";
+
+    try{
+      if(!user){
+        if(msg)msg.textContent="Faça login novamente e tente de novo.";
+        return;
+      }
+
+      const hash=await sha256Hex(code);
+      const {data:result,error}=await sb.rpc("redeem_cpa_key",{p_key_hash:hash});
+      if(error)throw error;
+
+      if(!result||result.ok!==true){
+        if(msg)msg.textContent="Key inválida ou já utilizada.";
+        return;
+      }
+
+      const {data:check,error:checkError}=await sb.from("cpa_access")
+        .select("*")
+        .eq("user_id",user.id)
+        .single();
+      if(checkError)throw checkError;
+
+      accessRow=check;
+      syncGamesAccessUI();
+      if(input)input.value="";
+      if(msg)msg.textContent="Acesso vitalício liberado!";
+      setTimeout(async()=>{
+        try{await checkAccess();await loadData();}catch(_){}
+      },150);
+    }catch(err){
+      console.error("games lifetime key",err);
+      if(msg)msg.textContent="Não foi possível validar a key. Tente novamente.";
+    }finally{
+      btn.disabled=false;
+      btn.textContent="Ativar key";
+    }
+  };
+}
+requestAnimationFrame(setupGamesLifetimeKey);
+`;
+'''
+
+          ns,count=re.subn(r'const GAMES_KEY_HANDLER=`[\s\S]*?`;\n\nfunction patchDashboardHtml',new_handler+'\nfunction patchDashboardHtml',s,count=1)
+          if count!=1:
+              raise SystemExit('GAMES_KEY_HANDLER block not found')
+          s=ns
+
+          old="text=text.replace('</script>',GAMES_KEY_HANDLER+'\\n</script>');"
+          new="const scriptEnd=text.lastIndexOf('</script>');\n    if(scriptEnd!==-1)text=text.slice(0,scriptEnd)+GAMES_KEY_HANDLER+'\\n'+text.slice(scriptEnd);"
+          if old not in s:
+              raise SystemExit('script injection line not found')
+          s=s.replace(old,new,1)
+
+          p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit update
+      - name: Commit fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html dashboard-atualizado.html
+          git add sw.js
           git diff --cached --quiet && exit 0
-          git commit -m 'Switch Dashboard Equipe Rico to lifetime access'
+          git commit -m 'Fix lifetime key activation button'
           git push
