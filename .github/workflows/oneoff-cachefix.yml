@@ -1,101 +1,35 @@
-name: One-off fix lifetime key button
+name: Fix lifetime key button
 
 on:
   push:
     paths:
-      - '.github/workflows/oneoff-cachefix.yml'
+      - .github/workflows/oneoff-cachefix.yml
 
 permissions:
   contents: write
 
 jobs:
-  fix-key-button:
+  fix:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix lifetime key activation button
+      - name: Fix script injection position
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-
-          p=Path('sw.js')
-          s=p.read_text(encoding='utf-8')
-
-          new_handler=r'''const GAMES_KEY_HANDLER=`
-function setupGamesLifetimeKey(){
-  const btn=$("gamesUnlockBtn");
-  if(!btn||btn.dataset.bound==="1")return;
-  btn.dataset.bound="1";
-  btn.onclick=async()=>{
-    const input=$("gamesUnlockCode");
-    const msg=$("gamesUnlockMsg");
-    const code=input?input.value.trim():"";
-    if(!code){if(msg)msg.textContent="Digite sua key vitalícia.";return;}
-
-    btn.disabled=true;
-    btn.textContent="Ativando...";
-    if(msg)msg.textContent="Verificando key...";
-
-    try{
-      if(!user){
-        if(msg)msg.textContent="Faça login novamente e tente de novo.";
-        return;
-      }
-
-      const hash=await sha256Hex(code);
-      const {data:result,error}=await sb.rpc("redeem_cpa_key",{p_key_hash:hash});
-      if(error)throw error;
-
-      if(!result||result.ok!==true){
-        if(msg)msg.textContent="Key inválida ou já utilizada.";
-        return;
-      }
-
-      const {data:check,error:checkError}=await sb.from("cpa_access")
-        .select("*")
-        .eq("user_id",user.id)
-        .single();
-      if(checkError)throw checkError;
-
-      accessRow=check;
-      syncGamesAccessUI();
-      if(input)input.value="";
-      if(msg)msg.textContent="Acesso vitalício liberado!";
-      setTimeout(async()=>{
-        try{await checkAccess();await loadData();}catch(_){}
-      },150);
-    }catch(err){
-      console.error("games lifetime key",err);
-      if(msg)msg.textContent="Não foi possível validar a key. Tente novamente.";
-    }finally{
-      btn.disabled=false;
-      btn.textContent="Ativar key";
-    }
-  };
-}
-requestAnimationFrame(setupGamesLifetimeKey);
-`;
-'''
-
-          ns,count=re.subn(r'const GAMES_KEY_HANDLER=`[\s\S]*?`;\n\nfunction patchDashboardHtml',new_handler+'\nfunction patchDashboardHtml',s,count=1)
-          if count!=1:
-              raise SystemExit('GAMES_KEY_HANDLER block not found')
-          s=ns
-
-          old="text=text.replace('</script>',GAMES_KEY_HANDLER+'\\n</script>');"
-          new="const scriptEnd=text.lastIndexOf('</script>');\n    if(scriptEnd!==-1)text=text.slice(0,scriptEnd)+GAMES_KEY_HANDLER+'\\n'+text.slice(scriptEnd);"
+          p = Path('sw.js')
+          s = p.read_text(encoding='utf-8')
+          old = "text=text.replace('</script>',GAMES_KEY_HANDLER+'\\n</script>');"
+          new = "const scriptEnd=text.lastIndexOf('</script>');\n    if(scriptEnd!==-1)text=text.slice(0,scriptEnd)+GAMES_KEY_HANDLER+'\\n'+text.slice(scriptEnd);"
           if old not in s:
-              raise SystemExit('script injection line not found')
-          s=s.replace(old,new,1)
-
-          p.write_text(s,encoding='utf-8')
+              raise SystemExit('injection line not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
       - name: Commit fix
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add sw.js
           git diff --cached --quiet && exit 0
-          git commit -m 'Fix lifetime key activation button'
+          git commit -m "Fix lifetime key button"
           git push
