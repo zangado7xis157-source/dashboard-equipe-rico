@@ -1,4 +1,4 @@
-name: One-off cache fix
+name: One-off achievement peak
 
 on:
   push:
@@ -9,22 +9,48 @@ permissions:
   contents: write
 
 jobs:
-  publish-alternate:
+  update-achievements:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create fresh dashboard URL and cache hints
+      - name: Keep conquest progress from going down
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          marker = '<meta charset="UTF-8">'
-          cache = '<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n<meta http-equiv="Pragma" content="no-cache">\n<meta http-equiv="Expires" content="0">'
-          if 'http-equiv="Cache-Control"' not in s:
-              s = s.replace(marker, marker+'\n'+cache, 1)
-              p.write_text(s, encoding='utf-8')
-          Path('dashboard-atualizado.html').write_text(s, encoding='utf-8')
+          import re
+
+          replacement = '''function totalAchievementProfit(){
+  const sorted=[...entries].sort((a,b)=>{
+    const da=String(a.entry_date||"")+" "+String(a.created_at||"");
+    const db=String(b.entry_date||"")+" "+String(b.created_at||"");
+    return da.localeCompare(db);
+  });
+  let current=0,peak=0;
+  sorted.forEach(e=>{
+    const v=Number(e.value||0);
+    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")current-=v;
+    if(e.entry_type==="saque"||e.entry_type==="bau")current+=v;
+    if(current>peak)peak=current;
+  });
+  return Math.max(0,peak);
+}
+function renderAchievements(){'''
+
+          pattern = r'function totalAchievementProfit\(\)\{.*?\n\}\nfunction renderAchievements\(\)\{'
+          changed = False
+          for name in ('index.html','dashboard-atualizado.html'):
+              p=Path(name)
+              if not p.exists():
+                  continue
+              s=p.read_text(encoding='utf-8')
+              ns,count=re.subn(pattern,replacement,s,count=1,flags=re.S)
+              if count!=1:
+                  raise SystemExit(f'achievement function not found in {name}')
+              if ns!=s:
+                  p.write_text(ns,encoding='utf-8')
+                  changed=True
+          if not changed:
+              raise SystemExit('no files changed')
           PY
       - name: Commit update
         run: |
@@ -32,5 +58,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html dashboard-atualizado.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Add fresh dashboard URL and no-cache hints'
+          git commit -m 'Keep conquest progress from decreasing'
           git push
