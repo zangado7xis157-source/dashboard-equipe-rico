@@ -38,13 +38,79 @@ const LIFETIME_REPLACEMENTS=[
   ["$(\"lockText\").textContent=\"O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.\";","$(\"lockText\").textContent=\"O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, compre o acesso vitalício por R$ 29,99.\";"],
   ["$(\"lockText\").textContent=\"A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.\";","$(\"lockText\").textContent=\"O acesso vitalício custa R$ 29,99. Faça o pagamento uma única vez e depois use a key recebida para liberar o acesso permanente.\";"],
   ["$(\"trialStatus\").textContent=\"Acesso pago ativo\";","$(\"trialStatus\").textContent=\"Acesso vitalício ativo\";"],
-  ["alreadyPaidBtn.href = \"https://wa.me/5535910238277?text=gostaria%20de%20saber%20minha%20key%20do%20dashabord%0A\";","alreadyPaidBtn.href = \"https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%2429%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard\";"]
+  ["alreadyPaidBtn.href = \"https://wa.me/5535910238277?text=gostaria%20de%20saber%20minha%20key%20do%20dashabord%0A\";","alreadyPaidBtn.href = \"https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%2429%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard\";"],
+  ["Acesso liberado por 30 dias. Esta key já foi consumida e não poderá ser usada novamente.","Acesso vitalício liberado. Esta key já foi consumida e não poderá ser usada novamente."]
 ];
+
+const GAMES_KEY_NOTE_OLD=`<div class="games-lock-note">Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.</div>`;
+const GAMES_KEY_NOTE_NEW=`<div class="games-lifetime-key" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+  <div style="font-weight:900;margin-bottom:8px;color:#eaffef">Já recebeu sua key vitalícia?</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+    <input id="gamesUnlockCode" type="password" placeholder="Digite sua key vitalícia" autocomplete="off" style="flex:1;min-width:200px;max-width:320px;height:44px;border:1px solid var(--line);border-radius:10px;background:#07100b;color:#eaffef;padding:0 12px;outline:none">
+    <button id="gamesUnlockBtn" type="button" style="min-height:44px;padding:0 16px;border:0;border-radius:10px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:950;cursor:pointer">Ativar key</button>
+  </div>
+  <div id="gamesUnlockMsg" style="min-height:18px;margin-top:8px;font-size:12px;color:#9bb2a3"></div>
+</div>
+<div class="games-lock-note">Depois que a key vitalícia for validada, os jogos ficam liberados permanentemente.</div>`;
+
+const GAMES_KEY_HANDLER=`
+function setupGamesLifetimeKey(){
+  const btn=$("gamesUnlockBtn");
+  if(!btn||btn.dataset.bound==="1")return;
+  btn.dataset.bound="1";
+  btn.onclick=()=>{
+    const input=$("gamesUnlockCode");
+    const msg=$("gamesUnlockMsg");
+    const code=input?input.value.trim():"";
+    if(!code){if(msg)msg.textContent="Digite sua key vitalícia.";return;}
+    const mainInput=$("unlockCode");
+    const mainBtn=$("unlockBtn");
+    const mainMsg=$("unlockMsg");
+    if(!mainInput||!mainBtn){if(msg)msg.textContent="Não foi possível abrir a validação da key.";return;}
+    mainInput.value=code;
+    if(mainMsg)mainMsg.textContent="";
+    if(msg)msg.textContent="Verificando key...";
+    mainBtn.click();
+    let tries=0;
+    const timer=setInterval(()=>{
+      tries++;
+      if(hasPaidGamesAccess()){
+        clearInterval(timer);
+        if(msg)msg.textContent="Acesso vitalício liberado!";
+        syncGamesAccessUI();
+        return;
+      }
+      const hiddenText=mainMsg?mainMsg.textContent:"";
+      if(hiddenText && hiddenText!=="Verificando key..."){
+        clearInterval(timer);
+        if(msg)msg.textContent=hiddenText;
+        return;
+      }
+      if(tries>=24){
+        clearInterval(timer);
+        if(msg)msg.textContent="A validação está demorando. Tente novamente.";
+      }
+    },250);
+  };
+}
+setTimeout(setupGamesLifetimeKey,0);
+`;
 
 function patchDashboardHtml(text){
   if(text.includes(ACHIEVEMENT_OLD))text=text.replace(ACHIEVEMENT_OLD,ACHIEVEMENT_NEW);
   for(const [oldValue,newValue] of LIFETIME_REPLACEMENTS){
     if(text.includes(oldValue))text=text.split(oldValue).join(newValue);
+  }
+  if(!text.includes('id="gamesUnlockCode"')){
+    if(text.includes(GAMES_KEY_NOTE_OLD)){
+      text=text.replace(GAMES_KEY_NOTE_OLD,GAMES_KEY_NOTE_NEW);
+    }else{
+      const lifetimeNote=`<div class="games-lock-note">Depois que a key vitalícia for validada, os jogos ficam liberados permanentemente.</div>`;
+      if(text.includes(lifetimeNote))text=text.replace(lifetimeNote,GAMES_KEY_NOTE_NEW);
+    }
+  }
+  if(text.includes('id="gamesUnlockCode"') && !text.includes('function setupGamesLifetimeKey(){')){
+    text=text.replace('</script>',GAMES_KEY_HANDLER+'\n</script>');
   }
   return text;
 }
