@@ -1,0 +1,50 @@
+name: One-off trial guard client update
+
+on:
+  push:
+    paths:
+      - '.github/workflows/oneoff-trial-guard.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wire device and network trial guard into dashboard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          anchor = '''async function checkAccess(){\n  const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();'''
+          replacement = '''function getTrialDeviceId(){\n  const key="rico_cpa_trial_device_id_v1";\n  let id=localStorage.getItem(key);\n  if(!id){\n    if(window.crypto&&typeof window.crypto.randomUUID==="function") id=window.crypto.randomUUID();\n    else id="dev-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);\n    localStorage.setItem(key,id);\n  }\n  return id;\n}\n\nasync function syncTrialGuard(){\n  try{\n    const {data,error}=await sb.functions.invoke("claim-cpa-trial",{body:{device_id:getTrialDeviceId()}});\n    if(error){console.warn("trial guard",error);return null;}\n    return data||null;\n  }catch(err){\n    console.warn("trial guard",err);\n    return null;\n  }\n}\n\nasync function checkAccess(){\n  await syncTrialGuard();\n  const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();'''
+          if anchor not in s:
+              raise SystemExit('checkAccess anchor not found')
+          s = s.replace(anchor, replacement, 1)
+
+          old_block = '''  if(!active){\n    if(data.access_status==="paid"){\n      $("lockBadge").textContent="Assinatura vencida";\n      $("lockTitle").textContent="Seus 30 dias de acesso terminaram";\n      $("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";\n    }else{\n      $("lockBadge").textContent="Acesso bloqueado";\n      $("lockTitle").textContent="Ative seu Dashboard";\n      $("lockText").textContent="A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";\n    }\n    showPaywall();\n    return;\n  }'''
+          new_block = '''  if(!active){\n    if(data.access_status==="paid"){\n      $("lockBadge").textContent="Assinatura vencida";\n      $("lockTitle").textContent="Seus 30 dias de acesso terminaram";\n      $("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";\n    }else if(data.access_status==="blocked"){\n      $("lockBadge").textContent="Teste grátis indisponível";\n      $("lockTitle").textContent="Este dispositivo ou rede já utilizou o teste";\n      $("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.";\n    }else{\n      $("lockBadge").textContent="Acesso bloqueado";\n      $("lockTitle").textContent="Ative seu Dashboard";\n      $("lockText").textContent="A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";\n    }\n    showPaywall();\n    return;\n  }'''
+          if old_block not in s:
+              raise SystemExit('inactive access block not found')
+          s = s.replace(old_block, new_block, 1)
+
+          old_signup = '''$("signupTab").onclick=()=>{mode="signup";$("signupTab").className="primary";$("loginTab").className="secondary";$("authSubmit").textContent="Criar conta";$("authMsg").textContent="Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar."}'''
+          new_signup = '''$("signupTab").onclick=()=>{mode="signup";$("signupTab").className="primary";$("loginTab").className="secondary";$("authSubmit").textContent="Criar conta";$("authMsg").textContent="O teste grátis de 24 horas é limitado a 1 por dispositivo/rede. Se a confirmação por e-mail estiver ativa, confirme o e-mail antes de entrar."}'''
+          if old_signup in s:
+              s = s.replace(old_signup, new_signup, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Prevent repeated free trials by device and network'
+          git push
