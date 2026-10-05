@@ -110,7 +110,8 @@ function patchDashboardHtml(text){
     }
   }
   if(text.includes('id="gamesUnlockCode"') && !text.includes('function setupGamesLifetimeKey(){')){
-    text=text.replace('</script>',GAMES_KEY_HANDLER+'\n</script>');
+    const scriptEnd=text.lastIndexOf('</script>');
+    if(scriptEnd!==-1)text=text.slice(0,scriptEnd)+GAMES_KEY_HANDLER+'\n'+text.slice(scriptEnd);
   }
   return text;
 }
