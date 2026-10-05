@@ -58,42 +58,54 @@ function setupGamesLifetimeKey(){
   const btn=$("gamesUnlockBtn");
   if(!btn||btn.dataset.bound==="1")return;
   btn.dataset.bound="1";
-  btn.onclick=()=>{
+  btn.onclick=async()=>{
     const input=$("gamesUnlockCode");
     const msg=$("gamesUnlockMsg");
     const code=input?input.value.trim():"";
     if(!code){if(msg)msg.textContent="Digite sua key vitalícia.";return;}
-    const mainInput=$("unlockCode");
-    const mainBtn=$("unlockBtn");
-    const mainMsg=$("unlockMsg");
-    if(!mainInput||!mainBtn){if(msg)msg.textContent="Não foi possível abrir a validação da key.";return;}
-    mainInput.value=code;
-    if(mainMsg)mainMsg.textContent="";
+
+    btn.disabled=true;
+    btn.textContent="Ativando...";
     if(msg)msg.textContent="Verificando key...";
-    mainBtn.click();
-    let tries=0;
-    const timer=setInterval(()=>{
-      tries++;
-      if(hasPaidGamesAccess()){
-        clearInterval(timer);
-        if(msg)msg.textContent="Acesso vitalício liberado!";
-        syncGamesAccessUI();
+
+    try{
+      if(!user){
+        if(msg)msg.textContent="Faça login novamente e tente de novo.";
         return;
       }
-      const hiddenText=mainMsg?mainMsg.textContent:"";
-      if(hiddenText && hiddenText!=="Verificando key..."){
-        clearInterval(timer);
-        if(msg)msg.textContent=hiddenText;
+
+      const hash=await sha256Hex(code);
+      const {data:result,error}=await sb.rpc("redeem_cpa_key",{p_key_hash:hash});
+      if(error)throw error;
+
+      if(!result||result.ok!==true){
+        if(msg)msg.textContent="Key inválida ou já utilizada.";
         return;
       }
-      if(tries>=24){
-        clearInterval(timer);
-        if(msg)msg.textContent="A validação está demorando. Tente novamente.";
-      }
-    },250);
+
+      const {data:check,error:checkError}=await sb.from("cpa_access")
+        .select("*")
+        .eq("user_id",user.id)
+        .single();
+      if(checkError)throw checkError;
+
+      accessRow=check;
+      syncGamesAccessUI();
+      if(input)input.value="";
+      if(msg)msg.textContent="Acesso vitalício liberado!";
+      setTimeout(async()=>{
+        try{await checkAccess();await loadData();}catch(_){}
+      },150);
+    }catch(err){
+      console.error("games lifetime key",err);
+      if(msg)msg.textContent="Não foi possível validar a key. Tente novamente.";
+    }finally{
+      btn.disabled=false;
+      btn.textContent="Ativar key";
+    }
   };
 }
-setTimeout(setupGamesLifetimeKey,0);
+requestAnimationFrame(setupGamesLifetimeKey);
 `;
 
 function patchDashboardHtml(text){
