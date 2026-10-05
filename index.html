@@ -21,7 +21,7 @@ button{border:0;border-radius:12px;padding:11px 14px;font-weight:800;cursor:poin
 input,select{width:100%;padding:12px 13px;border:1px solid var(--line);background:#08140d;color:var(--text);border-radius:12px;outline:none}label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.field{margin-bottom:12px}
 .auth{max-width:430px;margin:8vh auto}.tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button{flex:1}.msg{margin-top:10px;font-size:13px;color:var(--muted)}
 .grid{display:grid;gap:14px}.metrics{grid-template-columns:repeat(5,1fr);margin-bottom:14px}.metric .label{color:var(--muted);font-size:12px}.metric .value{font-size:25px;font-weight:850;margin-top:6px}.layout{grid-template-columns:390px 1fr;align-items:start}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.money{grid-template-columns:repeat(3,1fr)}.box{padding:12px;border:1px solid var(--line);border-radius:14px;background:#08140d}.box h3{margin:0 0 8px;font-size:14px}.box button{width:100%;margin-top:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.money{grid-template-columns:repeat(4,1fr)}.box{padding:12px;border:1px solid var(--line);border-radius:14px;background:#08140d}.box h3{margin:0 0 8px;font-size:14px}.box button{width:100%;margin-top:8px}
 .client-stats{grid-template-columns:repeat(4,1fr);margin-bottom:12px}.mini{padding:12px;border:1px solid var(--line);border-radius:13px;background:#08140d}.mini span{color:var(--muted);font-size:11px;display:block}.mini strong{display:block;margin-top:4px}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:12px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}th{color:var(--muted);background:#0a1710}
 .clients-grid{grid-template-columns:repeat(3,1fr);margin-top:12px}.client-card{padding:14px;border:1px solid var(--line);border-radius:15px;background:#0a1710}.client-card h3{margin:0 0 6px}.vals{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.vals div{padding:8px;border:1px solid var(--line);border-radius:10px;background:#08140d}.vals span{display:block;color:var(--muted);font-size:10px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
@@ -334,6 +334,7 @@ body.side-menu-open{overflow:hidden}
 
       <div class="grid money" style="margin-top:12px">
         <div class="box"><h3 style="color:var(--yellow)">Depósito</h3><input id="depValue" placeholder="R$ 0,00"><button class="secondary" id="addDep">Adicionar</button></div>
+        <div class="box"><h3 style="color:var(--green)">Depósito Conta Mãe</h3><input id="maeDepValue" placeholder="R$ 0,00"><button class="secondary" id="addMaeDep">Adicionar</button></div>
         <div class="box"><h3 style="color:var(--blue)">Saque</h3><input id="saqValue" placeholder="R$ 0,00"><button class="secondary" id="addSaq">Adicionar</button></div>
         <div class="box"><h3 style="color:var(--purple)">Baú</h3><input id="bauValue" placeholder="R$ 0,00"><button class="secondary" id="addBau">Adicionar</button></div>
       </div>
@@ -636,7 +637,7 @@ const toCents=v=>Math.round(Number(v||0)*100);
 function totals(list){
   const c=list.reduce((a,e)=>{
     const v=toCents(e.value);
-    if(e.entry_type==="deposito")a.d+=v;
+    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")a.d+=v;
     if(e.entry_type==="saque")a.s+=v;
     if(e.entry_type==="bau")a.b+=v;
     return a;
@@ -869,6 +870,7 @@ async function addEntry(type,input){
   $(input).value="";$("entryObs").value="";await loadData();
 }
 $("addDep").onclick=()=>addEntry("deposito","depValue");
+$("addMaeDep").onclick=()=>addEntry("deposito_mae","maeDepValue");
 $("addSaq").onclick=()=>addEntry("saque","saqValue");
 $("addBau").onclick=()=>addEntry("bau","bauValue");
 $("clientSelect").onchange=()=>{selectedClientId=$("clientSelect").value||null;render()}
@@ -1103,7 +1105,7 @@ function renderHistory(){
   let list=c?entries.filter(e=>e.client_id===c.id):[];
   list=list.filter(e=>[e.entry_type,e.note,e.entry_date,e.value].join(" ").toLowerCase().includes(q));
 
-  const deposits=list.filter(e=>e.entry_type==="deposito");
+  const deposits=list.filter(e=>e.entry_type==="deposito"||e.entry_type==="deposito_mae");
   const withdrawals=list.filter(e=>e.entry_type==="saque");
   const chests=list.filter(e=>e.entry_type==="bau");
 
@@ -1190,7 +1192,7 @@ function renderMonthDetail(){
     const day=Number(String(e.entry_date).slice(8,10));
     const v=Number(e.value||0);
     if(!day||day>daysInMonth)return;
-    if(e.entry_type==="deposito")byDay[day-1]-=v;
+    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")byDay[day-1]-=v;
     if(e.entry_type==="saque"||e.entry_type==="bau")byDay[day-1]+=v;
   });
 
