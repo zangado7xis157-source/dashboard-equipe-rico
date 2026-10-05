@@ -17,38 +17,21 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
-
-          replacement = '''function totalAchievementProfit(){
-  const sorted=[...entries].sort((a,b)=>{
-    const da=String(a.entry_date||"")+" "+String(a.created_at||"");
-    const db=String(b.entry_date||"")+" "+String(b.created_at||"");
-    return da.localeCompare(db);
-  });
-  let current=0,peak=0;
-  sorted.forEach(e=>{
-    const v=Number(e.value||0);
-    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")current-=v;
-    if(e.entry_type==="saque"||e.entry_type==="bau")current+=v;
-    if(current>peak)peak=current;
-  });
-  return Math.max(0,peak);
-}
-function renderAchievements(){'''
-
+          import re, base64
+          replacement = base64.b64decode('ZnVuY3Rpb24gdG90YWxBY2hpZXZlbWVudFByb2ZpdCgpewogIGNvbnN0IHNvcnRlZD1bLi4uZW50cmllc10uc29ydCgoYSxiKT0+ewogICAgY29uc3QgZGE9U3RyaW5nKGEuZW50cnlfZGF0ZXx8IiIpKyIgIitTdHJpbmcoYS5jcmVhdGVkX2F0fHwiIik7CiAgICBjb25zdCBkYj1TdHJpbmcoYi5lbnRyeV9kYXRlfHwiIikrIiAiK1N0cmluZyhiLmNyZWF0ZWRfYXR8fCIiKTsKICAgIHJldHVybiBkYS5sb2NhbGVDb21wYXJlKGRiKTsKICB9KTsKICBsZXQgY3VycmVudD0wLHBlYWs9MDsKICBzb3J0ZWQuZm9yRWFjaChlPT57CiAgICBjb25zdCB2PU51bWJlcihlLnZhbHVlfHwwKTsKICAgIGlmKGUuZW50cnlfdHlwZT09PSJkZXBvc2l0byJ8fGUuZW50cnlfdHlwZT09PSJkZXBvc2l0b19tYWUiKWN1cnJlbnQtPXY7CiAgICBpZihlLmVudHJ5X3R5cGU9PT0ic2FxdWUifHxlLmVudHJ5X3R5cGU9PT0iYmF1IiljdXJyZW50Kz12OwogICAgaWYoY3VycmVudD5wZWFrKXBlYWs9Y3VycmVudDsKICB9KTsKICByZXR1cm4gTWF0aC5tYXgoMCxwZWFrKTsKfQpmdW5jdGlvbiByZW5kZXJBY2hpZXZlbWVudHMoKXs=').decode('utf-8')
           pattern = r'function totalAchievementProfit\(\)\{.*?\n\}\nfunction renderAchievements\(\)\{'
           changed = False
           for name in ('index.html','dashboard-atualizado.html'):
-              p=Path(name)
+              p = Path(name)
               if not p.exists():
                   continue
-              s=p.read_text(encoding='utf-8')
-              ns,count=re.subn(pattern,replacement,s,count=1,flags=re.S)
-              if count!=1:
+              s = p.read_text(encoding='utf-8')
+              ns, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
+              if count != 1:
                   raise SystemExit(f'achievement function not found in {name}')
-              if ns!=s:
-                  p.write_text(ns,encoding='utf-8')
-                  changed=True
+              if ns != s:
+                  p.write_text(ns, encoding='utf-8')
+                  changed = True
           if not changed:
               raise SystemExit('no files changed')
           PY
