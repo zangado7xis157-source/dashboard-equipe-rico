@@ -1,4 +1,4 @@
-name: One-off achievement peak
+name: One-off lifetime access UI
 
 on:
   push:
@@ -9,31 +9,45 @@ permissions:
   contents: write
 
 jobs:
-  update-achievements:
+  update-lifetime-ui:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Keep conquest progress from going down
+      - name: Change monthly access to lifetime access
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re, base64
-          replacement = base64.b64decode('ZnVuY3Rpb24gdG90YWxBY2hpZXZlbWVudFByb2ZpdCgpewogIGNvbnN0IHNvcnRlZD1bLi4uZW50cmllc10uc29ydCgoYSxiKT0+ewogICAgY29uc3QgZGE9U3RyaW5nKGEuZW50cnlfZGF0ZXx8IiIpKyIgIitTdHJpbmcoYS5jcmVhdGVkX2F0fHwiIik7CiAgICBjb25zdCBkYj1TdHJpbmcoYi5lbnRyeV9kYXRlfHwiIikrIiAiK1N0cmluZyhiLmNyZWF0ZWRfYXR8fCIiKTsKICAgIHJldHVybiBkYS5sb2NhbGVDb21wYXJlKGRiKTsKICB9KTsKICBsZXQgY3VycmVudD0wLHBlYWs9MDsKICBzb3J0ZWQuZm9yRWFjaChlPT57CiAgICBjb25zdCB2PU51bWJlcihlLnZhbHVlfHwwKTsKICAgIGlmKGUuZW50cnlfdHlwZT09PSJkZXBvc2l0byJ8fGUuZW50cnlfdHlwZT09PSJkZXBvc2l0b19tYWUiKWN1cnJlbnQtPXY7CiAgICBpZihlLmVudHJ5X3R5cGU9PT0ic2FxdWUifHxlLmVudHJ5X3R5cGU9PT0iYmF1IiljdXJyZW50Kz12OwogICAgaWYoY3VycmVudD5wZWFrKXBlYWs9Y3VycmVudDsKICB9KTsKICByZXR1cm4gTWF0aC5tYXgoMCxwZWFrKTsKfQpmdW5jdGlvbiByZW5kZXJBY2hpZXZlbWVudHMoKXs=').decode('utf-8')
-          pattern = r'function totalAchievementProfit\(\)\{.*?\n\}\nfunction renderAchievements\(\)\{'
-          changed = False
+
+          replacements = [
+            ('Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 29,99 pelo botão abaixo.', 'Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, compre o acesso vitalício por R$ 29,99 pelo botão abaixo.'),
+            ('Pagar R$ 29,99 pelo Nubank pelo Nubank', 'Comprar acesso vitalício — R$ 29,99'),
+            ('Depois de concluir o pagamento ou renovação, clique em <strong style="color:var(--text)">Liberar acesso</strong>. Você será direcionado ao WhatsApp para solicitar sua key do dashboard.', 'Depois de concluir o pagamento, clique em <strong style="color:var(--text)">Liberar acesso</strong>. Você será direcionado ao WhatsApp para solicitar sua key vitalícia do dashboard.'),
+            ('Quando receber sua key, digite abaixo para continuar. Cada key funciona uma única vez e libera 30 dias.', 'Quando receber sua key, digite abaixo para continuar. Cada key funciona uma única vez e libera acesso vitalício.'),
+            ('MENSALIDADE DO DASHBOARD', 'ACESSO VITALÍCIO DO DASHBOARD'),
+            ('R$ 29,99 <span>/ mês</span>', 'R$ 29,99 <span>pagamento único</span>'),
+            ('Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.', 'Pague uma vez e tenha acesso permanente ao Dashboard de Lucro CPA — Equipe Rico.'),
+            ('Pagar R$ 29,99 pelo Nubank', 'Comprar acesso vitalício — R$ 29,99'),
+            ('Jogos exclusivos para assinantes', 'Jogos exclusivos do acesso vitalício'),
+            ('Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada após o pagamento e ativação da key de 30 dias.', 'Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada permanentemente após o pagamento e ativação da key vitalícia.'),
+            ('https://wa.me/5535910238277?text=ja%20paguei%20a%20mensalidade%20e%20quero%20minha%20key%20do%20dashboard', 'https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%2429%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard'),
+            ('Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.', 'Depois que a key vitalícia for validada, os jogos ficam liberados permanentemente.'),
+            ('$("lockBadge").textContent="Assinatura vencida";', '$("lockBadge").textContent="Acesso antigo encerrado";'),
+            ('$("lockTitle").textContent="Seus 30 dias de acesso terminaram";', '$("lockTitle").textContent="Seu acesso anterior terminou";'),
+            ('$("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";', '$("lockText").textContent="Agora o acesso é vitalício por R$ 29,99. Pague uma única vez e use sua key vitalícia.";'),
+            ('$("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.";', '$("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, compre o acesso vitalício por R$ 29,99.";'),
+            ('$("lockText").textContent="A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";', '$("lockText").textContent="O acesso vitalício custa R$ 29,99. Faça o pagamento uma única vez e depois use a key recebida para liberar o acesso permanente.";'),
+            ('$("trialStatus").textContent="Acesso pago ativo";', '$("trialStatus").textContent="Acesso vitalício ativo";'),
+            ('alreadyPaidBtn.href = "https://wa.me/5535910238277?text=gostaria%20de%20saber%20minha%20key%20do%20dashabord%0A";', 'alreadyPaidBtn.href = "https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%2429%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard";')
+          ]
+
           for name in ('index.html','dashboard-atualizado.html'):
               p = Path(name)
               if not p.exists():
                   continue
               s = p.read_text(encoding='utf-8')
-              ns, count = re.subn(pattern, replacement, s, count=1, flags=re.S)
-              if count != 1:
-                  raise SystemExit(f'achievement function not found in {name}')
-              if ns != s:
-                  p.write_text(ns, encoding='utf-8')
-                  changed = True
-          if not changed:
-              raise SystemExit('no files changed')
+              for old,new in replacements:
+                  s = s.replace(old,new)
+              p.write_text(s,encoding='utf-8')
           PY
       - name: Commit update
         run: |
@@ -41,5 +55,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html dashboard-atualizado.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Keep conquest progress from decreasing'
+          git commit -m 'Switch Dashboard Equipe Rico to lifetime access'
           git push
