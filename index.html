@@ -220,9 +220,9 @@ body.side-menu-open{overflow:hidden}
 <section id="paywallScreen" class="paywall card hidden">
   <div class="trialbadge" id="lockBadge">Acesso encerrado</div>
   <h2 id="lockTitle">Seu período de acesso terminou</h2>
-  <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 59,90 pelo botão abaixo.</p>
+  <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 29,99 pelo botão abaixo.</p>
 
-  <a class="paybtn" id="paymentBtn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank pelo Nubank</a>
+  <a class="paybtn" id="paymentBtn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 29,99 pelo Nubank pelo Nubank</a>
 
   <div id="paidArea" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:none">
     <h3 style="margin:0 0 8px">Pagamento realizado?</h3>
@@ -260,10 +260,10 @@ body.side-menu-open{overflow:hidden}
   <div id="monthlyPaymentBanner" class="monthly-payment-banner hidden">
     <div class="monthly-payment-copy">
       <div class="monthly-payment-kicker">MENSALIDADE DO DASHBOARD</div>
-      <div class="monthly-payment-title">R$ 59,90 <span>/ mês</span></div>
+      <div class="monthly-payment-title">R$ 29,99 <span>/ mês</span></div>
       <div class="monthly-payment-sub">Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.</div>
     </div>
-    <a class="monthly-payment-btn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 59,90 pelo Nubank</a>
+    <a class="monthly-payment-btn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 29,99 pelo Nubank</a>
   </div>
 
   <div class="main-menu-bar">
@@ -536,7 +536,7 @@ body.side-menu-open{overflow:hidden}
           <h2>Jogos exclusivos para assinantes</h2>
           <p>Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada após o pagamento e ativação da key de 30 dias.</p>
           <div class="games-lock-actions">
-            <a class="games-lock-pay games-payment-link" href="#" target="_blank" rel="noopener noreferrer">Liberar jogos — R$ 59,90</a>
+            <a class="games-lock-pay games-payment-link" href="#" target="_blank" rel="noopener noreferrer">Liberar jogos — R$ 29,99</a>
             <a class="games-lock-key" href="https://wa.me/5535910238277?text=ja%20paguei%20a%20mensalidade%20e%20quero%20minha%20key%20do%20dashboard" target="_blank" rel="noopener noreferrer">Já paguei / Pedir key</a>
           </div>
           <div class="games-lock-note">Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.</div>
@@ -618,7 +618,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let mode="login", user=null, clients=[], entries=[], selectedClientId=null;
 const RICO_ADMIN_USER_ID="2f2e9b50-79c2-4bd2-9ffc-1ae3c7b3b63e";
-const PAYMENT_URL="https://nubank.com.br/cobrar/fvuvf2/6ac183ff-3511-4769-83bc-6fdd681350f8";
+const PAYMENT_URL="https://nubank.com.br/cobrar/fvuvf2/6ac2ed65-d57b-4b82-97f5-ee2baac469e4";
 let adminRows=[];
 const $=id=>document.getElementById(id);
 const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -701,11 +701,11 @@ async function checkAccess(){
     if(data.access_status==="paid"){
       $("lockBadge").textContent="Assinatura vencida";
       $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
-      $("lockText").textContent="Renove sua mensalidade de R$ 59,90 e use uma nova key para liberar mais 30 dias.";
+      $("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";
     }else{
       $("lockBadge").textContent="Acesso bloqueado";
       $("lockTitle").textContent="Ative seu Dashboard";
-      $("lockText").textContent="A mensalidade é R$ 59,90. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";
+      $("lockText").textContent="A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";
     }
     showPaywall();
     return;
