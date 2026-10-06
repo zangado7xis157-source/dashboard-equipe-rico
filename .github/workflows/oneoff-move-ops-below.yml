@@ -1,5 +1,5 @@
 name: One-off move operations below dashboard
-on:
+"on":
   push:
     paths:
       - '.github/workflows/oneoff-move-ops-below.yml'
