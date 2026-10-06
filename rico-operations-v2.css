@@ -21,3 +21,59 @@ body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-active-name{color:#eef8ff!i
 .rico-ops-table-wrap{overflow:auto;background:#020813}.rico-ops-table{width:100%;min-width:920px;border-collapse:separate;border-spacing:0;color:#f4f8ff}.rico-ops-table thead th{padding:13px 15px;background:#03101c;border-bottom:1px solid rgba(32,141,255,.4);color:#8ca6c5;font-size:10px;font-weight:950;letter-spacing:.07em;text-transform:uppercase;text-align:left;white-space:nowrap}.rico-ops-table thead th:nth-child(2){color:#32efa8}.rico-ops-table thead th:nth-child(3){color:#ff6077}.rico-ops-table thead th:nth-child(4){color:#ffd42b}.rico-ops-table thead th:nth-child(5){color:#b778ff}.rico-ops-table thead th:nth-child(6){color:#20b8ff}.rico-ops-table thead th:last-child{text-align:center}.rico-ops-table tbody td{padding:11px 15px;border-bottom:1px solid rgba(57,89,123,.35);background:linear-gradient(90deg,rgba(3,12,24,.97),rgba(2,9,18,.98));vertical-align:middle;font-size:12px}.rico-ops-table tbody tr:last-child td{border-bottom:0}.rico-ops-table tbody tr{transition:.16s ease}.rico-ops-table tbody tr:hover td{background:linear-gradient(90deg,rgba(7,26,48,.98),rgba(3,14,27,.99))}
 .rico-screen-cell{min-width:170px}.rico-screen-name{display:block;color:#f4f8ff;font-size:13px;font-weight:950;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rico-screen-meta{display:block;margin-top:4px;color:#56708d;font-size:9px;font-weight:700}.rico-screen-link{color:#4caaff;text-decoration:none}.rico-screen-link:hover{text-decoration:underline}.rico-money-box{display:flex;align-items:center;min-height:42px;min-width:126px;padding:0 12px;border:1px solid rgba(57,130,181,.3);border-radius:10px;background:linear-gradient(180deg,#061526,#04101e);font-weight:950;font-size:13px;white-space:nowrap}.rico-money-box.deposit{color:var(--rico-green)}.rico-money-box.withdraw{color:var(--rico-red)}.rico-money-box.chest{color:var(--rico-yellow)}.rico-money-box.zero{color:#7e93ad;font-weight:800}.rico-cycle-badge{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 11px;border:1px solid rgba(172,91,255,.35);border-radius:10px;background:linear-gradient(180deg,rgba(48,20,81,.6),rgba(13,10,28,.9));color:#c391ff;font-weight:950;white-space:nowrap}.rico-cycle-badge i{width:7px;height:7px;border-radius:50%;background:var(--rico-purple);box-shadow:0 0 10px rgba(178,108,255,.65)}.rico-profit{font-size:15px;font-weight:950;color:var(--rico-green);white-space:nowrap}.rico-profit.negative{color:var(--rico-red)}.rico-profit.neutral{color:#8da1b9}.rico-actions{display:flex;align-items:center;justify-content:center;gap:8px;min-width:92px}.rico-action-btn{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;cursor:pointer;font-size:15px;transition:.17s ease}.rico-action-open{border:1px solid rgba(19,140,255,.65);background:rgba(0,104,230,.12);color:#29a2ff}.rico-action-open:hover{background:rgba(0,120,255,.25);color:#fff}.rico-action-delete{border:1px solid rgba(255,80,105,.38);background:rgba(255,55,82,.08);color:#ff657a}.rico-action-delete:hover{background:rgba(255,55,82,.18);color:#fff}.rico-ops-empty{padding:38px 20px!important;text-align:center!important;color:#7388a1!important;font-weight:800}.rico-ops-empty strong{display:block;color:#cbd8e7;font-size:14px;margin-bottom:5px}.rico-ops-foot{display:flex;justify-content:space-between;gap:12px;padding:10px 15px;border-top:1px solid rgba(33,122,223,.22);background:#020914;color:#5f7897;font-size:10px;flex-wrap:wrap}.rico-ops-foot strong{color:#9db4cf}
 @media(max-width:780px){body.rico-ops-v2-ready #ricoCycleTabsBar{border-radius:14px 14px 0 0!important}#ricoOpsV2{border-radius:0 0 14px 14px;margin-bottom:12px}.rico-ops-head{padding:15px}.rico-ops-title{font-size:20px}.rico-ops-logo{width:45px;height:45px;border-radius:12px}.rico-ops-head-right{width:100%;margin-left:0}.rico-cycle-profit-card{flex:1;min-width:150px}.rico-new-screen{flex:1}.rico-ops-table{min-width:820px}.rico-ops-table thead th,.rico-ops-table tbody td{padding-left:11px;padding-right:11px}.rico-money-box{min-width:105px}.rico-screen-cell{min-width:145px}}
+
+/* RICO_LAYOUT_FIT_20261006 */
+body.rico-ops-v2-ready .dashboard-view.layout{
+  grid-template-columns:minmax(300px,340px) minmax(0,1fr)!important;
+  align-items:start!important;
+}
+body.rico-ops-v2-ready .dashboard-view.layout>aside,
+body.rico-ops-v2-ready .dashboard-view.layout>main{min-width:0!important}
+body.rico-ops-v2-ready .dashboard-view.layout>main.card{overflow:hidden!important}
+body.rico-ops-v2-ready .dashboard-view.layout>main.card>.top{gap:10px!important}
+body.rico-ops-v2-ready .dashboard-view.layout .cycle-tools{gap:7px!important;max-width:100%!important}
+body.rico-ops-v2-ready .dashboard-view.layout .cycle-tools button{padding:10px 12px!important;font-size:12px!important;white-space:nowrap}
+body.rico-ops-v2-ready #ricoCycleTabsBar,
+body.rico-ops-v2-ready #ricoOpsV2{width:100%!important;max-width:100%!important;min-width:0!important}
+body.rico-ops-v2-ready #ricoOpsV2{margin-bottom:16px!important}
+body.rico-ops-v2-ready .rico-ops-head{padding:15px 16px!important;gap:12px!important}
+body.rico-ops-v2-ready .rico-ops-title-wrap{min-width:0!important;flex:1 1 250px!important;gap:11px!important}
+body.rico-ops-v2-ready .rico-ops-logo{width:46px!important;height:46px!important;border-radius:12px!important;font-size:21px!important;flex:0 0 auto}
+body.rico-ops-v2-ready .rico-ops-title{font-size:21px!important;line-height:1.1!important}
+body.rico-ops-v2-ready .rico-ops-sub{font-size:11px!important;margin-top:4px!important}
+body.rico-ops-v2-ready .rico-ops-head-right{min-width:0!important;gap:9px!important;flex:0 1 auto!important}
+body.rico-ops-v2-ready .rico-cycle-profit-card{min-width:160px!important;padding:9px 12px!important;border-radius:12px!important;gap:9px!important}
+body.rico-ops-v2-ready .rico-cycle-profit-icon{width:36px!important;height:36px!important;border-radius:9px!important;font-size:18px!important}
+body.rico-ops-v2-ready .rico-cycle-profit-card strong{font-size:20px!important}
+body.rico-ops-v2-ready .rico-new-screen{min-height:42px!important;padding:0 13px!important;font-size:12px!important;border-radius:11px!important}
+body.rico-ops-v2-ready .rico-ops-table-wrap{width:100%!important;max-width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain}
+body.rico-ops-v2-ready .rico-ops-table{width:100%!important;min-width:760px!important}
+body.rico-ops-v2-ready .rico-ops-table thead th,
+body.rico-ops-v2-ready .rico-ops-table tbody td{padding:10px 10px!important}
+body.rico-ops-v2-ready .rico-screen-cell{min-width:130px!important}
+body.rico-ops-v2-ready .rico-screen-name{max-width:160px!important;font-size:12px!important}
+body.rico-ops-v2-ready .rico-money-box{min-width:96px!important;min-height:38px!important;padding:0 9px!important;font-size:12px!important}
+body.rico-ops-v2-ready .rico-cycle-badge{min-height:34px!important;padding:0 9px!important;font-size:11px!important}
+body.rico-ops-v2-ready .rico-profit{font-size:13px!important}
+body.rico-ops-v2-ready .rico-actions{min-width:76px!important;gap:6px!important}
+body.rico-ops-v2-ready .rico-action-btn{width:34px!important;height:34px!important;border-radius:9px!important;font-size:13px!important;padding:0!important}
+body.rico-ops-v2-ready .rico-ops-foot{padding:9px 11px!important;font-size:9px!important}
+@media(max-width:1180px) and (min-width:1001px){
+  body.rico-ops-v2-ready .dashboard-view.layout{grid-template-columns:minmax(285px,310px) minmax(0,1fr)!important}
+  body.rico-ops-v2-ready .rico-ops-table{min-width:720px!important}
+  body.rico-ops-v2-ready .rico-cycle-profit-card{min-width:145px!important}
+}
+@media(max-width:1000px){
+  body.rico-ops-v2-ready .dashboard-view.layout{grid-template-columns:minmax(0,1fr)!important}
+  body.rico-ops-v2-ready .dashboard-view.layout>main.card{overflow:hidden!important}
+}
+@media(max-width:780px){
+  body.rico-ops-v2-ready .rico-ops-head{padding:13px!important}
+  body.rico-ops-v2-ready .rico-ops-title{font-size:19px!important}
+  body.rico-ops-v2-ready .rico-ops-head-right{width:100%!important;margin-left:0!important}
+  body.rico-ops-v2-ready .rico-cycle-profit-card{flex:1 1 155px!important}
+  body.rico-ops-v2-ready .rico-new-screen{flex:1 1 120px!important}
+  body.rico-ops-v2-ready .rico-ops-table{min-width:690px!important}
+  body.rico-ops-v2-ready .rico-money-box{min-width:88px!important}
+  body.rico-ops-v2-ready .rico-screen-cell{min-width:120px!important}
+}
