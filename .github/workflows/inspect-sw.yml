@@ -1,0 +1,25 @@
+name: Inspect SW payload
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect-sw.yml'
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode identifiers
+        run: |
+          python - <<'PY'
+          import re,base64,gzip,json
+          s=open('sw.js',encoding='utf-8').read()
+          p=re.search(r'const P="([A-Za-z0-9+/=]+)"',s).group(1)
+          d=json.loads(gzip.decompress(base64.b64decode(p)))
+          print('KEYS', list(d))
+          print('--- JS cycle/rico lines ---')
+          for line in d.get('js','').splitlines():
+              if 'cycle' in line.lower() or 'rico' in line.lower(): print(line[:1000])
+          print('--- CSS selectors with cycle/rico ---')
+          for line in d.get('css','').splitlines():
+              if 'cycle' in line.lower() or 'rico' in line.lower(): print(line[:1000])
+          PY
