@@ -1,177 +1,49 @@
-const ACHIEVEMENT_OLD=`function totalAchievementProfit(){
-  const t=totals(entries);
-  return Math.max(0,t.s+t.b-t.d);
-}`;
-
-const ACHIEVEMENT_NEW=`function totalAchievementProfit(){
-  const sorted=[...entries].sort((a,b)=>{
-    const da=String(a.entry_date||"")+" "+String(a.created_at||"");
-    const db=String(b.entry_date||"")+" "+String(b.created_at||"");
-    return da.localeCompare(db);
-  });
-  let current=0,peak=0;
-  sorted.forEach(e=>{
-    const v=Number(e.value||0);
-    if(e.entry_type==="deposito"||e.entry_type==="deposito_mae")current-=v;
-    if(e.entry_type==="saque"||e.entry_type==="bau")current+=v;
-    if(current>peak)peak=current;
-  });
-  return Math.max(0,peak);
-}`;
-
-const REPLACEMENTS=[
-  ["Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 29,99 pelo botão abaixo.","Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, compre o acesso vitalício por R$ 31,99 pelo Pix automático abaixo."],
-  ["Pagar R$ 29,99 pelo Nubank pelo Nubank","Gerar Pix — R$ 31,99"],
-  ["MENSALIDADE DO DASHBOARD","ACESSO VITALÍCIO DO DASHBOARD"],
-  ["R$ 29,99 <span>/ mês</span>","R$ 31,99 <span>pagamento único</span>"],
-  ["Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.","Pague uma vez por Pix e tenha acesso permanente ao Dashboard de Lucro CPA — Equipe Rico."],
-  ["Pagar R$ 29,99 pelo Nubank","Gerar Pix — R$ 31,99"],
-  ["Jogos exclusivos para assinantes","Jogos exclusivos do acesso vitalício"],
-  ["Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada após o pagamento e ativação da key de 30 dias.","Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada automaticamente após a confirmação do Pix."],
-  ["Liberar jogos — R$ 29,99","Liberar jogos — R$ 31,99"],
-  ["Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.","Após a confirmação do Pix, os jogos são liberados automaticamente e o acesso fica vitalício."],
-  ["$(\"lockBadge\").textContent=\"Assinatura vencida\";","$(\"lockBadge\").textContent=\"Acesso antigo encerrado\";"],
-  ["$(\"lockTitle\").textContent=\"Seus 30 dias de acesso terminaram\";","$(\"lockTitle\").textContent=\"Seu acesso anterior terminou\";"],
-  ["$(\"lockText\").textContent=\"Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.\";","$(\"lockText\").textContent=\"Agora o acesso é vitalício por R$ 31,99. Gere o Pix e aguarde a confirmação automática.\";"],
-  ["$(\"lockText\").textContent=\"O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.\";","$(\"lockText\").textContent=\"O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, compre o acesso vitalício por R$ 31,99.\";"],
-  ["$(\"lockText\").textContent=\"A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.\";","$(\"lockText\").textContent=\"O acesso vitalício custa R$ 31,99. Gere o Pix e aguarde a confirmação automática do pagamento.\";"],
-  ["$(\"trialStatus\").textContent=\"Acesso pago ativo\";","$(\"trialStatus\").textContent=\"Acesso vitalício ativo\";"]
-];
-
-const NO_KEY_STYLE='<style id="ricoNoKeyUi">#paidArea,.games-lock-key,.games-lifetime-key{display:none!important}</style>';
-
-const ASAAS_HANDLER=`
-let asaasPaymentPoll=null;
-function ensureAsaasPaymentModal(){
-  let modal=$("asaasPixModal");
-  if(modal)return modal;
-  modal=document.createElement("div");
-  modal.id="asaasPixModal";
-  modal.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:18px;overflow:auto";
-  modal.innerHTML='<div style="width:min(520px,100%);background:#07110c;border:1px solid rgba(49,230,124,.34);border-radius:20px;padding:22px;color:#effff4;position:relative">'+
-    '<button id="asaasPixClose" type="button" style="position:absolute;right:12px;top:10px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#0d1a12;color:#eaffef;font-size:20px">×</button>'+
-    '<div style="font-size:12px;font-weight:900;color:var(--green);margin-bottom:6px">ACESSO VITALÍCIO</div>'+
-    '<h2 style="margin:0 42px 6px 0">Pix automático — R$ 31,99</h2>'+
-    '<p style="margin:0 0 16px;color:#9bb2a3;line-height:1.5">Preencha os dados para gerar o Pix. Assim que o Asaas confirmar o pagamento, o acesso será liberado automaticamente.</p>'+
-    '<div id="asaasPixForm">'+
-      '<label style="display:block;font-size:12px;font-weight:800;margin:10px 0 6px">Nome completo</label>'+
-      '<input id="asaasBuyerName" autocomplete="name" placeholder="Seu nome completo" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:#06100a;color:#effff4;padding:0 12px">'+
-      '<label style="display:block;font-size:12px;font-weight:800;margin:12px 0 6px">CPF ou CNPJ</label>'+
-      '<input id="asaasBuyerCpf" inputmode="numeric" placeholder="Digite somente os números" style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:#06100a;color:#effff4;padding:0 12px">'+
-      '<button id="asaasGeneratePix" type="button" style="width:100%;min-height:46px;margin-top:14px;border:0;border-radius:11px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:950">Gerar Pix de R$ 31,99</button>'+
-    '</div>'+
-    '<div id="asaasPixResult" style="display:none;text-align:center">'+
-      '<img id="asaasPixQr" alt="QR Code Pix" style="width:220px;max-width:78vw;background:#fff;border-radius:14px;padding:10px;margin:4px auto 12px;display:none">'+
-      '<div style="font-size:12px;color:#9bb2a3;margin-bottom:6px">Pix copia e cola</div>'+
-      '<textarea id="asaasPixPayload" readonly style="width:100%;height:88px;border:1px solid var(--line);border-radius:10px;background:#06100a;color:#effff4;padding:10px"></textarea>'+
-      '<button id="asaasCopyPix" type="button" style="width:100%;min-height:44px;margin-top:10px;border:1px solid var(--line);border-radius:10px;background:#0d1a12;color:#effff4;font-weight:900">Copiar código Pix</button>'+
-      '<button id="asaasVerifyPix" type="button" style="width:100%;min-height:44px;margin-top:8px;border:0;border-radius:10px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:950">Já paguei / Verificar pagamento</button>'+
-      '<div id="asaasPixExpiration" style="font-size:11px;color:#718579;margin-top:9px"></div>'+
-    '</div>'+
-    '<div id="asaasPixMsg" style="min-height:20px;margin-top:12px;font-size:12px;color:#9bb2a3;text-align:center"></div></div>';
-  document.body.appendChild(modal);
-  $("asaasPixClose").onclick=()=>closeAsaasPayment();
-  modal.addEventListener("click",e=>{if(e.target===modal)closeAsaasPayment();});
-  $("asaasGeneratePix").onclick=createAsaasPixPayment;
-  $("asaasVerifyPix").onclick=()=>checkAsaasPaymentStatus(true);
-  $("asaasCopyPix").onclick=async()=>{
-    const payload=$("asaasPixPayload")?.value||"";
-    if(!payload)return;
-    try{await navigator.clipboard.writeText(payload);}catch(_){const f=$("asaasPixPayload");f.focus();f.select();document.execCommand("copy");}
-    $("asaasPixMsg").textContent="Código Pix copiado!";
-  };
-  return modal;
+const P="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";
+let D=null;
+async function payload(){
+  if(D)return D;
+  const b=Uint8Array.from(atob(P),c=>c.charCodeAt(0));
+  const s=new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip"));
+  D=JSON.parse(await new Response(s).text());
+  return D;
 }
-function closeAsaasPayment(){
-  const modal=$("asaasPixModal");
-  if(modal)modal.style.display="none";
-  if(asaasPaymentPoll){clearInterval(asaasPaymentPoll);asaasPaymentPoll=null;}
-}
-function openAsaasPayment(){
-  if(!user)return alert("Entre na sua conta para gerar o Pix.");
-  const modal=ensureAsaasPaymentModal();
-  const name=$("asaasBuyerName");
-  if(name&&!name.value){const fallback=String(user.user_metadata?.full_name||user.user_metadata?.name||"").trim();if(fallback)name.value=fallback;}
-  $("asaasPixMsg").textContent="";
-  modal.style.display="flex";
-}
-async function createAsaasPixPayment(){
-  const btn=$("asaasGeneratePix"),msg=$("asaasPixMsg");
-  const name=String($("asaasBuyerName")?.value||"").trim();
-  const cpfCnpj=String($("asaasBuyerCpf")?.value||"").replace(/\\D/g,"");
-  if(name.length<3){msg.textContent="Digite seu nome completo.";return;}
-  if(cpfCnpj.length!==11&&cpfCnpj.length!==14){msg.textContent="Digite um CPF ou CNPJ válido, somente com números.";return;}
-  btn.disabled=true;btn.textContent="Gerando Pix...";msg.textContent="Criando cobrança segura no Asaas...";
-  try{
-    const {data,error}=await sb.functions.invoke("create-asaas-payment",{body:{name,cpfCnpj}});
-    if(error)throw error;
-    if(data?.alreadyPaid){msg.textContent="Seu acesso vitalício já está ativo.";await checkAsaasPaymentStatus(true);return;}
-    if(!data?.ok||!data?.pixPayload)throw new Error("pix_error");
-    $("asaasPixPayload").value=data.pixPayload;
-    const qr=$("asaasPixQr");
-    if(data.pixEncodedImage){qr.src=String(data.pixEncodedImage).startsWith("data:")?data.pixEncodedImage:"data:image/png;base64,"+data.pixEncodedImage;qr.style.display="block";}else qr.style.display="none";
-    if(data.expirationDate){const d=new Date(data.expirationDate);$("asaasPixExpiration").textContent=Number.isNaN(d.getTime())?"Pix gerado com sucesso.":"Validade do QR Code: "+d.toLocaleString("pt-BR");}else $("asaasPixExpiration").textContent="Pix gerado com sucesso.";
-    $("asaasPixForm").style.display="none";$("asaasPixResult").style.display="block";msg.textContent="Pix pronto. Após pagar, a liberação acontece automaticamente.";
-    if(asaasPaymentPoll)clearInterval(asaasPaymentPoll);
-    asaasPaymentPoll=setInterval(()=>checkAsaasPaymentStatus(false),4000);
-  }catch(err){console.error("Asaas Pix",err);msg.textContent="Não foi possível gerar o Pix. Confira seus dados e tente novamente.";}
-  finally{btn.disabled=false;btn.textContent="Gerar Pix de R$ 31,99";}
-}
-async function checkAsaasPaymentStatus(showWaiting){
-  const msg=$("asaasPixMsg");
-  try{
-    const {data,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();
-    if(error)throw error;
-    const paid=data?.access_status==="paid"&&!data?.paid_until;
-    if(!paid){if(showWaiting&&msg)msg.textContent="Pagamento ainda não confirmado. Aguarde alguns segundos e tente novamente.";return false;}
-    if(asaasPaymentPoll){clearInterval(asaasPaymentPoll);asaasPaymentPoll=null;}
-    accessRow=data;syncGamesAccessUI();if(msg)msg.textContent="✅ Pagamento confirmado! Acesso vitalício liberado.";
-    setTimeout(async()=>{closeAsaasPayment();showApp();startCountdown();try{await touchAccount();await loadData();}catch(_){}},900);
-    return true;
-  }catch(err){console.warn("check Asaas payment",err);if(showWaiting&&msg)msg.textContent="Não foi possível verificar agora. Tente novamente em alguns segundos.";return false;}
-}
-function setupAutomaticAsaasPayment(){
-  const targets=[];
-  const main=$("paymentBtn");if(main)targets.push(main);
-  document.querySelectorAll(".monthly-payment-btn,.games-payment-link").forEach(el=>targets.push(el));
-  targets.forEach(el=>{el.href="#";el.removeAttribute("target");if(el.dataset.asaasBound==="1")return;el.dataset.asaasBound="1";el.addEventListener("click",ev=>{ev.preventDefault();ev.stopImmediatePropagation();openAsaasPayment();},true);});
-  const paidArea=$("paidArea");if(paidArea)paidArea.style.display="none";
-  document.querySelectorAll(".games-lock-key,.games-lifetime-key").forEach(el=>el.style.display="none");
-}
-requestAnimationFrame(setupAutomaticAsaasPayment);
-`;
-
-function patchDashboardHtml(text){
-  if(text.includes(ACHIEVEMENT_OLD))text=text.replace(ACHIEVEMENT_OLD,ACHIEVEMENT_NEW);
-  for(const [oldValue,newValue] of REPLACEMENTS){if(text.includes(oldValue))text=text.split(oldValue).join(newValue);}
-  if(!text.includes('id="ricoNoKeyUi"'))text=text.replace('</head>',NO_KEY_STYLE+'</head>');
-  if(!text.includes('function setupAutomaticAsaasPayment(){')){
-    const scriptEnd=text.lastIndexOf('</script>');
-    if(scriptEnd!==-1)text=text.slice(0,scriptEnd)+ASAAS_HANDLER+'\n'+text.slice(scriptEnd);
+async function patch(t){
+  const d=await payload();
+  if(!t.includes('id="rico-blue-theme-v1"')){
+    const x=t.lastIndexOf("</head>");
+    if(x!==-1)t=t.slice(0,x)+'<style id="rico-blue-theme-v1">'+d.css+"</style>\n"+t.slice(x);
   }
-  return text;
+  if(!t.includes('id="rico-blue-cycles-v1"')){
+    const x=t.lastIndexOf("</body>");
+    if(x!==-1)t=t.slice(0,x)+'<script id="rico-blue-cycles-v1">'+d.js+"<\\/script>\n"+t.slice(x);
+  }
+  return t;
 }
-
 self.addEventListener("install",()=>self.skipWaiting());
-self.addEventListener("activate",event=>{event.waitUntil((async()=>{await self.clients.claim();const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});for(const client of clients){try{await client.navigate(client.url)}catch(_){}}})());});
-self.addEventListener("fetch",event=>{
-  if(event.request.mode!=="navigate")return;
-  event.respondWith((async()=>{
-    const response=await fetch(event.request,{cache:"no-store"});
-    const type=response.headers.get("content-type")||"";
-    if(!type.includes("text/html"))return response;
-    const text=patchDashboardHtml(await response.text());
-    const headers=new Headers(response.headers);headers.set("Cache-Control","no-store, no-cache, must-revalidate");
-    return new Response(text,{status:response.status,statusText:response.statusText,headers});
+self.addEventListener("activate",e=>e.waitUntil((async()=>{
+  await self.clients.claim();
+  const cs=await self.clients.matchAll({type:"window",includeUncontrolled:true});
+  for(const c of cs){try{await c.navigate(c.url)}catch(_){}}
+})()));
+self.addEventListener("fetch",e=>{
+  if(e.request.mode!=="navigate")return;
+  e.respondWith((async()=>{
+    const r=await fetch(e.request,{cache:"no-store"});
+    if(!(r.headers.get("content-type")||"").includes("text/html"))return r;
+    const h=new Headers(r.headers);h.set("Cache-Control","no-store, no-cache, must-revalidate");
+    return new Response(await patch(await r.text()),{status:r.status,statusText:r.statusText,headers:h});
   })());
 });
-self.addEventListener("push",event=>{
-  let data={title:"Equipe Rico",body:"Você tem uma nova notificação.",url:"/"};
-  try{if(event.data)data={...data,...event.data.json()};}catch(_){try{data.body=event.data.text()}catch(__){}}
-  event.waitUntil(self.registration.showNotification(data.title||"Equipe Rico",{body:data.body||"",data:{url:data.url||"/"},tag:data.tag||undefined}));
+self.addEventListener("push",e=>{
+  let d={title:"Equipe Rico",body:"Você tem uma nova notificação.",url:"/"};
+  try{if(e.data)d={...d,...e.data.json()}}catch(_){try{d.body=e.data.text()}catch(__){}}
+  e.waitUntil(self.registration.showNotification(d.title||"Equipe Rico",{body:d.body||"",data:{url:d.url||"/"},tag:d.tag||undefined}));
 });
-self.addEventListener("notificationclick",event=>{
-  event.notification.close();
-  const url=(event.notification.data&&event.notification.data.url)||"/";
-  event.waitUntil(self.clients.matchAll({type:"window",includeUncontrolled:true}).then(clients=>{for(const client of clients){if("focus" in client){try{client.navigate(url)}catch(_){}return client.focus();}}if(self.clients.openWindow)return self.clients.openWindow(url);}));
+self.addEventListener("notificationclick",e=>{
+  e.notification.close();
+  const u=e.notification.data?.url||"/";
+  e.waitUntil(self.clients.matchAll({type:"window",includeUncontrolled:true}).then(cs=>{
+    for(const c of cs)if("focus" in c){try{c.navigate(u)}catch(_){};return c.focus()}
+    return self.clients.openWindow?self.clients.openWindow(u):undefined;
+  }));
 });
