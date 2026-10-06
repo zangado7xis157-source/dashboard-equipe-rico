@@ -1,0 +1,86 @@
+name: One-off dashboard layout fit
+on:
+  push:
+    paths:
+      - '.github/workflows/oneoff-layout-fit.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ajustar layout do dashboard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('rico-operations-v2.css')
+          s=p.read_text(encoding='utf-8')
+          marker='/* RICO_LAYOUT_FIT_20261006 */'
+          if marker not in s:
+              s += r'''
+
+/* RICO_LAYOUT_FIT_20261006 */
+body.rico-ops-v2-ready .dashboard-view.layout{
+  grid-template-columns:minmax(300px,340px) minmax(0,1fr)!important;
+  align-items:start!important;
+}
+body.rico-ops-v2-ready .dashboard-view.layout>aside,
+body.rico-ops-v2-ready .dashboard-view.layout>main{min-width:0!important}
+body.rico-ops-v2-ready .dashboard-view.layout>main.card{overflow:hidden!important}
+body.rico-ops-v2-ready .dashboard-view.layout>main.card>.top{gap:10px!important}
+body.rico-ops-v2-ready .dashboard-view.layout .cycle-tools{gap:7px!important;max-width:100%!important}
+body.rico-ops-v2-ready .dashboard-view.layout .cycle-tools button{padding:10px 12px!important;font-size:12px!important;white-space:nowrap}
+body.rico-ops-v2-ready #ricoCycleTabsBar,
+body.rico-ops-v2-ready #ricoOpsV2{width:100%!important;max-width:100%!important;min-width:0!important}
+body.rico-ops-v2-ready #ricoOpsV2{margin-bottom:16px!important}
+body.rico-ops-v2-ready .rico-ops-head{padding:15px 16px!important;gap:12px!important}
+body.rico-ops-v2-ready .rico-ops-title-wrap{min-width:0!important;flex:1 1 250px!important;gap:11px!important}
+body.rico-ops-v2-ready .rico-ops-logo{width:46px!important;height:46px!important;border-radius:12px!important;font-size:21px!important;flex:0 0 auto}
+body.rico-ops-v2-ready .rico-ops-title{font-size:21px!important;line-height:1.1!important}
+body.rico-ops-v2-ready .rico-ops-sub{font-size:11px!important;margin-top:4px!important}
+body.rico-ops-v2-ready .rico-ops-head-right{min-width:0!important;gap:9px!important;flex:0 1 auto!important}
+body.rico-ops-v2-ready .rico-cycle-profit-card{min-width:160px!important;padding:9px 12px!important;border-radius:12px!important;gap:9px!important}
+body.rico-ops-v2-ready .rico-cycle-profit-icon{width:36px!important;height:36px!important;border-radius:9px!important;font-size:18px!important}
+body.rico-ops-v2-ready .rico-cycle-profit-card strong{font-size:20px!important}
+body.rico-ops-v2-ready .rico-new-screen{min-height:42px!important;padding:0 13px!important;font-size:12px!important;border-radius:11px!important}
+body.rico-ops-v2-ready .rico-ops-table-wrap{width:100%!important;max-width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain}
+body.rico-ops-v2-ready .rico-ops-table{width:100%!important;min-width:760px!important}
+body.rico-ops-v2-ready .rico-ops-table thead th,
+body.rico-ops-v2-ready .rico-ops-table tbody td{padding:10px 10px!important}
+body.rico-ops-v2-ready .rico-screen-cell{min-width:130px!important}
+body.rico-ops-v2-ready .rico-screen-name{max-width:160px!important;font-size:12px!important}
+body.rico-ops-v2-ready .rico-money-box{min-width:96px!important;min-height:38px!important;padding:0 9px!important;font-size:12px!important}
+body.rico-ops-v2-ready .rico-cycle-badge{min-height:34px!important;padding:0 9px!important;font-size:11px!important}
+body.rico-ops-v2-ready .rico-profit{font-size:13px!important}
+body.rico-ops-v2-ready .rico-actions{min-width:76px!important;gap:6px!important}
+body.rico-ops-v2-ready .rico-action-btn{width:34px!important;height:34px!important;border-radius:9px!important;font-size:13px!important;padding:0!important}
+body.rico-ops-v2-ready .rico-ops-foot{padding:9px 11px!important;font-size:9px!important}
+@media(max-width:1180px) and (min-width:1001px){
+  body.rico-ops-v2-ready .dashboard-view.layout{grid-template-columns:minmax(285px,310px) minmax(0,1fr)!important}
+  body.rico-ops-v2-ready .rico-ops-table{min-width:720px!important}
+  body.rico-ops-v2-ready .rico-cycle-profit-card{min-width:145px!important}
+}
+@media(max-width:1000px){
+  body.rico-ops-v2-ready .dashboard-view.layout{grid-template-columns:minmax(0,1fr)!important}
+  body.rico-ops-v2-ready .dashboard-view.layout>main.card{overflow:hidden!important}
+}
+@media(max-width:780px){
+  body.rico-ops-v2-ready .rico-ops-head{padding:13px!important}
+  body.rico-ops-v2-ready .rico-ops-title{font-size:19px!important}
+  body.rico-ops-v2-ready .rico-ops-head-right{width:100%!important;margin-left:0!important}
+  body.rico-ops-v2-ready .rico-cycle-profit-card{flex:1 1 155px!important}
+  body.rico-ops-v2-ready .rico-new-screen{flex:1 1 120px!important}
+  body.rico-ops-v2-ready .rico-ops-table{min-width:690px!important}
+  body.rico-ops-v2-ready .rico-money-box{min-width:88px!important}
+  body.rico-ops-v2-ready .rico-screen-cell{min-width:120px!important}
+}
+'''
+              p.write_text(s,encoding='utf-8')
+          PY
+          rm -f .github/workflows/oneoff-layout-fit.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fit operations panel inside dashboard layout"
+          git push
