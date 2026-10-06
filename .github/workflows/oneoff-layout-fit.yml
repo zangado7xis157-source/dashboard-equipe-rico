@@ -12,72 +12,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Ajustar layout do dashboard
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('rico-operations-v2.css')
-          s=p.read_text(encoding='utf-8')
-          marker='/* RICO_LAYOUT_FIT_20261006 */'
-          if marker not in s:
-              s += r'''
-
-/* RICO_LAYOUT_FIT_20261006 */
-body.rico-ops-v2-ready .dashboard-view.layout{
-  grid-template-columns:minmax(300px,340px) minmax(0,1fr)!important;
-  align-items:start!important;
-}
-body.rico-ops-v2-ready .dashboard-view.layout>aside,
-body.rico-ops-v2-ready .dashboard-view.layout>main{min-width:0!important}
-body.rico-ops-v2-ready .dashboard-view.layout>main.card{overflow:hidden!important}
-body.rico-ops-v2-ready .dashboard-view.layout>main.card>.top{gap:10px!important}
-body.rico-ops-v2-ready .dashboard-view.layout .cycle-tools{gap:7px!important;max-width:100%!important}
-body.rico-ops-v2-ready .dashboard-view.layout .cycle-tools button{padding:10px 12px!important;font-size:12px!important;white-space:nowrap}
-body.rico-ops-v2-ready #ricoCycleTabsBar,
-body.rico-ops-v2-ready #ricoOpsV2{width:100%!important;max-width:100%!important;min-width:0!important}
-body.rico-ops-v2-ready #ricoOpsV2{margin-bottom:16px!important}
-body.rico-ops-v2-ready .rico-ops-head{padding:15px 16px!important;gap:12px!important}
-body.rico-ops-v2-ready .rico-ops-title-wrap{min-width:0!important;flex:1 1 250px!important;gap:11px!important}
-body.rico-ops-v2-ready .rico-ops-logo{width:46px!important;height:46px!important;border-radius:12px!important;font-size:21px!important;flex:0 0 auto}
-body.rico-ops-v2-ready .rico-ops-title{font-size:21px!important;line-height:1.1!important}
-body.rico-ops-v2-ready .rico-ops-sub{font-size:11px!important;margin-top:4px!important}
-body.rico-ops-v2-ready .rico-ops-head-right{min-width:0!important;gap:9px!important;flex:0 1 auto!important}
-body.rico-ops-v2-ready .rico-cycle-profit-card{min-width:160px!important;padding:9px 12px!important;border-radius:12px!important;gap:9px!important}
-body.rico-ops-v2-ready .rico-cycle-profit-icon{width:36px!important;height:36px!important;border-radius:9px!important;font-size:18px!important}
-body.rico-ops-v2-ready .rico-cycle-profit-card strong{font-size:20px!important}
-body.rico-ops-v2-ready .rico-new-screen{min-height:42px!important;padding:0 13px!important;font-size:12px!important;border-radius:11px!important}
-body.rico-ops-v2-ready .rico-ops-table-wrap{width:100%!important;max-width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain}
-body.rico-ops-v2-ready .rico-ops-table{width:100%!important;min-width:760px!important}
-body.rico-ops-v2-ready .rico-ops-table thead th,
-body.rico-ops-v2-ready .rico-ops-table tbody td{padding:10px 10px!important}
-body.rico-ops-v2-ready .rico-screen-cell{min-width:130px!important}
-body.rico-ops-v2-ready .rico-screen-name{max-width:160px!important;font-size:12px!important}
-body.rico-ops-v2-ready .rico-money-box{min-width:96px!important;min-height:38px!important;padding:0 9px!important;font-size:12px!important}
-body.rico-ops-v2-ready .rico-cycle-badge{min-height:34px!important;padding:0 9px!important;font-size:11px!important}
-body.rico-ops-v2-ready .rico-profit{font-size:13px!important}
-body.rico-ops-v2-ready .rico-actions{min-width:76px!important;gap:6px!important}
-body.rico-ops-v2-ready .rico-action-btn{width:34px!important;height:34px!important;border-radius:9px!important;font-size:13px!important;padding:0!important}
-body.rico-ops-v2-ready .rico-ops-foot{padding:9px 11px!important;font-size:9px!important}
-@media(max-width:1180px) and (min-width:1001px){
-  body.rico-ops-v2-ready .dashboard-view.layout{grid-template-columns:minmax(285px,310px) minmax(0,1fr)!important}
-  body.rico-ops-v2-ready .rico-ops-table{min-width:720px!important}
-  body.rico-ops-v2-ready .rico-cycle-profit-card{min-width:145px!important}
-}
-@media(max-width:1000px){
-  body.rico-ops-v2-ready .dashboard-view.layout{grid-template-columns:minmax(0,1fr)!important}
-  body.rico-ops-v2-ready .dashboard-view.layout>main.card{overflow:hidden!important}
-}
-@media(max-width:780px){
-  body.rico-ops-v2-ready .rico-ops-head{padding:13px!important}
-  body.rico-ops-v2-ready .rico-ops-title{font-size:19px!important}
-  body.rico-ops-v2-ready .rico-ops-head-right{width:100%!important;margin-left:0!important}
-  body.rico-ops-v2-ready .rico-cycle-profit-card{flex:1 1 155px!important}
-  body.rico-ops-v2-ready .rico-new-screen{flex:1 1 120px!important}
-  body.rico-ops-v2-ready .rico-ops-table{min-width:690px!important}
-  body.rico-ops-v2-ready .rico-money-box{min-width:88px!important}
-  body.rico-ops-v2-ready .rico-screen-cell{min-width:120px!important}
-}
-'''
-              p.write_text(s,encoding='utf-8')
-          PY
+          if ! grep -q 'RICO_LAYOUT_FIT_20261006' rico-operations-v2.css; then
+            echo 'Ci8qIFJJQ09fTEFZT1VUX0ZJVF8yMDI2MTAwNiAqLwpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5kYXNoYm9hcmQtdmlldy5sYXlvdXR7CiAgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOm1pbm1heCgzMDBweCwzNDBweCkgbWlubWF4KDAsMWZyKSFpbXBvcnRhbnQ7CiAgYWxpZ24taXRlbXM6c3RhcnQhaW1wb3J0YW50Owp9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLmRhc2hib2FyZC12aWV3LmxheW91dD5hc2lkZSwKYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAuZGFzaGJvYXJkLXZpZXcubGF5b3V0Pm1haW57bWluLXdpZHRoOjAhaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5kYXNoYm9hcmQtdmlldy5sYXlvdXQ+bWFpbi5jYXJke292ZXJmbG93OmhpZGRlbiFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLmRhc2hib2FyZC12aWV3LmxheW91dD5tYWluLmNhcmQ+LnRvcHtnYXA6MTBweCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLmRhc2hib2FyZC12aWV3LmxheW91dCAuY3ljbGUtdG9vbHN7Z2FwOjdweCFpbXBvcnRhbnQ7bWF4LXdpZHRoOjEwMCUhaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5kYXNoYm9hcmQtdmlldy5sYXlvdXQgLmN5Y2xlLXRvb2xzIGJ1dHRvbntwYWRkaW5nOjEwcHggMTJweCFpbXBvcnRhbnQ7Zm9udC1zaXplOjEycHghaW1wb3J0YW50O3doaXRlLXNwYWNlOm5vd3JhcH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAjcmljb0N5Y2xlVGFic0JhciwKYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAjcmljb09wc1Yye3dpZHRoOjEwMCUhaW1wb3J0YW50O21heC13aWR0aDoxMDAlIWltcG9ydGFudDttaW4td2lkdGg6MCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgI3JpY29PcHNWMnttYXJnaW4tYm90dG9tOjE2cHghaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLW9wcy1oZWFke3BhZGRpbmc6MTVweCAxNnB4IWltcG9ydGFudDtnYXA6MTJweCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tb3BzLXRpdGxlLXdyYXB7bWluLXdpZHRoOjAhaW1wb3J0YW50O2ZsZXg6MSAxIDI1MHB4IWltcG9ydGFudDtnYXA6MTFweCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tb3BzLWxvZ297d2lkdGg6NDZweCFpbXBvcnRhbnQ7aGVpZ2h0OjQ2cHghaW1wb3J0YW50O2JvcmRlci1yYWRpdXM6MTJweCFpbXBvcnRhbnQ7Zm9udC1zaXplOjIxcHghaW1wb3J0YW50O2ZsZXg6MCAwIGF1dG99CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tb3BzLXRpdGxle2ZvbnQtc2l6ZToyMXB4IWltcG9ydGFudDtsaW5lLWhlaWdodDoxLjEhaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLW9wcy1zdWJ7Zm9udC1zaXplOjExcHghaW1wb3J0YW50O21hcmdpbi10b3A6NHB4IWltcG9ydGFudH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1vcHMtaGVhZC1yaWdodHttaW4td2lkdGg6MCFpbXBvcnRhbnQ7Z2FwOjlweCFpbXBvcnRhbnQ7ZmxleDowIDEgYXV0byFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tY3ljbGUtcHJvZml0LWNhcmR7bWluLXdpZHRoOjE2MHB4IWltcG9ydGFudDtwYWRkaW5nOjlweCAxMnB4IWltcG9ydGFudDtib3JkZXItcmFkaXVzOjEycHghaW1wb3J0YW50O2dhcDo5cHghaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLWN5Y2xlLXByb2ZpdC1pY29ue3dpZHRoOjM2cHghaW1wb3J0YW50O2hlaWdodDozNnB4IWltcG9ydGFudDtib3JkZXItcmFkaXVzOjlweCFpbXBvcnRhbnQ7Zm9udC1zaXplOjE4cHghaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLWN5Y2xlLXByb2ZpdC1jYXJkIHN0cm9uZ3tmb250LXNpemU6MjBweCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tbmV3LXNjcmVlbnttaW4taGVpZ2h0OjQycHghaW1wb3J0YW50O3BhZGRpbmc6MCAxM3B4IWltcG9ydGFudDtmb250LXNpemU6MTJweCFpbXBvcnRhbnQ7Ym9yZGVyLXJhZGl1czoxMXB4IWltcG9ydGFudH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1vcHMtdGFibGUtd3JhcHt3aWR0aDoxMDAlIWltcG9ydGFudDttYXgtd2lkdGg6MTAwJSFpbXBvcnRhbnQ7b3ZlcmZsb3cteDphdXRvIWltcG9ydGFudDtvdmVyc2Nyb2xsLWJlaGF2aW9yLXg6Y29udGFpbn0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1vcHMtdGFibGV7d2lkdGg6MTAwJSFpbXBvcnRhbnQ7bWluLXdpZHRoOjc2MHB4IWltcG9ydGFudH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1vcHMtdGFibGUgdGhlYWQgdGgsCmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tb3BzLXRhYmxlIHRib2R5IHRke3BhZGRpbmc6MTBweCAxMHB4IWltcG9ydGFudH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1zY3JlZW4tY2VsbHttaW4td2lkdGg6MTMwcHghaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLXNjcmVlbi1uYW1le21heC13aWR0aDoxNjBweCFpbXBvcnRhbnQ7Zm9udC1zaXplOjEycHghaW1wb3J0YW50fQpib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLW1vbmV5LWJveHttaW4td2lkdGg6OTZweCFpbXBvcnRhbnQ7bWluLWhlaWdodDozOHB4IWltcG9ydGFudDtwYWRkaW5nOjAgOXB4IWltcG9ydGFudDtmb250LXNpemU6MTJweCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tY3ljbGUtYmFkZ2V7bWluLWhlaWdodDozNHB4IWltcG9ydGFudDtwYWRkaW5nOjAgOXB4IWltcG9ydGFudDtmb250LXNpemU6MTFweCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tcHJvZml0e2ZvbnQtc2l6ZToxM3B4IWltcG9ydGFudH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1hY3Rpb25ze21pbi13aWR0aDo3NnB4IWltcG9ydGFudDtnYXA6NnB4IWltcG9ydGFudH0KYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1hY3Rpb24tYnRue3dpZHRoOjM0cHghaW1wb3J0YW50O2hlaWdodDozNHB4IWltcG9ydGFudDtib3JkZXItcmFkaXVzOjlweCFpbXBvcnRhbnQ7Zm9udC1zaXplOjEzcHghaW1wb3J0YW50O3BhZGRpbmc6MCFpbXBvcnRhbnR9CmJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tb3BzLWZvb3R7cGFkZGluZzo5cHggMTFweCFpbXBvcnRhbnQ7Zm9udC1zaXplOjlweCFpbXBvcnRhbnR9CkBtZWRpYShtYXgtd2lkdGg6MTE4MHB4KSBhbmQgKG1pbi13aWR0aDoxMDAxcHgpewogIGJvZHkucmljby1vcHMtdjItcmVhZHkgLmRhc2hib2FyZC12aWV3LmxheW91dHtncmlkLXRlbXBsYXRlLWNvbHVtbnM6bWlubWF4KDI4NXB4LDMxMHB4KSBtaW5tYXgoMCwxZnIpIWltcG9ydGFudH0KICBib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLW9wcy10YWJsZXttaW4td2lkdGg6NzIwcHghaW1wb3J0YW50fQogIGJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tY3ljbGUtcHJvZml0LWNhcmR7bWluLXdpZHRoOjE0NXB4IWltcG9ydGFudH0KfQpAbWVkaWEobWF4LXdpZHRoOjEwMDBweCl7CiAgYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAuZGFzaGJvYXJkLXZpZXcubGF5b3V0e2dyaWQtdGVtcGxhdGUtY29sdW1uczptaW5tYXgoMCwxZnIpIWltcG9ydGFudH0KICBib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5kYXNoYm9hcmQtdmlldy5sYXlvdXQ+bWFpbi5jYXJke292ZXJmbG93OmhpZGRlbiFpbXBvcnRhbnR9Cn0KQG1lZGlhKG1heC13aWR0aDo3ODBweCl7CiAgYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1vcHMtaGVhZHtwYWRkaW5nOjEzcHghaW1wb3J0YW50fQogIGJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tb3BzLXRpdGxle2ZvbnQtc2l6ZToxOXB4IWltcG9ydGFudH0KICBib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLW9wcy1oZWFkLXJpZ2h0e3dpZHRoOjEwMCUhaW1wb3J0YW50O21hcmdpbi1sZWZ0OjAhaW1wb3J0YW50fQogIGJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tY3ljbGUtcHJvZml0LWNhcmR7ZmxleDoxIDEgMTU1cHghaW1wb3J0YW50fQogIGJvZHkucmljby1vcHMtdjItcmVhZHkgLnJpY28tbmV3LXNjcmVlbntmbGV4OjEgMSAxMjBweCFpbXBvcnRhbnR9CiAgYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1vcHMtdGFibGV7bWluLXdpZHRoOjY5MHB4IWltcG9ydGFudH0KICBib2R5LnJpY28tb3BzLXYyLXJlYWR5IC5yaWNvLW1vbmV5LWJveHttaW4td2lkdGg6ODhweCFpbXBvcnRhbnR9CiAgYm9keS5yaWNvLW9wcy12Mi1yZWFkeSAucmljby1zY3JlZW4tY2VsbHttaW4td2lkdGg6MTIwcHghaW1wb3J0YW50fQp9Cg==' | base64 -d >> rico-operations-v2.css
+          fi
           rm -f .github/workflows/oneoff-layout-fit.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
