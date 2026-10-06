@@ -1,6 +1,6 @@
 (()=>{
   const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n||0));
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   const getUser=()=>{try{return typeof user!=='undefined'&&user&&user.id?user:null}catch(_){return null}};
   const getClients=()=>{try{return Array.isArray(clients)?clients:[]}catch(_){return []}};
   const getEntries=()=>{try{return Array.isArray(entries)?entries:[]}catch(_){return []}};
@@ -19,9 +19,25 @@
 
   function cycleName(){return document.getElementById('ricoActiveCycleName')?.textContent?.trim()||'Ciclo'}
 
+  function dashboardGrid(){
+    return document.querySelector('.dashboard-view.layout')||document.querySelector('.dashboard-view');
+  }
+
+  function placeOutsideDashboard(root){
+    const grid=dashboardGrid();
+    if(!grid||!grid.parentNode||!root)return;
+    const bar=document.getElementById('ricoCycleTabsBar');
+    if(bar){
+      if(bar.previousElementSibling!==grid)grid.insertAdjacentElement('afterend',bar);
+      if(root.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',root);
+    }else if(root.previousElementSibling!==grid){
+      grid.insertAdjacentElement('afterend',root);
+    }
+  }
+
   function mount(){
     let root=document.getElementById('ricoOpsV2');
-    if(root)return root;
+    if(root){placeOutsideDashboard(root);return root}
     const anchor=document.querySelector('.history-sections')||document.querySelector('.cycle-board');
     if(!anchor)return null;
     root=document.createElement('section');
@@ -50,14 +66,15 @@
       const input=document.getElementById('clientName');
       if(input){input.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>input.focus(),350)}
     });
+    placeOutsideDashboard(root);
     return root;
   }
 
   function placeCycleBar(){
     const bar=document.getElementById('ricoCycleTabsBar'),root=document.getElementById('ricoOpsV2');
-    if(!bar||!root)return;
-    bar.classList.add('rico-cycle-bar-v2');
-    if(bar.nextElementSibling!==root)root.parentNode.insertBefore(bar,root);
+    if(!root)return;
+    if(bar)bar.classList.add('rico-cycle-bar-v2');
+    placeOutsideDashboard(root);
   }
 
   function renderRows(){
@@ -89,9 +106,11 @@
     }
     document.getElementById('ricoOpsTitle').textContent=`Operações do ${cName}`;
     const pc=document.getElementById('ricoCycleProfitCard'),pv=document.getElementById('ricoCycleProfit');
-    pv.textContent=(profit>0?'+':'')+money(profit);pc.classList.toggle('negative',profit<0);
-    document.getElementById('ricoOpsCount').textContent=`${list.length} ${list.length===1?'tela':'telas'} neste ciclo`;
-    document.getElementById('ricoOpsTotals').innerHTML=`Depósitos <strong>${money(dep)}</strong> · Saques <strong>${money(saq)}</strong> · Baús <strong>${money(bau)}</strong>`;
+    if(pv)pv.textContent=(profit>0?'+':'')+money(profit);
+    if(pc)pc.classList.toggle('negative',profit<0);
+    const count=document.getElementById('ricoOpsCount'),totals=document.getElementById('ricoOpsTotals');
+    if(count)count.textContent=`${list.length} ${list.length===1?'tela':'telas'} neste ciclo`;
+    if(totals)totals.innerHTML=`Depósitos <strong>${money(dep)}</strong> · Saques <strong>${money(saq)}</strong> · Baús <strong>${money(bau)}</strong>`;
     rows.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openClient(b.dataset.open)));
     rows.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',async()=>{
       const id=b.dataset.delete;
@@ -103,6 +122,7 @@
         if(typeof loadData==='function')await loadData();
       }
     }));
+    placeOutsideDashboard(root);
   }
 
   function openClient(id){
