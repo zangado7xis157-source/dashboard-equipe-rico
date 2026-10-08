@@ -1,7 +1,5 @@
 const express = require('express');
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 app.set('trust proxy', true);
@@ -12,11 +10,10 @@ const ASAAS_API_BASE = process.env.ASAAS_API_BASE || 'https://api.asaas.com/v3';
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY || '';
 const ASAAS_WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN || '';
 const DOWNLOAD_SECRET = process.env.DOWNLOAD_SECRET || '';
-const PRODUCT_ENC_KEY = process.env.PRODUCT_ENC_KEY || '';
+const PRODUCT_FILE_URL = process.env.PRODUCT_FILE_URL || '';
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
 const PRICE = Number(process.env.PRODUCT_PRICE || '21.99');
 const PRODUCT_NAME = process.env.PRODUCT_NAME || 'Extensão Rico China';
-const PRODUCT_ENC_PATH = process.env.PRODUCT_ENC_PATH || path.join(__dirname, 'product.enc');
 
 const paidOrders = new Map();
 
@@ -34,21 +31,6 @@ function validOrderSignature(orderId, sig) {
   const expected = signOrder(orderId);
   if (!expected || !sig || expected.length !== sig.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig));
-}
-
-function decryptProduct() {
-  if (!PRODUCT_ENC_KEY) throw new Error('PRODUCT_ENC_KEY não configurada');
-  if (!fs.existsSync(PRODUCT_ENC_PATH)) throw new Error('Arquivo criptografado do produto não encontrado');
-  const key = Buffer.from(PRODUCT_ENC_KEY, 'base64');
-  if (key.length !== 32) throw new Error('PRODUCT_ENC_KEY inválida');
-  const blob = fs.readFileSync(PRODUCT_ENC_PATH);
-  if (blob.length < 29) throw new Error('Arquivo criptografado inválido');
-  const nonce = blob.subarray(0, 12);
-  const tag = blob.subarray(blob.length - 16);
-  const ciphertext = blob.subarray(12, blob.length - 16);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, nonce);
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 }
 
 async function asaas(apiPath, options = {}) {
@@ -78,7 +60,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_ENC_KEY && fs.existsSync(PRODUCT_ENC_PATH) });
+  res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_FILE_URL });
 });
 
 app.get('/checkout', async (req, res) => {
@@ -181,7 +163,13 @@ app.get('/download', async (req, res) => {
       paid = !!payment && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status);
     }
     if (!paid) return res.status(403).send('Pagamento não confirmado.');
-    const zip = decryptProduct();
+    if (!PRODUCT_FILE_URL) throw new Error('PRODUCT_FILE_URL não configurada');
+
+    const fileRes = await fetch(PRODUCT_FILE_URL, { redirect: 'follow' });
+    if (!fileRes.ok) throw new Error(`Falha ao buscar arquivo: HTTP ${fileRes.status}`);
+    const zip = Buffer.from(await fileRes.arrayBuffer());
+    if (!zip.length) throw new Error('Arquivo vazio');
+
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="SHEED_Rico_China.zip"');
     res.setHeader('Content-Length', String(zip.length));
