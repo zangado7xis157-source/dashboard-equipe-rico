@@ -16,6 +16,8 @@ const PRICE = Number(process.env.PRODUCT_PRICE || '21.99');
 const PRODUCT_NAME = process.env.PRODUCT_NAME || 'Extensão Rico China';
 
 const paidOrders = new Map();
+const consumedDownloads = new Set();
+const downloadsInProgress = new Set();
 
 function html(title, body) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>
@@ -35,23 +37,13 @@ function validOrderSignature(orderId, sig) {
 
 async function asaas(apiPath, options = {}) {
   if (!ASAAS_API_KEY) throw new Error('ASAAS_API_KEY não configurada');
-  const headers = {
-    accept: 'application/json',
-    access_token: ASAAS_API_KEY,
-    'User-Agent': 'RicoChinaExtension/1.0',
-    ...(options.headers || {})
-  };
+  const headers = { accept: 'application/json', access_token: ASAAS_API_KEY, 'User-Agent': 'RicoChinaExtension/1.0', ...(options.headers || {}) };
   if (options.body) headers['content-type'] = 'application/json';
   const res = await fetch(`${ASAAS_API_BASE}${apiPath}`, { ...options, headers });
   const text = await res.text();
   let data;
   try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
-  if (!res.ok) {
-    const err = new Error(`Asaas ${res.status}`);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
+  if (!res.ok) { const err = new Error(`Asaas ${res.status}`); err.status = res.status; err.data = data; throw err; }
   return data;
 }
 
@@ -59,9 +51,7 @@ app.get('/', (req, res) => {
   res.send(html(PRODUCT_NAME, `<h1 class="title">${PRODUCT_NAME}</h1><p class="muted">Entrega automática após confirmação do pagamento.</p><div class="price">R$ ${PRICE.toFixed(2).replace('.', ',')}</div><a class="btn" href="/checkout">Comprar e pagar</a><p class="small">Pagamento processado pelo Asaas.</p>`));
 });
 
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_FILE_URL });
-});
+app.get('/health', (req, res) => res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_FILE_URL }));
 
 app.get('/checkout', async (req, res) => {
   try {
@@ -70,27 +60,12 @@ app.get('/checkout', async (req, res) => {
     const orderId = `ricoext_${Date.now()}_${crypto.randomBytes(8).toString('hex')}`;
     const sig = signOrder(orderId);
     const successUrl = `${PUBLIC_BASE_URL}/sucesso?order=${encodeURIComponent(orderId)}&sig=${sig}`;
-
-    const link = await asaas('/paymentLinks', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: `${PRODUCT_NAME} - ${orderId.slice(-8)}`,
-        description: 'Aceleração de Slot para CPA Chinês',
-        value: PRICE,
-        billingType: 'UNDEFINED',
-        chargeType: 'DETACHED',
-        dueDateLimitDays: 1,
-        externalReference: orderId,
-        notificationEnabled: true,
-        callback: { successUrl, autoRedirect: true }
-      })
-    });
-
+    const link = await asaas('/paymentLinks', { method: 'POST', body: JSON.stringify({ name: `${PRODUCT_NAME} - ${orderId.slice(-8)}`, description: 'Aceleração de Slot para CPA Chinês', value: PRICE, billingType: 'UNDEFINED', chargeType: 'DETACHED', dueDateLimitDays: 1, externalReference: orderId, notificationEnabled: true, callback: { successUrl, autoRedirect: true } }) });
     if (!link.url) throw new Error('O Asaas não retornou a URL do pagamento');
     res.redirect(302, link.url);
   } catch (e) {
     console.error('checkout_error', e.data || e.message);
-    res.status(500).send(html('Erro', `<h1 class="title error">Não consegui abrir o pagamento</h1><p class="muted">${String(e.message || e)}</p><p class="small">Confira a configuração do Asaas no servidor.</p>`));
+    res.status(500).send(html('Erro', `<h1 class="title error">Não consegui abrir o pagamento</h1><p class="muted">${String(e.message || e)}</p>`));
   }
 });
 
@@ -106,76 +81,54 @@ async function findOrderPayment(orderId) {
 app.get('/sucesso', async (req, res) => {
   const orderId = String(req.query.order || '');
   const sig = String(req.query.sig || '');
-  if (!validOrderSignature(orderId, sig)) {
-    return res.status(403).send(html('Link inválido', `<h1 class="title error">Link inválido</h1><p class="muted">Não foi possível validar este pedido.</p>`));
-  }
+  if (!validOrderSignature(orderId, sig)) return res.status(403).send(html('Link inválido', `<h1 class="title error">Link inválido</h1><p class="muted">Não foi possível validar este pedido.</p>`));
   try {
     let paid = paidOrders.get(orderId) === true;
-    if (!paid) {
-      const payment = await findOrderPayment(orderId);
-      paid = !!payment && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status);
-      if (paid) paidOrders.set(orderId, true);
-    }
-    if (!paid) {
-      return res.status(202).send(html('Aguardando confirmação', `<h1 class="title warn">Pagamento em confirmação</h1><p class="muted">O Asaas ainda não confirmou o pagamento deste pedido. Aguarde alguns segundos e atualize esta página.</p><a class="btn" href="${req.originalUrl}">Verificar novamente</a>`));
-    }
+    if (!paid) { const payment = await findOrderPayment(orderId); paid = !!payment && ['CONFIRMED','RECEIVED','RECEIVED_IN_CASH'].includes(payment.status); if (paid) paidOrders.set(orderId, true); }
+    if (!paid) return res.status(202).send(html('Aguardando confirmação', `<h1 class="title warn">Pagamento em confirmação</h1><p class="muted">Aguarde alguns segundos e atualize esta página.</p><a class="btn" href="${req.originalUrl}">Verificar novamente</a>`));
+    if (consumedDownloads.has(orderId)) return res.status(410).send(html('Download utilizado', `<h1 class="title error">Link de download já utilizado</h1><p class="muted">Este pedido já realizou o download do arquivo. O link não pode ser usado novamente.</p>`));
     const dlSig = crypto.createHmac('sha256', DOWNLOAD_SECRET).update(`download:${orderId}`).digest('hex');
-    return res.send(html('Pagamento confirmado', `<h1 class="title ok">Pagamento confirmado ✓</h1><p class="muted">Seu arquivo foi liberado.</p><a class="btn" href="/download?order=${encodeURIComponent(orderId)}&sig=${dlSig}">Baixar SHEED_Rico_China.zip</a><p class="small">O link é individual para este pedido.</p>`));
-  } catch (e) {
-    console.error('success_check_error', e.data || e.message);
-    res.status(500).send(html('Erro', `<h1 class="title error">Não consegui verificar agora</h1><p class="muted">Atualize a página em alguns instantes.</p>`));
-  }
+    return res.send(html('Pagamento confirmado', `<h1 class="title ok">Pagamento confirmado ✓</h1><p class="muted">Seu arquivo foi liberado.</p><a class="btn" href="/download?order=${encodeURIComponent(orderId)}&sig=${dlSig}">Baixar SHEED_Rico_China.zip</a><p class="small">Download único: após baixar, este link será bloqueado.</p>`));
+  } catch (e) { console.error('success_check_error', e.data || e.message); res.status(500).send(html('Erro', `<h1 class="title error">Não consegui verificar agora</h1>`)); }
 });
 
 app.post('/webhook/asaas', async (req, res) => {
   const token = req.get('asaas-access-token') || '';
   if (!ASAAS_WEBHOOK_TOKEN || token !== ASAAS_WEBHOOK_TOKEN) return res.status(401).json({ ok: false });
   try {
-    const event = req.body?.event;
-    const payment = req.body?.payment || {};
-    if (['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'].includes(event) && payment.paymentLink) {
-      try {
-        const link = await asaas(`/paymentLinks/${encodeURIComponent(payment.paymentLink)}`, { method: 'GET' });
-        const orderId = link.externalReference;
-        if (orderId && String(orderId).startsWith('ricoext_')) paidOrders.set(String(orderId), true);
-      } catch (e) {
-        console.error('webhook_link_lookup_error', e.data || e.message);
-      }
+    const event = req.body?.event; const payment = req.body?.payment || {};
+    if (['PAYMENT_CONFIRMED','PAYMENT_RECEIVED'].includes(event) && payment.paymentLink) {
+      try { const link = await asaas(`/paymentLinks/${encodeURIComponent(payment.paymentLink)}`, { method: 'GET' }); const orderId = link.externalReference; if (orderId && String(orderId).startsWith('ricoext_')) paidOrders.set(String(orderId), true); } catch (e) { console.error('webhook_link_lookup_error', e.data || e.message); }
     }
     res.json({ received: true });
-  } catch (e) {
-    console.error('webhook_error', e.message);
-    res.status(500).json({ received: false });
-  }
+  } catch (e) { console.error('webhook_error', e.message); res.status(500).json({ received: false }); }
 });
 
 app.get('/download', async (req, res) => {
   const orderId = String(req.query.order || '');
   const sig = String(req.query.sig || '');
   const expected = DOWNLOAD_SECRET ? crypto.createHmac('sha256', DOWNLOAD_SECRET).update(`download:${orderId}`).digest('hex') : '';
-  if (!expected || !sig || expected.length !== sig.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))) {
-    return res.status(403).send('Link inválido.');
-  }
+  if (!expected || !sig || expected.length !== sig.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))) return res.status(403).send('Link inválido.');
+  if (consumedDownloads.has(orderId) || downloadsInProgress.has(orderId)) return res.status(410).send(html('Link expirado', `<h1 class="title error">Este download já foi utilizado</h1><p class="muted">O arquivo só pode ser baixado uma vez por pedido.</p>`));
+  downloadsInProgress.add(orderId);
   try {
     let paid = paidOrders.get(orderId) === true;
-    if (!paid) {
-      const payment = await findOrderPayment(orderId);
-      paid = !!payment && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status);
-    }
-    if (!paid) return res.status(403).send('Pagamento não confirmado.');
+    if (!paid) { const payment = await findOrderPayment(orderId); paid = !!payment && ['CONFIRMED','RECEIVED','RECEIVED_IN_CASH'].includes(payment.status); }
+    if (!paid) { downloadsInProgress.delete(orderId); return res.status(403).send('Pagamento não confirmado.'); }
     if (!PRODUCT_FILE_URL) throw new Error('PRODUCT_FILE_URL não configurada');
-
     const fileRes = await fetch(PRODUCT_FILE_URL, { redirect: 'follow' });
     if (!fileRes.ok) throw new Error(`Falha ao buscar arquivo: HTTP ${fileRes.status}`);
     const zip = Buffer.from(await fileRes.arrayBuffer());
     if (!zip.length) throw new Error('Arquivo vazio');
-
+    consumedDownloads.add(orderId);
+    downloadsInProgress.delete(orderId);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="SHEED_Rico_China.zip"');
     res.setHeader('Content-Length', String(zip.length));
     res.setHeader('Cache-Control', 'private, no-store');
     res.end(zip);
   } catch (e) {
+    downloadsInProgress.delete(orderId);
     console.error('download_error', e.message);
     res.status(500).send('Erro ao entregar o arquivo.');
   }
