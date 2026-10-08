@@ -1,5 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.set('trust proxy', true);
@@ -10,10 +12,11 @@ const ASAAS_API_BASE = process.env.ASAAS_API_BASE || 'https://api.asaas.com/v3';
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY || '';
 const ASAAS_WEBHOOK_TOKEN = process.env.ASAAS_WEBHOOK_TOKEN || '';
 const DOWNLOAD_SECRET = process.env.DOWNLOAD_SECRET || '';
-const PRODUCT_FILE_URL = process.env.PRODUCT_FILE_URL || '';
+const PRODUCT_ENC_KEY = process.env.PRODUCT_ENC_KEY || '';
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
 const PRICE = Number(process.env.PRODUCT_PRICE || '21.99');
 const PRODUCT_NAME = process.env.PRODUCT_NAME || 'Extensão Rico China';
+const PRODUCT_ENC_PATH = process.env.PRODUCT_ENC_PATH || path.join(__dirname, 'product.enc');
 
 const paidOrders = new Map();
 
@@ -26,23 +29,38 @@ function signOrder(orderId) {
   if (!DOWNLOAD_SECRET) return '';
   return crypto.createHmac('sha256', DOWNLOAD_SECRET).update(orderId).digest('hex');
 }
+
 function validOrderSignature(orderId, sig) {
   const expected = signOrder(orderId);
   if (!expected || !sig || expected.length !== sig.length) return false;
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig));
 }
-async function asaas(path, options = {}) {
+
+function decryptProduct() {
+  if (!PRODUCT_ENC_KEY) throw new Error('PRODUCT_ENC_KEY não configurada');
+  if (!fs.existsSync(PRODUCT_ENC_PATH)) throw new Error('Arquivo criptografado do produto não encontrado');
+  const key = Buffer.from(PRODUCT_ENC_KEY, 'base64');
+  if (key.length !== 32) throw new Error('PRODUCT_ENC_KEY inválida');
+  const blob = fs.readFileSync(PRODUCT_ENC_PATH);
+  if (blob.length < 29) throw new Error('Arquivo criptografado inválido');
+  const nonce = blob.subarray(0, 12);
+  const tag = blob.subarray(blob.length - 16);
+  const ciphertext = blob.subarray(12, blob.length - 16);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, nonce);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+}
+
+async function asaas(apiPath, options = {}) {
   if (!ASAAS_API_KEY) throw new Error('ASAAS_API_KEY não configurada');
-  const res = await fetch(`${ASAAS_API_BASE}${path}`, {
-    ...options,
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      access_token: ASAAS_API_KEY,
-      'User-Agent': 'RicoChinaExtension/1.0',
-      ...(options.headers || {})
-    }
-  });
+  const headers = {
+    accept: 'application/json',
+    access_token: ASAAS_API_KEY,
+    'User-Agent': 'RicoChinaExtension/1.0',
+    ...(options.headers || {})
+  };
+  if (options.body) headers['content-type'] = 'application/json';
+  const res = await fetch(`${ASAAS_API_BASE}${apiPath}`, { ...options, headers });
   const text = await res.text();
   let data;
   try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
@@ -59,7 +77,9 @@ app.get('/', (req, res) => {
   res.send(html(PRODUCT_NAME, `<h1 class="title">${PRODUCT_NAME}</h1><p class="muted">Entrega automática após confirmação do pagamento.</p><div class="price">R$ ${PRICE.toFixed(2).replace('.', ',')}</div><a class="btn" href="/checkout">Comprar e pagar</a><p class="small">Pagamento processado pelo Asaas.</p>`));
 });
 
-app.get('/health', (req, res) => res.json({ ok: true, service: 'rico-china-extension-delivery' }));
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_ENC_KEY && fs.existsSync(PRODUCT_ENC_PATH) });
+});
 
 app.get('/checkout', async (req, res) => {
   try {
@@ -93,14 +113,12 @@ app.get('/checkout', async (req, res) => {
 });
 
 async function findOrderPayment(orderId) {
-  const links = await asaas(`/paymentLinks?limit=20&externalReference=${encodeURIComponent(orderId)}`, { method: 'GET', headers: { 'content-type': undefined } });
+  const links = await asaas(`/paymentLinks?limit=20&externalReference=${encodeURIComponent(orderId)}`, { method: 'GET' });
   const link = Array.isArray(links.data) ? links.data[0] : null;
   if (!link?.id) return null;
-
-  const payments = await asaas('/payments?limit=100&offset=0', { method: 'GET', headers: { 'content-type': undefined } });
+  const payments = await asaas('/payments?limit=100&offset=0', { method: 'GET' });
   const list = Array.isArray(payments.data) ? payments.data : [];
-  const payment = list.find(p => p.paymentLink === link.id);
-  return payment || null;
+  return list.find(p => p.paymentLink === link.id) || null;
 }
 
 app.get('/sucesso', async (req, res) => {
@@ -109,7 +127,6 @@ app.get('/sucesso', async (req, res) => {
   if (!validOrderSignature(orderId, sig)) {
     return res.status(403).send(html('Link inválido', `<h1 class="title error">Link inválido</h1><p class="muted">Não foi possível validar este pedido.</p>`));
   }
-
   try {
     let paid = paidOrders.get(orderId) === true;
     if (!paid) {
@@ -117,11 +134,9 @@ app.get('/sucesso', async (req, res) => {
       paid = !!payment && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status);
       if (paid) paidOrders.set(orderId, true);
     }
-
     if (!paid) {
       return res.status(202).send(html('Aguardando confirmação', `<h1 class="title warn">Pagamento em confirmação</h1><p class="muted">O Asaas ainda não confirmou o pagamento deste pedido. Aguarde alguns segundos e atualize esta página.</p><a class="btn" href="${req.originalUrl}">Verificar novamente</a>`));
     }
-
     const dlSig = crypto.createHmac('sha256', DOWNLOAD_SECRET).update(`download:${orderId}`).digest('hex');
     return res.send(html('Pagamento confirmado', `<h1 class="title ok">Pagamento confirmado ✓</h1><p class="muted">Seu arquivo foi liberado.</p><a class="btn" href="/download?order=${encodeURIComponent(orderId)}&sig=${dlSig}">Baixar SHEED_Rico_China.zip</a><p class="small">O link é individual para este pedido.</p>`));
   } catch (e) {
@@ -138,7 +153,7 @@ app.post('/webhook/asaas', async (req, res) => {
     const payment = req.body?.payment || {};
     if (['PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED'].includes(event) && payment.paymentLink) {
       try {
-        const link = await asaas(`/paymentLinks/${encodeURIComponent(payment.paymentLink)}`, { method: 'GET', headers: { 'content-type': undefined } });
+        const link = await asaas(`/paymentLinks/${encodeURIComponent(payment.paymentLink)}`, { method: 'GET' });
         const orderId = link.externalReference;
         if (orderId && String(orderId).startsWith('ricoext_')) paidOrders.set(String(orderId), true);
       } catch (e) {
@@ -166,23 +181,15 @@ app.get('/download', async (req, res) => {
       paid = !!payment && ['CONFIRMED', 'RECEIVED', 'RECEIVED_IN_CASH'].includes(payment.status);
     }
     if (!paid) return res.status(403).send('Pagamento não confirmado.');
-    if (!PRODUCT_FILE_URL) return res.status(503).send('Arquivo ainda não configurado no servidor.');
-
-    const upstream = await fetch(PRODUCT_FILE_URL, { redirect: 'follow' });
-    if (!upstream.ok || !upstream.body) return res.status(502).send('Não foi possível carregar o arquivo.');
-    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'application/zip');
+    const zip = decryptProduct();
+    res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="SHEED_Rico_China.zip"');
+    res.setHeader('Content-Length', String(zip.length));
     res.setHeader('Cache-Control', 'private, no-store');
-    const reader = upstream.body.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(Buffer.from(value));
-    }
-    res.end();
+    res.end(zip);
   } catch (e) {
     console.error('download_error', e.message);
-    if (!res.headersSent) res.status(500).send('Erro ao entregar o arquivo.'); else res.end();
+    res.status(500).send('Erro ao entregar o arquivo.');
   }
 });
 
