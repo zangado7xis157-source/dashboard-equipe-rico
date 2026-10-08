@@ -14,6 +14,9 @@ const PRODUCT_FILE_URL = process.env.PRODUCT_FILE_URL || '';
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
 const PRICE = Number(process.env.PRODUCT_PRICE || '21.99');
 const PRODUCT_NAME = process.env.PRODUCT_NAME || 'Extensão Rico China';
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || '';
+const DOWNLOAD_DB_SECRET = process.env.DOWNLOAD_DB_SECRET || '';
 
 const paidOrders = new Map();
 const consumedDownloads = new Set();
@@ -47,11 +50,53 @@ async function asaas(apiPath, options = {}) {
   return data;
 }
 
+function supabaseHeaders(extra = {}) {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !DOWNLOAD_DB_SECRET) throw new Error('Banco de downloads não configurado');
+  return {
+    apikey: SUPABASE_PUBLISHABLE_KEY,
+    'x-download-secret': DOWNLOAD_DB_SECRET,
+    ...extra
+  };
+}
+
+async function isDownloadConsumed(orderId) {
+  if (consumedDownloads.has(orderId)) return true;
+  const url = `${SUPABASE_URL}/rest/v1/extension_downloads?order_id=eq.${encodeURIComponent(orderId)}&select=order_id&limit=1`;
+  const res = await fetch(url, { headers: supabaseHeaders({ accept: 'application/json' }) });
+  if (!res.ok) throw new Error(`Falha ao consultar download: HTTP ${res.status}`);
+  const rows = await res.json();
+  const used = Array.isArray(rows) && rows.length > 0;
+  if (used) consumedDownloads.add(orderId);
+  return used;
+}
+
+async function claimDownload(orderId) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/extension_downloads`, {
+    method: 'POST',
+    headers: supabaseHeaders({
+      'content-type': 'application/json',
+      accept: 'application/json',
+      Prefer: 'return=minimal'
+    }),
+    body: JSON.stringify({ order_id: orderId })
+  });
+  if (res.status === 409) return false;
+  if (!res.ok) throw new Error(`Falha ao registrar download: HTTP ${res.status}`);
+  consumedDownloads.add(orderId);
+  return true;
+}
+
 app.get('/', (req, res) => {
   res.send(html(PRODUCT_NAME, `<h1 class="title">${PRODUCT_NAME}</h1><p class="muted">Entrega automática após confirmação do pagamento.</p><div class="price">R$ ${PRICE.toFixed(2).replace('.', ',')}</div><a class="btn" href="/checkout">Comprar e pagar</a><p class="small">Pagamento processado pelo Asaas.</p>`));
 });
 
-app.get('/health', (req, res) => res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_FILE_URL }));
+app.get('/health', async (req, res) => {
+  let dbReady = false;
+  try {
+    dbReady = !!SUPABASE_URL && !!SUPABASE_PUBLISHABLE_KEY && !!DOWNLOAD_DB_SECRET;
+  } catch {}
+  res.json({ ok: true, service: 'rico-china-extension-delivery', productReady: !!PRODUCT_FILE_URL, persistentDownloads: dbReady });
+});
 
 app.get('/checkout', async (req, res) => {
   try {
@@ -86,9 +131,9 @@ app.get('/sucesso', async (req, res) => {
     let paid = paidOrders.get(orderId) === true;
     if (!paid) { const payment = await findOrderPayment(orderId); paid = !!payment && ['CONFIRMED','RECEIVED','RECEIVED_IN_CASH'].includes(payment.status); if (paid) paidOrders.set(orderId, true); }
     if (!paid) return res.status(202).send(html('Aguardando confirmação', `<h1 class="title warn">Pagamento em confirmação</h1><p class="muted">Aguarde alguns segundos e atualize esta página.</p><a class="btn" href="${req.originalUrl}">Verificar novamente</a>`));
-    if (consumedDownloads.has(orderId)) return res.status(410).send(html('Download utilizado', `<h1 class="title error">Link de download já utilizado</h1><p class="muted">Este pedido já realizou o download do arquivo. O link não pode ser usado novamente.</p>`));
+    if (await isDownloadConsumed(orderId)) return res.status(410).send(html('Download utilizado', `<h1 class="title error">Este download já foi utilizado</h1><p class="muted">O arquivo só pode ser baixado uma vez por pedido.</p>`));
     const dlSig = crypto.createHmac('sha256', DOWNLOAD_SECRET).update(`download:${orderId}`).digest('hex');
-    return res.send(html('Pagamento confirmado', `<h1 class="title ok">Pagamento confirmado ✓</h1><p class="muted">Seu arquivo foi liberado.</p><a class="btn" href="/download?order=${encodeURIComponent(orderId)}&sig=${dlSig}">Baixar SHEED_Rico_China.zip</a><p class="small">Download único: após baixar, este link será bloqueado.</p>`));
+    return res.send(html('Pagamento confirmado', `<h1 class="title ok">Pagamento confirmado ✓</h1><p class="muted">Seu arquivo foi liberado.</p><a class="btn" href="/download?order=${encodeURIComponent(orderId)}&sig=${dlSig}">Baixar SHEED_Rico_China.zip</a><p class="small">Download único: após baixar, este link será bloqueado permanentemente.</p>`));
   } catch (e) { console.error('success_check_error', e.data || e.message); res.status(500).send(html('Erro', `<h1 class="title error">Não consegui verificar agora</h1>`)); }
 });
 
@@ -109,18 +154,30 @@ app.get('/download', async (req, res) => {
   const sig = String(req.query.sig || '');
   const expected = DOWNLOAD_SECRET ? crypto.createHmac('sha256', DOWNLOAD_SECRET).update(`download:${orderId}`).digest('hex') : '';
   if (!expected || !sig || expected.length !== sig.length || !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))) return res.status(403).send('Link inválido.');
-  if (consumedDownloads.has(orderId) || downloadsInProgress.has(orderId)) return res.status(410).send(html('Link expirado', `<h1 class="title error">Este download já foi utilizado</h1><p class="muted">O arquivo só pode ser baixado uma vez por pedido.</p>`));
+  if (downloadsInProgress.has(orderId)) return res.status(410).send(html('Link expirado', `<h1 class="title error">Este download já foi utilizado</h1><p class="muted">O arquivo só pode ser baixado uma vez por pedido.</p>`));
   downloadsInProgress.add(orderId);
   try {
+    if (await isDownloadConsumed(orderId)) {
+      downloadsInProgress.delete(orderId);
+      return res.status(410).send(html('Link expirado', `<h1 class="title error">Este download já foi utilizado</h1><p class="muted">O arquivo só pode ser baixado uma vez por pedido.</p>`));
+    }
+
     let paid = paidOrders.get(orderId) === true;
     if (!paid) { const payment = await findOrderPayment(orderId); paid = !!payment && ['CONFIRMED','RECEIVED','RECEIVED_IN_CASH'].includes(payment.status); }
     if (!paid) { downloadsInProgress.delete(orderId); return res.status(403).send('Pagamento não confirmado.'); }
     if (!PRODUCT_FILE_URL) throw new Error('PRODUCT_FILE_URL não configurada');
+
     const fileRes = await fetch(PRODUCT_FILE_URL, { redirect: 'follow' });
     if (!fileRes.ok) throw new Error(`Falha ao buscar arquivo: HTTP ${fileRes.status}`);
     const zip = Buffer.from(await fileRes.arrayBuffer());
     if (!zip.length) throw new Error('Arquivo vazio');
-    consumedDownloads.add(orderId);
+
+    const claimed = await claimDownload(orderId);
+    if (!claimed) {
+      downloadsInProgress.delete(orderId);
+      return res.status(410).send(html('Link expirado', `<h1 class="title error">Este download já foi utilizado</h1><p class="muted">O arquivo só pode ser baixado uma vez por pedido.</p>`));
+    }
+
     downloadsInProgress.delete(orderId);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="SHEED_Rico_China.zip"');
