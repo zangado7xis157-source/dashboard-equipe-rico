@@ -1,153 +1,37 @@
 (()=>{
-  const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n||0));
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
-  const getUser=()=>{try{return typeof user!=='undefined'&&user&&user.id?user:null}catch(_){return null}};
-  const getClients=()=>{try{return Array.isArray(clients)?clients:[]}catch(_){return []}};
-  const getEntries=()=>{try{return Array.isArray(entries)?entries:[]}catch(_){return []}};
-
-  function totalsForClient(id){
-    let deposit=0,withdraw=0,chest=0;
-    for(const e of getEntries()){
-      if(e.client_id!==id)continue;
-      const v=Number(e.value||0);
-      if(e.entry_type==='deposito'||e.entry_type==='deposito_mae')deposit+=v;
-      else if(e.entry_type==='saque')withdraw+=v;
-      else if(e.entry_type==='bau')chest+=v;
-    }
-    return {deposit,withdraw,chest,profit:withdraw+chest-deposit};
-  }
-
-  function cycleName(){return document.getElementById('ricoActiveCycleName')?.textContent?.trim()||'Ciclo'}
-
-  function dashboardGrid(){
-    return document.querySelector('.dashboard-view.layout')||document.querySelector('.dashboard-view');
-  }
-
-  function placeOutsideDashboard(root){
-    const grid=dashboardGrid();
-    if(!grid||!grid.parentNode||!root)return;
-    const bar=document.getElementById('ricoCycleTabsBar');
-    if(bar){
-      if(bar.previousElementSibling!==grid)grid.insertAdjacentElement('afterend',bar);
-      if(root.previousElementSibling!==bar)bar.insertAdjacentElement('afterend',root);
-    }else if(root.previousElementSibling!==grid){
-      grid.insertAdjacentElement('afterend',root);
-    }
-  }
-
-  function mount(){
-    let root=document.getElementById('ricoOpsV2');
-    if(root){placeOutsideDashboard(root);return root}
-    const anchor=document.querySelector('.history-sections')||document.querySelector('.cycle-board');
-    if(!anchor)return null;
-    root=document.createElement('section');
-    root.id='ricoOpsV2';
-    root.innerHTML=`
-      <div class="rico-ops-head">
-        <div class="rico-ops-title-wrap">
-          <div class="rico-ops-logo">▦</div>
-          <div><h2 class="rico-ops-title" id="ricoOpsTitle">Operações do Ciclo</h2><p class="rico-ops-sub">Depósitos, saques e baús organizados por tela e por ciclo.</p></div>
-        </div>
-        <div class="rico-ops-head-right">
-          <div class="rico-cycle-profit-card" id="ricoCycleProfitCard"><div class="rico-cycle-profit-icon">↗</div><div><span>Lucro do ciclo</span><strong id="ricoCycleProfit">R$ 0,00</strong></div></div>
-          <button class="rico-new-screen" id="ricoNewScreen" type="button">＋ Nova tela</button>
-        </div>
-      </div>
-      <div class="rico-ops-table-wrap">
-        <table class="rico-ops-table">
-          <thead><tr><th>🖥 Tela</th><th>▣ Depósito</th><th>⇩ Saque</th><th>▰ Baú</th><th>⟳ Ciclo</th><th>▥ Lucro</th><th>⚙ Ações</th></tr></thead>
-          <tbody id="ricoOpsRows"></tbody>
-        </table>
-      </div>
-      <div class="rico-ops-foot"><span id="ricoOpsCount">0 telas neste ciclo</span><span id="ricoOpsTotals"></span></div>`;
-    anchor.parentNode.insertBefore(root,anchor);
-    document.body.classList.add('rico-ops-v2-ready');
-    root.querySelector('#ricoNewScreen').addEventListener('click',()=>{
-      const input=document.getElementById('clientName');
-      if(input){input.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>input.focus(),350)}
-    });
-    placeOutsideDashboard(root);
-    return root;
-  }
-
-  function placeCycleBar(){
-    const bar=document.getElementById('ricoCycleTabsBar'),root=document.getElementById('ricoOpsV2');
-    if(!root)return;
-    if(bar)bar.classList.add('rico-cycle-bar-v2');
-    placeOutsideDashboard(root);
-  }
-
-  function renderRows(){
-    const root=mount();if(!root||!getUser())return;
-    placeCycleBar();
-    const rows=document.getElementById('ricoOpsRows');if(!rows)return;
-    const list=getClients().slice().sort((a,b)=>String(a.created_at||'').localeCompare(String(b.created_at||'')));
-    const cName=cycleName();
-    let dep=0,saq=0,bau=0,profit=0;
-    if(!list.length){
-      rows.innerHTML='<tr><td colspan="7" class="rico-ops-empty"><strong>Nenhuma tela neste ciclo.</strong>Crie uma nova tela e ela ficará somente nesta aba.</td></tr>';
-    }else{
-      rows.innerHTML=list.map(c=>{
-        const t=totalsForClient(c.id);dep+=t.deposit;saq+=t.withdraw;bau+=t.chest;profit+=t.profit;
-        const created=c.created_at?new Date(c.created_at).toLocaleDateString('pt-BR'):'';
-        const meta=c.house_link?`<a class="rico-screen-link" href="${esc(c.house_link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗ abrir casa</a>`:(created?`Criada em ${created}`:'Tela operacional');
-        const depCls=t.deposit?'deposit':'zero',saqCls=t.withdraw?'withdraw':'zero',bauCls=t.chest?'chest':'zero';
-        const pCls=t.profit<0?'negative':(t.profit===0?'neutral':'');
-        return `<tr data-client-id="${esc(c.id)}">
-          <td class="rico-screen-cell"><span class="rico-screen-name">${esc(c.name)}</span><span class="rico-screen-meta">${meta}</span></td>
-          <td><div class="rico-money-box ${depCls}">${money(t.deposit)}</div></td>
-          <td><div class="rico-money-box ${saqCls}">${money(t.withdraw)}</div></td>
-          <td><div class="rico-money-box ${bauCls}">${money(t.chest)}</div></td>
-          <td><span class="rico-cycle-badge"><i></i>${esc(cName)}</span></td>
-          <td><span class="rico-profit ${pCls}">${t.profit>0?'+':''}${money(t.profit)}</span></td>
-          <td><div class="rico-actions"><button class="rico-action-btn rico-action-open" type="button" data-open="${esc(c.id)}" title="Abrir tela">↗</button><button class="rico-action-btn rico-action-delete" type="button" data-delete="${esc(c.id)}" title="Excluir tela">🗑</button></div></td>
-        </tr>`;
-      }).join('');
-    }
-    document.getElementById('ricoOpsTitle').textContent=`Operações do ${cName}`;
-    const pc=document.getElementById('ricoCycleProfitCard'),pv=document.getElementById('ricoCycleProfit');
-    if(pv)pv.textContent=(profit>0?'+':'')+money(profit);
-    if(pc)pc.classList.toggle('negative',profit<0);
-    const count=document.getElementById('ricoOpsCount'),totals=document.getElementById('ricoOpsTotals');
-    if(count)count.textContent=`${list.length} ${list.length===1?'tela':'telas'} neste ciclo`;
-    if(totals)totals.innerHTML=`Depósitos <strong>${money(dep)}</strong> · Saques <strong>${money(saq)}</strong> · Baús <strong>${money(bau)}</strong>`;
-    rows.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openClient(b.dataset.open)));
-    rows.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',async()=>{
-      const id=b.dataset.delete;
-      if(typeof window.deleteCycleClient==='function')await window.deleteCycleClient(id);
-      else if(typeof sb!=='undefined'){
-        if(!confirm('Excluir esta tela e todo o histórico?'))return;
-        const {error}=await sb.from('cpa_clients').delete().eq('id',id);
-        if(error)return alert(error.message);
-        if(typeof loadData==='function')await loadData();
-      }
-    }));
-    placeOutsideDashboard(root);
-  }
-
-  function openClient(id){
-    try{selectedClientId=id}catch(_){}
-    const sel=document.getElementById('clientSelect');if(sel)sel.value=id;
-    try{if(typeof render==='function')render()}catch(_){}
-    const target=document.getElementById('detailName')||document.getElementById('clientSelect');
-    if(target)target.scrollIntoView({behavior:'smooth',block:'center'});
-  }
-
-  function bindObservers(){
-    const bar=document.getElementById('ricoCycleTabsBar');
-    if(bar&&!bar.dataset.opsV2Observed){
-      bar.dataset.opsV2Observed='1';
-      new MutationObserver(()=>setTimeout(renderRows,20)).observe(bar,{subtree:true,childList:true,characterData:true,attributes:true});
-      bar.addEventListener('click',()=>setTimeout(renderRows,250),true);
-    }
-  }
-
-  function boot(){
-    if(!getUser())return;
-    mount();placeCycleBar();bindObservers();renderRows();
-  }
-
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,300));else setTimeout(boot,300);
-  setTimeout(boot,800);
-  setInterval(()=>{if(getUser()){boot()}},1200);
+'use strict';
+const fmt=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n||0));
+const sign=n=>(Number(n||0)>0?'+':'')+fmt(n);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const U=()=>{try{return user?.id?user:null}catch(_){return null}},DB=()=>{try{return sb}catch(_){return null}};
+let cycles=[],allClients=[],allEntries=[],activeId=null,viewId=null,loading=false,finishing=false,wrapped=false;
+const oldReports={profit:typeof renderProfitReport==='function'?renderProfitReport:null,month:typeof renderMonthDetail==='function'?renderMonthDetail:null,ach:typeof renderAchievements==='function'?renderAchievements:null};
+const cycle=id=>cycles.find(x=>x.id===id)||null,active=()=>cycle(activeId),view=()=>cycle(viewId),editable=()=>viewId===activeId&&view()?.status==='active';
+function stats(id){const cs=allClients.filter(c=>c.cycle_id===id),ids=new Set(cs.map(c=>c.id));let d=0,s=0,b=0;for(const e of allEntries){if(!ids.has(e.client_id))continue;const v=Number(e.value||0);if(e.entry_type==='deposito'||e.entry_type==='deposito_mae')d+=v;else if(e.entry_type==='saque')s+=v;else if(e.entry_type==='bau')b+=v}return{clients:cs.length,d,s,b,p:s+b-d}}
+function styles(){if(document.getElementById('ricoCycleV3Style'))return;const x=document.createElement('style');x.id='ricoCycleV3Style';x.textContent=`
+.rico-cycle-hub{margin:0 0 14px;padding:14px;border:1px solid rgba(49,230,124,.3);border-radius:18px;background:linear-gradient(145deg,#0a1c12,#06120c)}.rico-cycle-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.rico-cycle-head small{display:block;color:#78998a;font-weight:900;letter-spacing:.1em}.rico-cycle-head strong{font-size:18px}.rico-cycle-result{color:#9bc4aa}.rico-cycle-result b{color:#31e67c;font-size:18px}.rico-cycle-result b.neg{color:#ff6573}.rico-cycle-tabs{display:flex;gap:8px;overflow-x:auto;margin-top:10px;padding-bottom:3px}.rico-cycle-tab{white-space:nowrap;border:1px solid #1d3b2a;background:#09160f;color:#aac7b4;border-radius:11px;padding:9px 11px;font-size:11px;font-weight:900}.rico-cycle-tab.on{border-color:#31e67c;background:rgba(49,230,124,.12);color:#effff4}.rico-cycle-tab.closed:before{content:'✓ ';color:#91aa9d}.rico-cycle-note{margin-top:9px;font-size:11px;color:#78998a}.rico-cycle-note.history{color:#e5c777}.rico-cycle-disabled{opacity:.5!important;cursor:not-allowed!important}.rico-ops-head-right{flex-wrap:wrap}.rico-cycle-state{padding:6px 9px;border-radius:999px;border:1px solid rgba(49,230,124,.3);font-size:10px;font-weight:900;color:#8ed8aa}.rico-cycle-state.closed{color:#e5c777;border-color:rgba(255,200,87,.3)}@media(max-width:650px){.rico-cycle-hub{padding:12px}.rico-cycle-result{width:100%}}
+`;document.head.appendChild(x)}
+function metricGrid(){return document.querySelector('.grid.metrics.dashboard-view')}function layout(){return document.querySelector('.grid.layout.dashboard-view')}
+function mountBar(){let r=document.getElementById('ricoCycleTabsBar');if(!r){r=document.createElement('section');r.id='ricoCycleTabsBar';r.className='rico-cycle-hub dashboard-view'}const m=metricGrid(),l=layout();if(m&&r.previousElementSibling!==m)m.insertAdjacentElement('afterend',r);if(l&&l.previousElementSibling!==r)r.insertAdjacentElement('afterend',l);return r}
+function renderBar(){const r=mountBar(),c=view()||active();if(!r)return;if(!c){r.innerHTML='<strong>Preparando ciclo...</strong>';return}const st=stats(c.id),ordered=cycles.slice().sort((a,b)=>a.status!==b.status?(a.status==='active'?-1:1):new Date(b.created_at)-new Date(a.created_at));r.innerHTML=`<div class="rico-cycle-head"><div><small>${c.status==='active'?'CICLO ATUAL':'HISTÓRICO DE CICLOS'}</small><strong id="ricoActiveCycleName">${esc(c.name)}</strong></div><div class="rico-cycle-result">${st.clients} ${st.clients===1?'cliente':'clientes'} · resultado <b class="${st.p<0?'neg':''}">${sign(st.p)}</b></div></div><div class="rico-cycle-tabs">${ordered.map(x=>{const s=stats(x.id);return`<button class="rico-cycle-tab ${x.id===c.id?'on':''} ${x.status==='closed'?'closed':''}" data-cycle="${x.id}">${x.status==='active'?'Atual • ':''}${esc(x.name)} • ${esc(sign(s.p))}</button>`}).join('')}</div><div class="rico-cycle-note ${c.status==='closed'?'history':''}">${c.status==='closed'?'📁 Ciclo finalizado: dados salvos em modo somente leitura.':'Ao finalizar, o resultado fica salvo e um novo ciclo começa zerado.'}</div>`;r.querySelectorAll('[data-cycle]').forEach(b=>b.onclick=()=>selectCycle(b.dataset.cycle))}
+function mountOps(){let r=document.getElementById('ricoOpsV2');const l=layout();if(!l)return null;if(!r){r=document.createElement('section');r.id='ricoOpsV2';r.className='dashboard-view';r.innerHTML=`<div class="rico-ops-head"><div class="rico-ops-title-wrap"><div class="rico-ops-logo">▦</div><div><h2 class="rico-ops-title" id="ricoOpsTitle">Operações do ciclo</h2><p class="rico-ops-sub">Depósitos, saques e baús separados por ciclo.</p></div></div><div class="rico-ops-head-right"><span id="ricoCycleState" class="rico-cycle-state">ATIVO</span><div class="rico-cycle-profit-card" id="ricoCycleProfitCard"><div class="rico-cycle-profit-icon">↗</div><div><span>Resultado do ciclo</span><strong id="ricoCycleProfit">R$ 0,00</strong></div></div><button class="rico-new-screen" id="ricoNewScreen">＋ Novo cliente</button></div></div><div class="rico-ops-table-wrap"><table class="rico-ops-table"><thead><tr><th>Cliente</th><th>Depósito</th><th>Saque</th><th>Baú</th><th>Ciclo</th><th>Lucro</th><th>Ações</th></tr></thead><tbody id="ricoOpsRows"></tbody></table></div><div class="rico-ops-foot"><span id="ricoOpsCount"></span><span id="ricoOpsTotals"></span></div>`;l.insertAdjacentElement('afterend',r);r.querySelector('#ricoNewScreen').onclick=()=>{if(!editable())return;document.getElementById('clientName')?.scrollIntoView({behavior:'smooth',block:'center'})}}else if(r.previousElementSibling!==l)l.insertAdjacentElement('afterend',r);return r}
+function clientTotals(id){let d=0,s=0,b=0;for(const e of (Array.isArray(entries)?entries:[])){if(e.client_id!==id)continue;const v=Number(e.value||0);if(e.entry_type==='deposito'||e.entry_type==='deposito_mae')d+=v;else if(e.entry_type==='saque')s+=v;else if(e.entry_type==='bau')b+=v}return{d,s,b,p:s+b-d}}
+function renderOps(){const r=mountOps(),c=view();if(!r||!c)return;const rows=r.querySelector('#ricoOpsRows'),list=Array.isArray(clients)?clients:[];let d=0,s=0,b=0,p=0;rows.innerHTML=list.length?list.map(x=>{const t=clientTotals(x.id);d+=t.d;s+=t.s;b+=t.b;p+=t.p;const meta=x.house_link?`<a class="rico-screen-link" href="${esc(x.house_link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">↗ abrir casa</a>`:'';return`<tr><td class="rico-screen-cell"><span class="rico-screen-name">${esc(x.name)}</span><span class="rico-screen-meta">${meta}</span></td><td><div class="rico-money-box ${t.d?'deposit':'zero'}">${fmt(t.d)}</div></td><td><div class="rico-money-box ${t.s?'withdraw':'zero'}">${fmt(t.s)}</div></td><td><div class="rico-money-box ${t.b?'chest':'zero'}">${fmt(t.b)}</div></td><td><span class="rico-cycle-badge"><i></i>${esc(c.name)}</span></td><td><span class="rico-profit ${t.p<0?'negative':t.p===0?'neutral':''}">${sign(t.p)}</span></td><td><div class="rico-actions"><button class="rico-action-btn" data-open="${x.id}">↗</button>${editable()?`<button class="rico-action-btn rico-action-delete" data-del="${x.id}">🗑</button>`:''}</div></td></tr>`}).join(''):`<tr><td colspan="7" class="rico-ops-empty"><strong>Nenhum cliente neste ciclo.</strong>${editable()?'Cadastre um cliente para começar.':'Este ciclo foi finalizado vazio.'}</td></tr>`;r.querySelector('#ricoOpsTitle').textContent=`Operações do ${c.name}`;r.querySelector('#ricoCycleProfit').textContent=sign(p);r.querySelector('#ricoCycleProfitCard').classList.toggle('negative',p<0);r.querySelector('#ricoOpsCount').textContent=`${list.length} ${list.length===1?'cliente':'clientes'} neste ciclo`;r.querySelector('#ricoOpsTotals').innerHTML=`Depósitos <strong>${fmt(d)}</strong> · Saques <strong>${fmt(s)}</strong> · Baús <strong>${fmt(b)}</strong>`;const st=r.querySelector('#ricoCycleState');st.textContent=editable()?'ATIVO':'FINALIZADO';st.classList.toggle('closed',!editable());const nb=r.querySelector('#ricoNewScreen');nb.disabled=!editable();nb.textContent=editable()?'＋ Novo cliente':'🔒 Somente leitura';rows.querySelectorAll('[data-open]').forEach(q=>q.onclick=()=>openLocal(q.dataset.open));rows.querySelectorAll('[data-del]').forEach(q=>q.onclick=()=>deleteClient(q.dataset.del))}
+function openLocal(id){try{selectedClientId=id}catch(_){}const s=document.getElementById('clientSelect');if(s)s.value=id;try{render()}catch(_){}document.getElementById('detailName')?.scrollIntoView({behavior:'smooth',block:'center'})}
+function readonly(){const on=editable();['clientName','houseLink','clientObs','addClient','depValue','maeDepValue','saqValue','bauValue','entryDate','entryObs','addDep','addMaeDep','addSaq','addBau','deleteClient'].forEach(id=>{const e=document.getElementById(id);if(e){e.disabled=!on;e.classList.toggle('rico-cycle-disabled',!on)}});const f=document.getElementById('finishCycleBtn');if(f){f.disabled=!on||finishing;f.classList.toggle('rico-cycle-disabled',!on||finishing);f.textContent=finishing?'Finalizando...':on?'Finalizar ciclo':'Ciclo finalizado'}const lab=document.getElementById('mLucro')?.parentElement?.querySelector('.label');if(lab)lab.textContent=on?'Lucro do ciclo':'Lucro do ciclo (histórico)'}
+function apply(){const c=view()||active();if(!c)return;viewId=c.id;const cs=allClients.filter(x=>x.cycle_id===c.id),ids=new Set(cs.map(x=>x.id)),es=allEntries.filter(e=>ids.has(e.client_id));try{clients=cs;entries=es;if(!selectedClientId||!cs.some(x=>x.id===selectedClientId))selectedClientId=cs[0]?.id||null}catch(_){}renderBar();readonly();try{render()}catch(e){console.warn(e)}renderOps()}
+function selectCycle(id){if(!cycle(id))return;viewId=id;apply();metricGrid()?.scrollIntoView({behavior:'smooth',block:'start'})}
+function nextName(){const nums=cycles.map(c=>Number(String(c.name||'').match(/(\d+)/)?.[1]||0));return`Ciclo ${Math.max(cycles.length,...nums,0)+1}`}
+async function ensureActive(){const u=U(),db=DB();if(!u||!db)return null;let a=cycles.find(x=>x.status==='active');if(!a){const r=await db.from('cpa_cycles').insert({user_id:u.id,name:nextName(),status:'active'}).select().single();if(r.error){const q=await db.from('cpa_cycles').select('*').eq('user_id',u.id).eq('status','active').limit(1);a=q.data?.[0]||null}else{a=r.data;cycles.push(a)}}activeId=a?.id||null;return a}
+async function loadCycleData(){if(loading)return;const u=U(),db=DB();if(!u||!db)return;loading=true;try{const [cy,cl,en]=await Promise.all([db.from('cpa_cycles').select('*').eq('user_id',u.id).order('created_at'),db.from('cpa_clients').select('*').eq('user_id',u.id).order('created_at',{ascending:false}),db.from('cpa_entries').select('*').eq('user_id',u.id).order('entry_date',{ascending:false})]);if(cy.error||cl.error||en.error){console.error(cy.error||cl.error||en.error);return}cycles=cy.data||[];allClients=cl.data||[];allEntries=en.data||[];const a=await ensureActive();const legacy=allClients.filter(x=>!x.cycle_id);if(a&&legacy.length){const z=await db.from('cpa_clients').update({cycle_id:a.id}).eq('user_id',u.id).is('cycle_id',null);if(!z.error)allClients=allClients.map(x=>x.cycle_id?x:{...x,cycle_id:a.id})}if(!viewId||!cycle(viewId))viewId=activeId;apply();if(!document.getElementById('profitView')?.classList.contains('hidden'))try{renderProfitReport()}catch(_){}if(!document.getElementById('achievementsView')?.classList.contains('hidden'))try{renderAchievements()}catch(_){}}finally{loading=false}}
+async function addClientActive(){if(!editable())return alert('Abra o ciclo atual para cadastrar cliente.');const u=U(),db=DB(),a=active(),name=document.getElementById('clientName')?.value.trim();if(!u||!db||!a)return;if(!name)return alert('Digite o nome do cliente.');const r=await db.from('cpa_clients').insert({user_id:u.id,cycle_id:a.id,name,house_link:document.getElementById('houseLink')?.value.trim()||null,note:document.getElementById('clientObs')?.value.trim()||null}).select().single();if(r.error)return alert(r.error.message);['clientName','houseLink','clientObs'].forEach(id=>document.getElementById(id).value='');try{selectedClientId=r.data.id}catch(_){}await loadCycleData()}
+async function addEntryActive(type,id){if(!editable())return alert('Este ciclo já foi finalizado.');let c=null;try{c=selected()}catch(_){}if(!c)return alert('Selecione um cliente.');let v;try{v=money(document.getElementById(id)?.value)}catch(_){v=Number(String(document.getElementById(id)?.value||'').replace(',','.'))}if(!Number.isFinite(v)||v<=0)return alert('Valor inválido.');const u=U(),db=DB(),r=await db.from('cpa_entries').insert({user_id:u.id,client_id:c.id,entry_type:type,value:v,entry_date:document.getElementById('entryDate')?.value||new Date().toISOString().slice(0,10),note:document.getElementById('entryObs')?.value.trim()||null});if(r.error)return alert(r.error.message);document.getElementById(id).value='';if(document.getElementById('entryObs'))document.getElementById('entryObs').value='';await loadCycleData()}
+async function deleteClient(id){if(!editable())return alert('Ciclo finalizado: somente leitura.');const c=allClients.find(x=>x.id===id);if(!c||!confirm(`Excluir ${c.name} e todo o histórico?`))return;const r=await DB().from('cpa_clients').delete().eq('id',id).eq('user_id',U().id);if(r.error)return alert(r.error.message);try{if(selectedClientId===id)selectedClientId=null}catch(_){}await loadCycleData()}
+async function deleteEntry(id){if(!editable())return alert('Ciclo finalizado: somente leitura.');if(!confirm('Excluir lançamento?'))return;const r=await DB().from('cpa_entries').delete().eq('id',id).eq('user_id',U().id);if(r.error)return alert(r.error.message);await loadCycleData()}
+async function finish(){if(finishing)return;const a=active();if(!a||viewId!==a.id)return alert('Abra o ciclo atual antes de finalizar.');const s=stats(a.id);if(!s.clients&&!s.d&&!s.s&&!s.b)return alert('O ciclo atual ainda está vazio.');if(!confirm(`Finalizar ${a.name}?\n\nDepósitos: ${fmt(s.d)}\nSaques: ${fmt(s.s)}\nBaús: ${fmt(s.b)}\nResultado: ${sign(s.p)}\n\nO histórico ficará salvo e um novo ciclo será aberto zerado.`))return;finishing=true;readonly();const db=DB(),u=U();try{const close=await db.from('cpa_cycles').update({status:'closed',closed_at:new Date().toISOString()}).eq('id',a.id).eq('user_id',u.id).eq('status','active');if(close.error)throw close.error;const n=await db.from('cpa_cycles').insert({user_id:u.id,name:nextName(),status:'active'}).select().single();if(n.error)throw n.error;activeId=n.data.id;viewId=n.data.id;try{selectedClientId=null}catch(_){}try{if(typeof sendRicoPush==='function')await sendRicoPush('✅ Ciclo finalizado',`${a.name} • Resultado: ${sign(s.p)} • Novo ciclo: ${n.data.name}`)}catch(_){}await loadCycleData();alert(`${a.name} finalizado e salvo.\n\nResultado: ${sign(s.p)}\n${n.data.name} aberto zerado.`)}catch(e){console.error(e);await loadCycleData();alert('Não foi possível finalizar agora. Seus dados não foram apagados.')}finally{finishing=false;readonly()}}
+function wrapReports(){if(wrapped)return;wrapped=true;if(oldReports.profit)renderProfitReport=function(){const cur=entries;try{entries=allEntries.slice();return oldReports.profit()}finally{entries=cur}};if(oldReports.month)renderMonthDetail=function(){const cur=entries;try{entries=allEntries.slice();return oldReports.month()}finally{entries=cur}};if(oldReports.ach)renderAchievements=function(){const cur=entries;try{entries=allEntries.slice();return oldReports.ach()}finally{entries=cur}};try{totalAchievementProfit=function(){let d=0,s=0,b=0;for(const e of allEntries){const v=Number(e.value||0);if(e.entry_type==='deposito'||e.entry_type==='deposito_mae')d+=v;else if(e.entry_type==='saque')s+=v;else if(e.entry_type==='bau')b+=v}return Math.max(0,s+b-d)}}catch(_){}}
+function bind(){const a=document.getElementById('addClient');if(a)a.onclick=addClientActive;[['addDep','deposito','depValue'],['addMaeDep','deposito_mae','maeDepValue'],['addSaq','saque','saqValue'],['addBau','bau','bauValue']].forEach(([b,t,i])=>{const e=document.getElementById(b);if(e)e.onclick=()=>addEntryActive(t,i)});const f=document.getElementById('finishCycleBtn');if(f)f.onclick=finish;const d=document.getElementById('deleteClient');if(d)d.onclick=()=>{let c;try{c=selected()}catch(_){}if(c)deleteClient(c.id)};const r=document.getElementById('refreshBtn');if(r)r.onclick=loadCycleData;const pr=document.getElementById('profitRefreshBtn');if(pr)pr.onclick=async()=>{await loadCycleData();renderProfitReport()};window.deleteEntry=deleteEntry;window.deleteCycleClient=deleteClient}
+function install(){styles();wrapReports();try{loadData=loadCycleData}catch(_){}try{addEntry=addEntryActive}catch(_){}bind()}
+async function boot(){install();if(!U())return;mountBar();mountOps();bind();await loadCycleData()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,250));else setTimeout(boot,250);setTimeout(boot,800);setInterval(()=>{if(U()){bind();renderBar();renderOps();readonly()}},1800);
 })();
