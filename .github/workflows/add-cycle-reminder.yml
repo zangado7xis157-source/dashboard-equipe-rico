@@ -1,0 +1,55 @@
+name: Add cycle reminder
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Add visual cycle reminder
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          css = '''\n/* RICO_CYCLE_REMINDER_20261010 */\n.cycle-save-reminder{display:flex;align-items:center;gap:9px;margin:2px 0 14px;padding:10px 12px;border:1px solid rgba(255,210,31,.38);border-radius:12px;background:linear-gradient(90deg,rgba(255,210,31,.10),rgba(255,210,31,.035));color:#f6e59a;font-size:12px;font-weight:800;line-height:1.35;box-shadow:inset 0 0 18px rgba(255,210,31,.025)}\n.cycle-save-reminder .cycle-save-reminder-icon{font-size:16px;line-height:1;flex:0 0 auto}\n.cycle-save-reminder strong{color:#ffd92f}\n@media(max-width:620px){.cycle-save-reminder{font-size:11px;padding:9px 10px;margin-bottom:12px}}\n'''
+
+          reminder = '''      <div class="cycle-save-reminder" role="note" aria-label="Lembrete para salvar o ciclo">\n        <span class="cycle-save-reminder-icon">⚠️</span>\n        <span><strong>Lembrete:</strong> ao terminar uma operação, finalize o ciclo antes de iniciar outro. Assim seu histórico fica sempre salvo.</span>\n      </div>\n'''
+
+          marker = '      <div class="grid client-stats">'
+          for filename in ['index.html', 'dashboard-atualizado.html']:
+              p = Path(filename)
+              if not p.exists():
+                  continue
+              html = p.read_text(encoding='utf-8')
+              changed = False
+              if 'RICO_CYCLE_REMINDER_20261010' not in html:
+                  html = html.replace('\n</style>', css + '\n</style>', 1)
+                  changed = True
+              if 'class="cycle-save-reminder"' not in html and marker in html:
+                  html = html.replace(marker, reminder + marker, 1)
+                  changed = True
+              if changed:
+                  p.write_text(html, encoding='utf-8')
+          PY
+
+      - name: Commit reminder
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html dashboard-atualizado.html
+          git commit -m "feat: adicionar lembrete para finalizar ciclo"
+          git push
