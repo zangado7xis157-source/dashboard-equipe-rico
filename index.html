@@ -202,6 +202,12 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 body.side-menu-open{overflow:hidden}
 @media(min-width:900px){.main-menu-bar{margin-bottom:18px}.menu-toggle-btn{width:52px}}
 
+/* RICO_CYCLE_REMINDER_20261010 */
+.cycle-save-reminder{display:flex;align-items:center;gap:9px;margin:2px 0 14px;padding:10px 12px;border:1px solid rgba(255,210,31,.38);border-radius:12px;background:linear-gradient(90deg,rgba(255,210,31,.10),rgba(255,210,31,.035));color:#f6e59a;font-size:12px;font-weight:800;line-height:1.35;box-shadow:inset 0 0 18px rgba(255,210,31,.025)}
+.cycle-save-reminder .cycle-save-reminder-icon{font-size:16px;line-height:1;flex:0 0 auto}
+.cycle-save-reminder strong{color:#ffd92f}
+@media(max-width:620px){.cycle-save-reminder{font-size:11px;padding:9px 10px;margin-bottom:12px}}
+
 </style>
 <link rel="stylesheet" href="/rico-operations-v2.css?v=20261010b">
 </head>
@@ -354,6 +360,10 @@ body.side-menu-open{overflow:hidden}
       <button class="primary" id="finishCycleBtn">Finalizar ciclo</button>
       <button class="danger" id="deleteClient">Excluir cliente</button>
     </div>
+      </div>
+      <div class="cycle-save-reminder" role="note" aria-label="Lembrete para salvar o ciclo">
+        <span class="cycle-save-reminder-icon">⚠️</span>
+        <span><strong>Lembrete:</strong> ao terminar uma operação, finalize o ciclo antes de iniciar outro. Assim seu histórico fica sempre salvo.</span>
       </div>
       <div class="grid client-stats">
         <div class="mini"><span>Depositado</span><strong id="cDep">R$ 0,00</strong></div>
