@@ -203,7 +203,7 @@ body.side-menu-open{overflow:hidden}
 @media(min-width:900px){.main-menu-bar{margin-bottom:18px}.menu-toggle-btn{width:52px}}
 
 </style>
-<link rel="stylesheet" href="/rico-operations-v2.css?v=20261006">
+<link rel="stylesheet" href="/rico-operations-v2.css?v=20261010b">
 </head>
 <body>
 <div class="wrap">
@@ -336,7 +336,7 @@ body.side-menu-open{overflow:hidden}
       <div class="field"><label>Cliente selecionado</label><select id="clientSelect"></select></div>
       <div id="selectedLink" class="muted"></div>
 
-      <div class="grid money" style="margin-top:12px">
+      <div class="grid money" style="margin-top:12px;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%">
         <div class="box"><h3 style="color:var(--yellow)">Depósito</h3><input id="depValue" placeholder="R$ 0,00"><button class="secondary" id="addDep">Adicionar</button></div>
         <div class="box"><h3 style="color:var(--green)">Depósito Conta Mãe</h3><input id="maeDepValue" placeholder="R$ 0,00"><button class="secondary" id="addMaeDep">Adicionar</button></div>
         <div class="box"><h3 style="color:var(--blue)">Saque</h3><input id="saqValue" placeholder="R$ 0,00"><button class="secondary" id="addSaq">Adicionar</button></div>
@@ -1715,6 +1715,6 @@ applyPaymentUrl();
 registerRicoWorker().then(()=>refreshNotifyButton());
 boot();
 </script>
-<script src="/rico-operations-v2.js?v=20261006"></script>
+<script src="/rico-operations-v2.js?v=20261010b"></script>
 </body>
 </html>
