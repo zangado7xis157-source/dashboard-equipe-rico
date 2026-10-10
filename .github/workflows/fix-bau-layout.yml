@@ -1,0 +1,57 @@
+name: Fix bau layout
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-layout:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ajustar grade de lançamentos
+        shell: bash
+        run: |
+          if ! grep -q 'RICO_MONEY_GRID_FIX_20261010' rico-operations-v2.css; then
+            cat >> rico-operations-v2.css <<'CSS'
+
+          /* RICO_MONEY_GRID_FIX_20261010 */
+          body.rico-ops-v2-ready .dashboard-view.layout .grid.money {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          body.rico-ops-v2-ready .dashboard-view.layout .grid.money > .box {
+            min-width: 0 !important;
+            width: 100% !important;
+          }
+          body.rico-ops-v2-ready .dashboard-view.layout .grid.money input,
+          body.rico-ops-v2-ready .dashboard-view.layout .grid.money button {
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+          @media (max-width: 430px) {
+            body.rico-ops-v2-ready .dashboard-view.layout .grid.money {
+              grid-template-columns: 1fr !important;
+            }
+          }
+          CSS
+          fi
+
+      - name: Publicar correção
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'Nenhuma alteração necessária.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add rico-operations-v2.css
+          git commit -m 'fix: exibir campo de bau no painel'
+          git push
