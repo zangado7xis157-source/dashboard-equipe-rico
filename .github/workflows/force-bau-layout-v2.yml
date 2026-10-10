@@ -1,0 +1,44 @@
+name: Force bau layout v2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/force-bau-layout-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fix money grid directly in HTML and bust CSS cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '<div class="grid money" style="margin-top:12px">'
+          new = '<div class="grid money" style="margin-top:12px;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%">'
+          if old in s:
+              s = s.replace(old, new, 1)
+          else:
+              s = s.replace('class="grid money" style="margin-top:12px"', 'class="grid money" style="margin-top:12px;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;max-width:100%"', 1)
+          s = s.replace('/rico-operations-v2.css?v=20261006', '/rico-operations-v2.css?v=20261010b')
+          s = s.replace('/rico-operations-v2.js?v=20261006', '/rico-operations-v2.js?v=20261010b')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "fix: forcar exibicao do campo de bau"
+            git push origin main
+          fi
