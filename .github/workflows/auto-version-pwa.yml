@@ -1,0 +1,88 @@
+name: Auto version PWA
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Atualizar versão, manifest e script PWA
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os, re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          sha = os.environ['BUILD_SHA']
+          now = datetime.now(timezone.utc).isoformat()
+
+          # Versão consultada pelos clientes já abertos.
+          Path('app-version.json').write_text(
+              json.dumps({'version': sha, 'updated_at': now}, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8'
+          )
+
+          # Grava a versão dentro do JS carregado pelo navegador.
+          pwa = Path('pwa-enhancements.js')
+          if pwa.exists():
+              text = pwa.read_text(encoding='utf-8')
+              text = re.sub(
+                  r'const RICO_BUILD_VERSION = "[^"]*";',
+                  f'const RICO_BUILD_VERSION = "{sha}";',
+                  text,
+                  count=1
+              )
+              pwa.write_text(text, encoding='utf-8')
+
+          # Garante ícone e propriedades adequadas para instalação como app.
+          manifest_path = Path('manifest.webmanifest')
+          if manifest_path.exists():
+              data = json.loads(manifest_path.read_text(encoding='utf-8'))
+              data['id'] = '/'
+              data['scope'] = '/'
+              data['start_url'] = '/'
+              data['display'] = 'standalone'
+              icons = data.get('icons') or []
+              icons = [i for i in icons if i.get('src') != '/pwa-icon.svg']
+              icons.insert(0, {
+                  'src': '/pwa-icon.svg',
+                  'sizes': 'any',
+                  'type': 'image/svg+xml',
+                  'purpose': 'any maskable'
+              })
+              data['icons'] = icons
+              manifest_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          # Injeta o módulo de instalação/atualização na página principal.
+          index_path = Path('index.html')
+          if index_path.exists():
+              html = index_path.read_text(encoding='utf-8')
+              tag = '<script src="/pwa-enhancements.js?v=pwa-20261010"></script>'
+              if '/pwa-enhancements.js' not in html:
+                  html = html.replace('</body>', tag + '\n</body>')
+              index_path.write_text(html, encoding='utf-8')
+          PY
+
+      - name: Commit automático da versão PWA
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app-version.json pwa-enhancements.js manifest.webmanifest index.html
+          git commit -m "chore: atualizar versão do Dashboard Rico"
+          git push
