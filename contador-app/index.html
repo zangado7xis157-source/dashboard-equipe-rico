@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Contador Rico">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Contador Equipe Rico</title>
+<style>
+:root{--bg:#03060b;--panel:#08111f;--panel2:#0b1728;--line:#16345b;--text:#f5f8ff;--muted:#8198bb;--blue:#1687ff;--blue2:#0b63d4;--red:#ff5b70}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#10284a 0,#07111f 30%,#03060b 75%);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif;padding:18px;display:grid;place-items:center}.app{width:min(1100px,100%);background:linear-gradient(180deg,#09111e,#05080e);border:1px solid #173a68;border-radius:22px;box-shadow:0 30px 100px #000c,0 0 50px #1687ff18;overflow:hidden}.top{padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(90deg,#07111f,#0b1d36);border-bottom:1px solid var(--line)}.brand{font-weight:950;font-size:22px;display:flex;align-items:center;gap:10px}.brand b{color:var(--blue)}.dot{width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 18px var(--blue)}.sub{color:var(--muted);font-size:13px;margin-top:4px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid #294d7d;background:#0f1b2e;color:#fff;border-radius:11px;padding:10px 14px;font-weight:900;cursor:pointer}.btn.primary{background:linear-gradient(180deg,#178cff,#0b63d4);border-color:#4ba6ff;box-shadow:0 8px 24px #1687ff35}.btn:hover{filter:brightness(1.12)}.content{padding:16px;max-height:72vh;overflow:auto}.row{display:grid;grid-template-columns:56px repeat(4,82px) minmax(100px,1fr) repeat(4,82px) 42px;gap:7px;align-items:center;margin-bottom:10px;padding:8px;border-radius:14px;background:linear-gradient(180deg,#0c1523,#080e17);border:1px solid #173052}.profile,.value{height:46px;display:grid;place-items:center;border-radius:9px;font-weight:950}.profile{background:#0c1a2f;border:1px solid #20518c;color:#72b6ff}.value{background:#02050a;border:1px solid #2b5f9f;font-size:22px;box-shadow:inset 0 0 18px #1687ff10}.step{height:46px;border-radius:9px;border:1px solid;font-weight:950;font-size:15px;cursor:pointer}.minus{background:#28131a;border-color:#5f2b38;color:#ff7182}.plus{background:#09223b;border-color:#19558d;color:#60b2ff}.remove{width:42px;height:42px;border-radius:9px;border:1px solid #5d2a35;background:#28131a;color:#ff6f80;font-weight:950;font-size:18px}.foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:13px}.status{color:#85bdff;font-weight:800}.installHint{display:none;margin:0 16px 16px;padding:12px 14px;border-radius:12px;border:1px solid #1d4d84;background:#0a1c33;color:#a8cfff;font-size:13px}@media(max-width:900px){body{padding:0;place-items:stretch}.app{border-radius:0;min-height:100vh}.row{grid-template-columns:44px repeat(2,1fr) 94px repeat(2,1fr) 38px}.hideMob{display:none}.content{max-height:none}.top{position:sticky;top:0;z-index:5}.actions{width:100%}.actions .btn{flex:1}.value{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div><div class="brand"><span class="dot"></span>Contador <b>Equipe Rico</b></div><div class="sub" id="countLabel">4 perfis • valores salvos automaticamente</div></div>
+    <div class="actions"><button class="btn primary" id="add">＋ Adicionar perfil</button><button class="btn" id="install">⬇ Instalar app</button><button class="btn" id="reset">↻ Resetar</button></div>
+  </header>
+  <div class="installHint" id="iosHint">No iPhone/iPad: toque em Compartilhar e depois em “Adicionar à Tela de Início”.</div>
+  <main class="content" id="rows"></main>
+  <footer class="foot"><span class="status">● Contador ativo</span><span>Equipe Rico • funciona offline</span></footer>
+</div>
+<script>
+const KEY='contador-equipe-rico-v3';const steps=[-500,-100,-10,-1,1,10,100,500];let values=JSON.parse(localStorage.getItem(KEY)||'null');if(!Array.isArray(values)||!values.length)values=[1400,1400,1400,1400];
+const save=()=>localStorage.setItem(KEY,JSON.stringify(values));
+function render(){const box=document.getElementById('rows');box.innerHTML='';document.getElementById('countLabel').textContent=`${values.length} ${values.length===1?'perfil':'perfis'} • valores salvos automaticamente`;values.forEach((val,i)=>{const r=document.createElement('section');r.className='row';const p=document.createElement('div');p.className='profile';p.textContent='P'+(i+1);r.appendChild(p);steps.slice(0,4).forEach((n,j)=>{const b=document.createElement('button');b.className='step minus'+(j<2?' hideMob':'');b.textContent=n;b.onclick=()=>{values[i]+=n;save();render()};r.appendChild(b)});const v=document.createElement('div');v.className='value';v.textContent=val;r.appendChild(v);steps.slice(4).forEach((n,j)=>{const b=document.createElement('button');b.className='step plus'+(j>1?' hideMob':'');b.textContent='+'+n;b.onclick=()=>{values[i]+=n;save();render()};r.appendChild(b)});const x=document.createElement('button');x.className='remove';x.textContent='×';x.title='Remover perfil';x.onclick=()=>{if(values.length>1){values.splice(i,1);save();render()}};r.appendChild(x);box.appendChild(r)})}
+document.getElementById('add').onclick=()=>{values.push(1400);save();render();setTimeout(()=>window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}),30)};document.getElementById('reset').onclick=()=>{if(confirm('Resetar todos os perfis para 1400?')){values=values.map(()=>1400);save();render()}};
+let deferredPrompt=null;const installBtn=document.getElementById('install');window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;installBtn.style.display='inline-block'});installBtn.onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}else{const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);document.getElementById('iosHint').style.display='block';if(!ios)alert('No Chrome/Edge, abra o menu do navegador e escolha “Instalar aplicativo”.')}};window.addEventListener('appinstalled',()=>installBtn.style.display='none');
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
+render();
+</script>
+</body>
+</html>
