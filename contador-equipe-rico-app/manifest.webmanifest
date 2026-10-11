@@ -1,0 +1,13 @@
+{
+  "name": "Contador Equipe Rico",
+  "short_name": "Contador Rico",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#03070d",
+  "theme_color": "#06101d",
+  "description": "Contador instalável da Equipe Rico",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
