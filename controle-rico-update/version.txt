@@ -1,0 +1,4 @@
+version=10.0.0
+payload=https://raw.githubusercontent.com/zangado7xis157-source/dashboard-equipe-rico/controle-rico-updates/controle-rico-update/controle-rico-latest.b64
+sha256=70c8cee2943f8b619ad52a5532231c10eafe6885d12d33712f348f37ff7bd626
+notes=Sistema de atualizacao automatica adicionado. Agora o app avisa quando uma nova versao estiver disponivel.
