@@ -1,4 +1,4 @@
-version=10.0.0
+version=11.0.0
 payload=https://raw.githubusercontent.com/zangado7xis157-source/dashboard-equipe-rico/controle-rico-updates/controle-rico-update/controle-rico-latest.b64
-sha256=70c8cee2943f8b619ad52a5532231c10eafe6885d12d33712f348f37ff7bd626
-notes=Sistema de atualizacao automatica adicionado. Agora o app avisa quando uma nova versao estiver disponivel.
+sha256=c1d9c113de3f50321a3a2b33676cc872b5cc186936965e119ec8e5d30c1ec797
+notes=Novo gerador de telefone para dados de teste: DDD brasileiro aleatorio, numero celular iniciando obrigatoriamente com 9 e botao para copiar.
