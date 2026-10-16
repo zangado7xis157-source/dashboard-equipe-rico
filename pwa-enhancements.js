@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const RICO_BUILD_VERSION = "d5e0bd62a8d9855087f8c77f0775321e61a65a9d";
+  const RICO_BUILD_VERSION = "20261016-no-trial-1";
   const VERSION_URL = "/app-version.json";
   const POLL_MS = 30000;
   let latestVersion = RICO_BUILD_VERSION;
@@ -92,9 +92,7 @@
   async function checkForUpdate() {
     const remote = await fetchRemoteVersion();
     if (!remote) return;
-    if (RICO_BUILD_VERSION !== "bootstrap" && remote !== RICO_BUILD_VERSION) {
-      showUpdateBanner(remote);
-    }
+    if (remote !== RICO_BUILD_VERSION) showUpdateBanner(remote);
   }
 
   function showInstallHelp() {
@@ -120,11 +118,7 @@
       <span class="side-menu-icon">⬇️</span>
       <span class="side-menu-copy"><span class="side-menu-title">Instalar no PC</span><span class="side-menu-sub">Abrir como aplicativo</span></span>`;
     button.onclick = async () => {
-      if (isStandalone()) {
-        showInstallHelp();
-        return;
-      }
-      if (!deferredInstallPrompt) {
+      if (isStandalone() || !deferredInstallPrompt) {
         showInstallHelp();
         return;
       }
@@ -139,6 +133,58 @@
       button.querySelector(".side-menu-title").textContent = "Dashboard instalado";
       button.querySelector(".side-menu-sub").textContent = "Executando como aplicativo";
     }
+  }
+
+  function applyNoTrialCopy() {
+    const badge = document.getElementById("lockBadge");
+    const title = document.getElementById("lockTitle");
+    const text = document.getElementById("lockText");
+
+    if (badge && /teste gr[aá]tis/i.test(badge.textContent || "")) {
+      badge.textContent = "Acesso bloqueado";
+    }
+    if (title && /(dispositivo|rede).*teste|utilizou o teste/i.test(title.textContent || "")) {
+      title.textContent = "Ative seu Dashboard";
+    }
+    if (text && /teste gr[aá]tis|dispositivo\/rede/i.test(text.textContent || "")) {
+      text.textContent = "Para acessar o Dashboard, faça o pagamento e use a key recebida para liberar seu acesso.";
+    }
+
+    const authMsg = document.getElementById("authMsg");
+    if (authMsg && /teste gr[aá]tis/i.test(authMsg.textContent || "")) {
+      authMsg.textContent = "Crie sua conta e depois ative o acesso usando uma key válida.";
+    }
+
+    const gamesBox = document.querySelector("#gamesLockedOverlay .games-lock-box p");
+    if (gamesBox && /teste gr[aá]tis/i.test(gamesBox.textContent || "")) {
+      gamesBox.textContent = "A lista de jogos é exclusiva para assinantes e é liberada após o pagamento e ativação de uma key válida.";
+    }
+  }
+
+  function disableTrialUi() {
+    try {
+      window.syncTrialGuard = async () => ({
+        ok: true,
+        state: "blocked",
+        access_status: "blocked",
+        trial_enabled: false
+      });
+    } catch (_) {}
+
+    applyNoTrialCopy();
+
+    const observer = new MutationObserver(() => applyNoTrialCopy());
+    observer.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      characterData: true
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target?.id === "signupTab" || event.target?.closest?.("#signupTab")) {
+        setTimeout(applyNoTrialCopy, 0);
+      }
+    }, true);
   }
 
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -167,6 +213,7 @@
     injectStyles();
     ensureInstallMenuItem();
     cleanUpdateQuery();
+    disableTrialUi();
     setTimeout(checkForUpdate, 2500);
     setInterval(checkForUpdate, POLL_MS);
     window.addEventListener("focus", checkForUpdate);
