@@ -1,4 +1,4 @@
-version=11.0.0
+version=12.0.0
 payload=https://raw.githubusercontent.com/zangado7xis157-source/dashboard-equipe-rico/controle-rico-updates/controle-rico-update/controle-rico-latest.b64
-sha256=b5eda2eff7168ee800fe3d155e433f2e9d08e0bd58cf1351ade638c889c2edbd
-notes=Novo gerador de telefone: DDD brasileiro aleatorio, celular iniciando obrigatoriamente com 9, com botoes Gerar outro e Copiar.
+sha256=6315e211e946da7391872f8fb8bcc919df91a2294c5be43d579eaa1762dc18d8
+notes=Novo Speed Test para paginas proprias/autorizadas, com liga/desliga, velocidade de 1x a 10x e lista de dominios permitidos.
