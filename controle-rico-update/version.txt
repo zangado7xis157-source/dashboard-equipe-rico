@@ -1,4 +1,4 @@
 version=12.0.0
 payload=https://raw.githubusercontent.com/zangado7xis157-source/dashboard-equipe-rico/controle-rico-updates/controle-rico-update/controle-rico-latest.b64
-sha256=6315e211e946da7391872f8fb8bcc919df91a2294c5be43d579eaa1762dc18d8
-notes=Novo Speed Test para paginas proprias/autorizadas, com liga/desliga, velocidade de 1x a 10x e lista de dominios permitidos.
+sha256=9782abd19a7b6c19f8e47b9e5af0128501a3b038c7097d191418fcfdd721d57f
+notes=Speed Test + correcao do atualizador automatico.
