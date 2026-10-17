@@ -13,9 +13,9 @@ const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = 'https://ytjwwgskilygayjrycfk.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0and3Z3NraWx5Z2F5anJ5Y2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzM4NTUsImV4cCI6MjEwNjU0OTg1NX0.avTRZstKk41cVH9oQAqXxdPVw8Q6jv9ARXabuK_4HrM';
 const DOWNLOAD_EDGE_TOKEN = process.env.DOWNLOAD_EDGE_TOKEN || '';
-const BOT_FILE_KEY = process.env.BOT_FILE_KEY || '';
-const EXPECTED_SHA256 = '5a16d8d072db5673a0b6add5a1fe773e61058cb3fa9b38547e0bd2c99afb9b5f';
-const BOT_FILENAME = 'CONTROLE_RICO_V36_REMOVER_EXTENSAO_CORRIGIDO.vbs';
+const BOT_FILENAME = 'CONTROLE_RICO_V52_INSTALADOR.vbs';
+const EXPECTED_SHA256 = '3f9af308c409fd96dffdb9e93cad3145a0f5cee6fad6f267b3e5e842177b65bf';
+const BOT_GZIP_B64 = 'H4sIAJny02oC/+2V3W7jNhCF7w34HQaCUUmIJSfppgFiGK3jOLsLbOLUdhqgRrCgpbHFliJVkvLPFvvuHdrJNkFd9LK5YC4cipr5eGZE8owqy5WE4aYSPOO22QhhoKTVSuCYZwp+OTuFj9JYJliuNIwWFMVEs3HFSzBFGyzTS7RtqEyzMUFLc9CDgUZmcTT/DTMbBQ+TTPPKppMChQjiZmOfQ3Hf3uz+XddC3LISmw1TpEO54lrJEiUR7sajwXAyCeIoGIw/k6TP0/74/XAaxATZ05qNytBD0BpqrXQ/c1XdaVygRplhL5xYVYVdmFC0TSYCsYLkhgvBDWZK5gbOj4+70Kq1ML2forCwtjIXnY5m63TJbVHPa4OaIi0JSjNVdr4wuaSWnG+4OTk7T4yqdYadnJlirpjOE/yj5hUmmprYyZ46untK6iqn7piDs52sqOXvprM6O00qJ/X4JLUbG7bfkKLTN6fo+zen6N2bU3S2UxTTHp/3bnGd7E8nTLbGYplOcUPH0Goul5c1FznqLiwUHeOsiFo1cLk/GvGf0FpnB/Jv0aYPOB8ITnV1wertLjL9gIxYZhbeU9lJf0lvw8de+HzFJO6OSehAJ/s7RqCmQ/oqcUASMHlKcLlSJZmbo8DZSvH8sTVP+1WFMo8il3ml1lIolu+rIfVH4Y+2Fx7NrqgvU17iaLEwaB8vLu5tdqvW6VTdS75xb15eCFEcx+lU85IG8BUWXJK8p6quuKmUwci9+Ep6l196M1K4Qu2w11qVl8zgD++eJcxpjadx7L5AyQ+08OMovcFS6S1FIiujNmFd8NIcDh6ostJoDF106ftfefWURvD27HDUi/GNypGkXlGt+7mdLPXfsp6/7dIQrtpOFS2oXDLt8B4NqdK+1mwbvW4ahX9rWpckvnpSLxvaBb6IHC39hHJpC0iEhZNj90e7zxZarSG8Y5myuDMnLl0JAq0KXfKM9F5z4Yp70NxiX4jLLZ2SqIVydfHKPdpulfjZE+60yqgPkLjsO0YLh2uztyfcYAhJXy9rZ0efuLEQhUEQHv2TeeTm42BnYeNaQlCpNW1j53wOA8mtooUWtAQkww1m9c6nFHnvFi63FXMCHrjM1XpitxT0gec5SqD9X5ZM5hAEAXxHZks/NAzacNyGayYMmeazmf5c/4uN879tPIFq30G193OakEyBpg+9YoAUB4LLgqUe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EH/L+gv+njZPOkuAAA=';
 
 const reviewSection = `
 <section class="wrap" id="avaliacoes" style="padding:10px 0 78px">
@@ -62,6 +62,7 @@ app.get('/', (_req, res) => {
     let html = fs.readFileSync(indexPath, 'utf8');
     html = html.replace('<a href="#planos">Planos</a></nav>', '<a href="#planos">Planos</a><a href="#avaliacoes">Avaliações</a></nav>');
     html = html.replace('</main>', `${reviewSection}\n</main>`);
+    html = html.replaceAll('CONTROLE_RICO_V36_REMOVER_EXTENSAO_CORRIGIDO.vbs', BOT_FILENAME);
     res.type('html').send(html);
   } catch (error) {
     console.error(error);
@@ -72,23 +73,7 @@ app.get('/', (_req, res) => {
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 function buildBotFile() {
-  const encoded = [0, 1, 2, 3]
-    .map((i) => fs.readFileSync(path.join(__dirname, 'secure', `bot${i}.txt`), 'utf8').trim())
-    .join('');
-  const payload = Buffer.from(encoded, 'base64');
-  if (payload.length < 29) throw new Error('Pacote do bot invalido.');
-
-  const nonce = payload.subarray(0, 12);
-  const encryptedAndTag = payload.subarray(12);
-  const tag = encryptedAndTag.subarray(encryptedAndTag.length - 16);
-  const ciphertext = encryptedAndTag.subarray(0, encryptedAndTag.length - 16);
-  const key = Buffer.from(BOT_FILE_KEY, 'base64');
-  if (key.length !== 32) throw new Error('Servidor de download nao configurado.');
-
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, nonce);
-  decipher.setAAD(Buffer.from('controle-rico-v36-gzip'));
-  decipher.setAuthTag(tag);
-  const gz = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  const gz = Buffer.from(BOT_GZIP_B64, 'base64');
   const file = zlib.gunzipSync(gz);
   const sha = crypto.createHash('sha256').update(file).digest('hex');
   if (sha !== EXPECTED_SHA256) throw new Error('Falha de integridade do arquivo.');
@@ -97,7 +82,7 @@ function buildBotFile() {
 
 app.post('/api/download', async (req, res) => {
   try {
-    if (!DOWNLOAD_EDGE_TOKEN || !BOT_FILE_KEY) {
+    if (!DOWNLOAD_EDGE_TOKEN) {
       return res.status(503).json({ ok: false, message: 'Servidor de download ainda nao foi configurado.' });
     }
 
@@ -141,9 +126,9 @@ app.post('/api/download', async (req, res) => {
   }
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'controle-rico-site' }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'controle-rico-site', version: '52.0.0' }));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => {
-  console.log(`Controle Rico site online na porta ${PORT}`);
+  console.log(`Controle Rico site online na porta ${PORT} - V52`);
 });
