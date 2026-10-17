@@ -11,11 +11,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = 'https://ytjwwgskilygayjrycfk.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0and3Z3NraWx5Z2F5anJ5Y2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzM4NTUsImV4cCI6MjEwNjU0OTg1NX0.avTRZstKk41cVH9oQAqXxdPVw8Q6jv9ARXabuK_4HrM';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6Inl0and3Z3NraWx5Z2F5anJ5Y2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzM4NTUsImV4cCI6MjEwNjU0OTg1NX0.avTRZstKk41cVH9oQAqXxdPVw8Q6jv9ARXabuK_4HrM';
 const DOWNLOAD_EDGE_TOKEN = process.env.DOWNLOAD_EDGE_TOKEN || '';
-const BOT_FILENAME = 'CONTROLE_RICO_V52_INSTALADOR.vbs';
-const EXPECTED_SHA256 = '3f9af308c409fd96dffdb9e93cad3145a0f5cee6fad6f267b3e5e842177b65bf';
-const BOT_GZIP_B64 = 'H4sIAJny02oC/+2V3W7jNhCF7w34HQaCUUmIJSfppgFiGK3jOLsLbOLUdhqgRrCgpbHFliJVkvLPFvvuHdrJNkFd9LK5YC4cipr5eGZE8owqy5WE4aYSPOO22QhhoKTVSuCYZwp+OTuFj9JYJliuNIwWFMVEs3HFSzBFGyzTS7RtqEyzMUFLc9CDgUZmcTT/DTMbBQ+TTPPKppMChQjiZmOfQ3Hf3uz+XddC3LISmw1TpEO54lrJEiUR7sajwXAyCeIoGIw/k6TP0/74/XAaxATZ05qNytBD0BpqrXQ/c1XdaVygRplhL5xYVYVdmFC0TSYCsYLkhgvBDWZK5gbOj4+70Kq1ML2forCwtjIXnY5m63TJbVHPa4OaIi0JSjNVdr4wuaSWnG+4OTk7T4yqdYadnJlirpjOE/yj5hUmmprYyZ46untK6iqn7piDs52sqOXvprM6O00qJ/X4JLUbG7bfkKLTN6fo+zen6N2bU3S2UxTTHp/3bnGd7E8nTLbGYplOcUPH0Goul5c1FznqLiwUHeOsiFo1cLk/GvGf0FpnB/Jv0aYPOB8ITnV1wertLjL9gIxYZhbeU9lJf0lvw8de+HzFJO6OSehAJ/s7RqCmQ/oqcUASMHlKcLlSJZmbo8DZSvH8sTVP+1WFMo8il3ml1lIolu+rIfVH4Y+2Fx7NrqgvU17iaLEwaB8vLu5tdqvW6VTdS75xb15eCFEcx+lU85IG8BUWXJK8p6quuKmUwci9+Ep6l196M1K4Qu2w11qVl8zgD++eJcxpjadx7L5AyQ+08OMovcFS6S1FIiujNmFd8NIcDh6ostJoDF106ftfefWURvD27HDUi/GNypGkXlGt+7mdLPXfsp6/7dIQrtpOFS2oXDLt8B4NqdK+1mwbvW4ahX9rWpckvnpSLxvaBb6IHC39hHJpC0iEhZNj90e7zxZarSG8Y5myuDMnLl0JAq0KXfKM9F5z4Yp70NxiX4jLLZ2SqIVydfHKPdpulfjZE+60yqgPkLjsO0YLh2uztyfcYAhJXy9rZ0efuLEQhUEQHv2TeeTm42BnYeNaQlCpNW1j53wOA8mtooUWtAQkww1m9c6nFHnvFi63FXMCHrjM1XpitxT0gec5SqD9X5ZM5hAEAXxHZks/NAzacNyGayYMmeazmf5c/4uN879tPIFq30G193OakEyBpg+9YoAUB4LLgqUe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EEe5EH/L+gv+njZPOkuAAA=';
+const BOT_FILENAME = 'CONTROLE_RICO_V52_CORRIGIDO.vbs';
+const HOTFIX_PAYLOAD_URL = 'https://raw.githubusercontent.com/zangado7xis157-source/dashboard-equipe-rico/controle-rico-updates/controle-rico-update/chunks/v52-hotfix-wrapper.b64';
 
 const reviewSection = `
 <section class="wrap" id="avaliacoes" style="padding:10px 0 78px">
@@ -44,10 +43,13 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '20kb' }));
 
 app.use((req, res, next) => {
-  const allowedOrigin = 'https://controle-rico-oficial.onrender.com';
+  const allowedOrigins = new Set([
+    'https://controle-rico.onrender.com',
+    'https://controle-rico-oficial.onrender.com'
+  ]);
   const origin = req.headers.origin;
-  if (origin === allowedOrigin) {
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
   }
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -63,6 +65,7 @@ app.get('/', (_req, res) => {
     html = html.replace('<a href="#planos">Planos</a></nav>', '<a href="#planos">Planos</a><a href="#avaliacoes">Avaliações</a></nav>');
     html = html.replace('</main>', `${reviewSection}\n</main>`);
     html = html.replaceAll('CONTROLE_RICO_V36_REMOVER_EXTENSAO_CORRIGIDO.vbs', BOT_FILENAME);
+    html = html.replaceAll('CONTROLE_RICO_V52_INSTALADOR.vbs', BOT_FILENAME);
     res.type('html').send(html);
   } catch (error) {
     console.error(error);
@@ -72,11 +75,30 @@ app.get('/', (_req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
-function buildBotFile() {
-  const gz = Buffer.from(BOT_GZIP_B64, 'base64');
-  const file = zlib.gunzipSync(gz);
-  const sha = crypto.createHash('sha256').update(file).digest('hex');
-  if (sha !== EXPECTED_SHA256) throw new Error('Falha de integridade do arquivo.');
+function toUtf16LeWithBom(text) {
+  return Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]);
+}
+
+async function buildBotFile() {
+  const payloadResponse = await fetch(`${HOTFIX_PAYLOAD_URL}?v=52.0.1`, { cache: 'no-store' });
+  if (!payloadResponse.ok) throw new Error(`Falha ao obter pacote V52: HTTP ${payloadResponse.status}`);
+
+  const encoded = (await payloadResponse.text()).trim();
+  if (!encoded) throw new Error('Pacote V52 vazio.');
+
+  let file = zlib.gunzipSync(Buffer.from(encoded, 'base64'));
+
+  // O Windows Script Host é sensível à codificação de .vbs. Preserve UTF-16
+  // quando já existir BOM e normalize wrappers em UTF-8 para UTF-16LE+BOM.
+  const hasUtf16LeBom = file.length >= 2 && file[0] === 0xff && file[1] === 0xfe;
+  const hasUtf16BeBom = file.length >= 2 && file[0] === 0xfe && file[1] === 0xff;
+  if (!hasUtf16LeBom && !hasUtf16BeBom) {
+    let text = file.toString('utf8');
+    if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+    file = toUtf16LeWithBom(text);
+  }
+
+  if (file.length < 100) throw new Error('Pacote V52 inválido.');
   return file;
 }
 
@@ -91,7 +113,6 @@ app.post('/api/download', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Key invalida.' });
     }
 
-    const botFile = buildBotFile();
     const keyHash = crypto.createHash('sha256').update(rawKey, 'utf8').digest('hex');
 
     const rpc = await fetch(`${SUPABASE_URL}/rest/v1/rpc/consume_controle_rico_download_key`, {
@@ -116,6 +137,7 @@ app.post('/api/download', async (req, res) => {
       return res.status(403).json({ ok: false, message: 'Key invalida ou ja utilizada.' });
     }
 
+    const botFile = await buildBotFile();
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', `attachment; filename="${BOT_FILENAME}"`);
@@ -126,9 +148,23 @@ app.post('/api/download', async (req, res) => {
   }
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'controle-rico-site', version: '52.0.0' }));
+app.get('/health', async (_req, res) => {
+  try {
+    const payloadResponse = await fetch(`${HOTFIX_PAYLOAD_URL}?health=1`, { cache: 'no-store' });
+    const payloadOk = payloadResponse.ok && (await payloadResponse.text()).trim().length > 100;
+    return res.status(payloadOk ? 200 : 503).json({
+      ok: payloadOk,
+      service: 'controle-rico-site',
+      version: '52.0.1',
+      downloadPackage: 'V52_CORRIGIDO'
+    });
+  } catch {
+    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.1' });
+  }
+});
+
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => {
-  console.log(`Controle Rico site online na porta ${PORT} - V52`);
+  console.log(`Controle Rico site online na porta ${PORT} - V52.0.1 corrigida`);
 });
