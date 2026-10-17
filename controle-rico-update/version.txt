@@ -1,4 +1,4 @@
 version=52.0.0
 payload=https://raw.githubusercontent.com/zangado7xis157-source/dashboard-equipe-rico/controle-rico-updates/controle-rico-update/controle-rico-latest.b64
-sha256=87bf96b32213e3d781b039cfa618a873935e679f2e96f95bba603c8c594528ff
+sha256=3f9af308c409fd96dffdb9e93cad3145a0f5cee6fad6f267b3e5e842177b65bf
 notes=Controle Rico V52 final: exclusao completa de dados do perfil, teste automatico da proxy, Fechar tela, F8, extensoes automaticas, faixa do Chrome for Testing oculta e aba Opcoes removida.
