@@ -63,8 +63,19 @@ app.use((req, res, next) => {
 function buildBotFile() {
   if (!BOT_FILE_KEY) throw new Error('BOT_FILE_KEY ausente.');
 
-  const encoded = [0, 1, 2, 3]
-    .map(i => fs.readFileSync(path.join(__dirname, 'secure', `bot${i}.txt`), 'utf8').trim())
+  const chunkFiles = [
+    'bot0.txt',
+    'bot1.txt',
+    'bot2.txt',
+    'bot3a.txt',
+    'bot3b.txt',
+    'bot3c.txt',
+    'bot3d.txt',
+    'bot3e.txt'
+  ];
+
+  const encoded = chunkFiles
+    .map(name => fs.readFileSync(path.join(__dirname, 'secure', name), 'utf8').trim())
     .join('');
 
   const packed = Buffer.from(encoded, 'base64');
@@ -124,7 +135,6 @@ app.post('/api/download', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Key invalida.' });
     }
 
-    // Só consome a key depois que o pacote estiver montado e validado.
     const botFile = buildBotFile();
 
     const keyHash = crypto.createHash('sha256').update(rawKey, 'utf8').digest('hex');
@@ -167,19 +177,19 @@ app.get('/health', (_req, res) => {
     return res.status(200).json({
       ok: true,
       service: 'controle-rico-site',
-      version: '52.0.3',
+      version: '52.0.4',
       bytes: botFile.length,
       sha256: BOT_SHA256,
-      downloadPackage: 'V52_SLIM_PROTECTED'
+      downloadPackage: 'V52_SLIM_PROTECTED_FIXED'
     });
   } catch (error) {
     console.error('Health V52:', error);
-    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.3' });
+    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.4' });
   }
 });
 
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => {
-  console.log(`Controle Rico site online na porta ${PORT} - V52.0.3`);
+  console.log(`Controle Rico site online na porta ${PORT} - V52.0.4`);
 });
