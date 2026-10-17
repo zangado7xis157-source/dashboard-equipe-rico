@@ -43,6 +43,19 @@ const reviewSection = `
 app.disable('x-powered-by');
 app.use(express.json({ limit: '20kb' }));
 
+app.use((req, res, next) => {
+  const allowedOrigin = 'https://controle-rico-oficial.onrender.com';
+  const origin = req.headers.origin;
+  if (origin === allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 app.get('/', (_req, res) => {
   try {
     const indexPath = path.join(__dirname, 'public', 'index.html');
