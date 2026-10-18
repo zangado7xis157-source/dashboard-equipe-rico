@@ -15,7 +15,7 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const DOWNLOAD_EDGE_TOKEN = process.env.DOWNLOAD_EDGE_TOKEN || '';
 const BOT_FILE_KEY = process.env.BOT_FILE_KEY || '';
 const BOT_FILENAME = 'CONTROLE_RICO_V52_CORRIGIDO.vbs';
-const BOT_SHA256 = 'cfdf5446cde36dbee9c1b9dd779e9e7a41dda29cecc1f8fa25af915750e955ab';
+const BOT_SHA256 = '70a57753824304890b3deb3d72a52aeb76a84005051f41e8c2ef45dc9a209b76';
 const BOT_AAD = Buffer.from('controle-rico-v52-slim-final-20261017', 'utf8');
 
 const reviewSection = `
