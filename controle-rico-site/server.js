@@ -15,8 +15,8 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const DOWNLOAD_EDGE_TOKEN = process.env.DOWNLOAD_EDGE_TOKEN || '';
 const BOT_FILE_KEY = process.env.BOT_FILE_KEY || '';
 const BOT_FILENAME = 'CONTROLE_RICO_V52_CORRIGIDO.vbs';
-const BOT_SHA256 = '944ab0ecc8ad7613b6c58f4ce243efb04759461572bed15c4536f1168e4e5f03';
-const BOT_AAD = Buffer.from('controle-rico-v52-icon-final-20261017', 'utf8');
+const BOT_SHA256 = '70a57753824304890b3deb3d72a52aeb76a84005051f41e8c2ef45dc9a209b76';
+const BOT_AAD = Buffer.from('controle-rico-v52-slim-final-20261017', 'utf8');
 
 const reviewSection = `
 <section class="wrap" id="avaliacoes" style="padding:10px 0 78px">
@@ -177,19 +177,19 @@ app.get('/health', (_req, res) => {
     return res.status(200).json({
       ok: true,
       service: 'controle-rico-site',
-      version: '52.0.4',
+      version: '52.0.5',
       bytes: botFile.length,
       sha256: BOT_SHA256,
-      downloadPackage: 'V52_SLIM_PROTECTED_FIXED'
+      downloadPackage: 'V52_SLIM_ICON_VALIDATED'
     });
   } catch (error) {
     console.error('Health V52:', error);
-    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.4' });
+    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.5' });
   }
 });
 
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => {
-  console.log(`Controle Rico site online na porta ${PORT} - V52.0.4`);
+  console.log(`Controle Rico site online na porta ${PORT} - V52.0.5`);
 });
