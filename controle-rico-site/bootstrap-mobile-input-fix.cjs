@@ -112,7 +112,7 @@ if (!source.includes(listenAnchor)) {
 }
 source = source.replace(
   listenAnchor,
-  `\nconst releasePreflight = buildBotFile();\nconsole.log(\`V52.0.8 preflight OK - \${releasePreflight.length} bytes\`);\n\${listenAnchor}`
+  `\nconst releasePreflight = buildBotFile();\nconsole.log(\`V52.0.8 preflight OK - \${releasePreflight.length} bytes\`);\n${listenAnchor}`
 );
 
 fs.writeFileSync(runtimePath, source, 'utf8');
