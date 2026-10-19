@@ -81,6 +81,34 @@ const patchedReturn = `  let releaseText = raw.toString('utf16le');
   }
   releaseText = releaseText.replace(touchBlock, desktopInputBlock);
 
+  const updaterAnchor = 'f.WriteLine "# ===== FIM LICENCIAMENTO ====="';
+  if (!releaseText.includes(updaterAnchor)) {
+    throw new Error('Patch V52 nao encontrou ponto do aviso de atualizacao.');
+  }
+  const updaterLines = [
+    updaterAnchor,
+    'f.WriteLine ""',
+    'f.WriteLine "# ===== AVISO DE ATUALIZACAO ====="',
+    'f.WriteLine "$script:controleRicoVersion = \\\'52.0.9\\\'"',
+    'f.WriteLine "$script:updateBaseUrl = \\\'https://controle-rico.onrender.com\\\'"',
+    'f.WriteLine "function Show-ControleRicoUpdateNotice {"',
+    'f.WriteLine "    try {"',
+    'f.WriteLine "        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"',
+    'f.WriteLine "        $info = Invoke-RestMethod -Uri ($script:updateBaseUrl + \\\'/api/update-info\\\') -Method Get -TimeoutSec 8"',
+    'f.WriteLine "        if (-not $info -or -not $info.ok -or -not $info.version) { return }"',
+    'f.WriteLine "        if ([version]([string]$info.version) -le [version]$script:controleRicoVersion) { return }"',
+    'f.WriteLine "        $nl = [Environment]::NewLine"',
+    'f.WriteLine "        $notes = [string]$info.notes"',
+    'f.WriteLine "        $message = \\\'Nova atualização disponível - V\\\' + [string]$info.version + $nl + $nl + $notes + $nl + $nl + \\\'Deseja abrir o site para atualizar agora?\\\'"',
+    'f.WriteLine "        $choice = [System.Windows.Forms.MessageBox]::Show($message,\\\'Controle Rico - Atualização\\\',[System.Windows.Forms.MessageBoxButtons]::YesNo,[System.Windows.Forms.MessageBoxIcon]::Information)"',
+    'f.WriteLine "        if ($choice -eq [System.Windows.Forms.DialogResult]::Yes) { Start-Process $script:updateBaseUrl }"',
+    'f.WriteLine "    } catch {}"',
+    'f.WriteLine "}"',
+    'f.WriteLine "Show-ControleRicoUpdateNotice"',
+    'f.WriteLine "# ===== FIM AVISO DE ATUALIZACAO ====="'
+  ].join(eol);
+  releaseText = releaseText.replace(updaterAnchor, updaterLines);
+
   const releaseRaw = Buffer.from(releaseText, 'utf16le');
   return patchBotShortKeys(releaseRaw);`;
 
@@ -89,21 +117,47 @@ if (!source.includes(originalReturn)) {
 }
 source = source.replace(originalReturn, patchedReturn);
 
+
+const updateRouteAnchor = "\napp.get('/health', (_req, res) => {";
+if (!source.includes(updateRouteAnchor)) {
+  throw new Error('Ponto da rota de atualizacao nao encontrado.');
+}
+const updateRoute = `
+app.get('/api/update-info', (_req, res) => {
+  try {
+    const updateFile = buildBotFile();
+    const updateSha = crypto.createHash('sha256').update(updateFile).digest('hex');
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({
+      ok: true,
+      version: '52.0.9',
+      notes: 'Há uma nova versão do Controle Rico. Abra o site oficial, baixe a atualização e instale por cima da versão atual. Seus perfis continuam salvos.',
+      sha256: updateSha,
+      bytes: updateFile.length
+    });
+  } catch (error) {
+    console.error('Update info V52:', error);
+    return res.status(503).json({ ok: false, version: '52.0.9' });
+  }
+});
+`;
+source = source.replace(updateRouteAnchor, `${updateRoute}${updateRouteAnchor}`);
+
 source = source.replace(
   '      shortBotKeys: true,',
-  '      shortBotKeys: true,\n      mobileInputFix: true,\n      resolution1500x3000: true,'
+  '      shortBotKeys: true,\n      mobileInputFix: true,\n      resolution1500x3000: true,\n      updateNotice: true,'
 );
 source = source.replaceAll(
   "version: '52.0.6'",
-  "version: '52.0.8'"
+  "version: '52.0.9'"
 );
 source = source.replace(
   "downloadPackage: 'V52_SLIM_ICON_VALIDATED_SHORT_KEYS'",
-  "downloadPackage: 'V52_1500x3000_MOBILE_INPUT_RELEASE'"
+  "downloadPackage: 'V52_1500x3000_MOBILE_INPUT_UPDATE_NOTICE'"
 );
 source = source.replace(
   'V52.0.6 short BOT keys',
-  'V52.0.8 short BOT keys + mobile input + 1500x3000'
+  'V52.0.9 short BOT keys + mobile input + 1500x3000 + update notice'
 );
 
 const listenAnchor = '\napp.listen(PORT, () => {';
@@ -112,12 +166,12 @@ if (!source.includes(listenAnchor)) {
 }
 source = source.replace(
   listenAnchor,
-  `\nconst releasePreflight = buildBotFile();\nconsole.log(\`V52.0.8 preflight OK - \${releasePreflight.length} bytes\`);\n${listenAnchor}`
+  `\nconst releasePreflight = buildBotFile();\nconsole.log(\`V52.0.9 preflight OK - \${releasePreflight.length} bytes\`);\n${listenAnchor}`
 );
 
 fs.writeFileSync(runtimePath, source, 'utf8');
 
 import(pathToFileURL(runtimePath).href).catch((error) => {
-  console.error('Falha ao iniciar Controle Rico V52.0.8:', error);
+  console.error('Falha ao iniciar Controle Rico V52.0.9:', error);
   process.exit(1);
 });
