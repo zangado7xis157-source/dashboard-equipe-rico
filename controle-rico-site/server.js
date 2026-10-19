@@ -60,6 +60,35 @@ app.use((req, res, next) => {
   next();
 });
 
+function patchBotShortKeys(raw) {
+  const text = raw.toString('utf16le');
+  const target = /f\.WriteLine "    try \{"\r?\nf\.WriteLine "        if \(-not \$keyText -or -not \$keyText\.Contains\('\.'\)\) \{"/;
+  const injected = [
+    'f.WriteLine "    try {"',
+    'f.WriteLine "        $short = [string]$keyText.Trim().ToUpperInvariant()"',
+    'f.WriteLine "        if ($short -match \'^BOT-RICO(?:-[A-Z0-9]{4}){4}$\') {"',
+    'f.WriteLine "            try {"',
+    'f.WriteLine "                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"',
+    'f.WriteLine "                $body = @{ key=$short; deviceId=(Get-DeviceId) } | ConvertTo-Json -Compress"',
+    'f.WriteLine "                $r = Invoke-RestMethod -Uri \'https://controle-rico.onrender.com/api/activate-bot\' -Method Post -ContentType \'application/json\' -Body $body -TimeoutSec 12"',
+    'f.WriteLine "                if ($r -and $r.ok) {"',
+    'f.WriteLine "                    $expires = [DateTimeOffset]::Parse([string]$r.expires_at).ToLocalTime().DateTime"',
+    'f.WriteLine "                    return [pscustomobject]@{Valid=$true;Message=(\'Ativo até {0:dd/MM/yyyy HH:mm}\' -f $expires);Plan=[string]$r.plan;Expires=$expires}"',
+    'f.WriteLine "                }"',
+    'f.WriteLine "                $shortMessage = switch ([string]$r.message) { \'expired\' {\'Sua key venceu.\'} \'device_mismatch\' {\'Essa key pertence a outro PC.\'} \'blocked\' {\'Essa key está bloqueada.\'} default {\'Key inválida.\'} }"',
+    'f.WriteLine "                return [pscustomobject]@{Valid=$false;Message=$shortMessage}"',
+    'f.WriteLine "            } catch {"',
+    'f.WriteLine "                return [pscustomobject]@{Valid=$false;Message=\'Não foi possível validar a key. Verifique sua internet.\'}"',
+    'f.WriteLine "            }"',
+    'f.WriteLine "        }"',
+    'f.WriteLine "        if (-not $keyText -or -not $keyText.Contains(\'.\')) {"'
+  ].join('\r\n');
+
+  const patched = text.replace(target, injected);
+  if (patched === text) throw new Error('Bloco de licenciamento do V52 não encontrado para aplicar key curta.');
+  return Buffer.from(patched, 'utf16le');
+}
+
 function buildBotFile() {
   if (!BOT_FILE_KEY) throw new Error('BOT_FILE_KEY ausente.');
 
@@ -104,7 +133,7 @@ function buildBotFile() {
   if (raw.length < 100 || raw[0] !== 0xff || raw[1] !== 0xfe) {
     throw new Error('Pacote V52 invalido.');
   }
-  return raw;
+  return patchBotShortKeys(raw);
 }
 
 app.get('/', (_req, res) => {
@@ -123,6 +152,32 @@ app.get('/', (_req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+
+app.post('/api/activate-bot', async (req, res) => {
+  try {
+    const rawKey = String(req.body?.key || '').trim().toUpperCase();
+    const deviceId = String(req.body?.deviceId || '').trim().toUpperCase();
+    if (!/^BOT-RICO(?:-[A-Z0-9]{4}){4}$/.test(rawKey) || deviceId.length < 8 || deviceId.length > 100) {
+      return res.status(200).json({ ok: false, message: 'invalid_key' });
+    }
+    const keyHash = crypto.createHash('sha256').update(rawKey, 'utf8').digest('hex');
+    const rpc = await fetch(`${SUPABASE_URL}/rest/v1/rpc/activate_controle_rico_bot_key`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_key_hash: keyHash, p_device_id: deviceId })
+    });
+    if (!rpc.ok) {
+      console.error('RPC bot key:', rpc.status, await rpc.text());
+      return res.status(502).json({ ok: false, message: 'validation_unavailable' });
+    }
+    const result = await rpc.json();
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json(result || { ok: false, message: 'invalid_key' });
+  } catch (error) {
+    console.error('Erro ao validar BOT key:', error);
+    return res.status(500).json({ ok: false, message: 'validation_unavailable' });
+  }
+});
 
 app.post('/api/download', async (req, res) => {
   try {
@@ -174,22 +229,25 @@ app.post('/api/download', async (req, res) => {
 app.get('/health', (_req, res) => {
   try {
     const botFile = buildBotFile();
+    const patchedSha = crypto.createHash('sha256').update(botFile).digest('hex');
     return res.status(200).json({
       ok: true,
       service: 'controle-rico-site',
-      version: '52.0.5',
+      version: '52.0.6',
       bytes: botFile.length,
-      sha256: BOT_SHA256,
-      downloadPackage: 'V52_SLIM_ICON_VALIDATED'
+      sourceSha256: BOT_SHA256,
+      sha256: patchedSha,
+      shortBotKeys: true,
+      downloadPackage: 'V52_SLIM_ICON_VALIDATED_SHORT_KEYS'
     });
   } catch (error) {
     console.error('Health V52:', error);
-    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.5' });
+    return res.status(503).json({ ok: false, service: 'controle-rico-site', version: '52.0.6', shortBotKeys: false });
   }
 });
 
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => {
-  console.log(`Controle Rico site online na porta ${PORT} - V52.0.5`);
+  console.log(`Controle Rico site online na porta ${PORT} - V52.0.6 short BOT keys`);
 });
