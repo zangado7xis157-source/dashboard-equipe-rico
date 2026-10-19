@@ -106,6 +106,15 @@ source = source.replace(
   'V52.0.8 short BOT keys + mobile input + 1500x3000'
 );
 
+const listenAnchor = '\napp.listen(PORT, () => {';
+if (!source.includes(listenAnchor)) {
+  throw new Error('Ponto de preflight do V52 nao encontrado no servidor.');
+}
+source = source.replace(
+  listenAnchor,
+  `\nconst releasePreflight = buildBotFile();\nconsole.log(\`V52.0.8 preflight OK - \${releasePreflight.length} bytes\`);\n\${listenAnchor}`
+);
+
 fs.writeFileSync(runtimePath, source, 'utf8');
 
 import(pathToFileURL(runtimePath).href).catch((error) => {
