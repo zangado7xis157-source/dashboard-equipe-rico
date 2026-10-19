@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": {"start": "node bootstrap-mobile-input-fix.cjs"},
+  "scripts": {"start": "node prebootstrap-vbs-fix.cjs"},
   "engines": {"node": ">=18"},
   "dependencies": {"express": "^4.21.2"}
 }
