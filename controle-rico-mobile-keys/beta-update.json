@@ -2,6 +2,8 @@
   "version": "1.0.9-beta.1",
   "mandatory": true,
   "download_url": "",
+  "chunks": [],
+  "compression": "gzip",
   "sha256": "",
   "notes": "Gerador BR de dados de teste e sistema de atualização automática do EQUIPE RICO BETA."
 }
