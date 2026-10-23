@@ -11,6 +11,25 @@
     window.matchMedia?.("(display-mode: standalone)")?.matches ||
     window.navigator.standalone === true;
 
+  function ensureMonochromeStyles() {
+    if (!document.getElementById("ricoMonochromeTheme")) {
+      const link = document.createElement("link");
+      link.id = "ricoMonochromeTheme";
+      link.rel = "stylesheet";
+      link.href = `/rico-monochrome.css?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
+      document.head.appendChild(link);
+    }
+
+    const theme = document.querySelector('meta[name="theme-color"]');
+    if (theme) theme.setAttribute("content", "#050607");
+
+    try {
+      if (typeof ACHIEVEMENT_LEVELS !== "undefined") {
+        ACHIEVEMENT_LEVELS.forEach((level) => { level.color = "#f4f4f5"; });
+      }
+    } catch (_) {}
+  }
+
   async function registerFreshServiceWorker() {
     if (!("serviceWorker" in navigator)) return null;
     try {
@@ -84,10 +103,10 @@
         "z-index:99998",
         "max-width:360px",
         "padding:14px 16px",
-        "border:1px solid rgba(21,239,159,.35)",
+        "border:1px solid #343840",
         "border-radius:14px",
-        "background:#06151e",
-        "color:#eef8ff",
+        "background:#0b0d10",
+        "color:#f4f4f5",
         "box-shadow:0 16px 45px rgba(0,0,0,.42)",
         "font-family:inherit",
         "font-size:12px",
@@ -148,6 +167,7 @@
   }
 
   async function boot() {
+    ensureMonochromeStyles();
     cleanLatestQuery();
     await registerFreshServiceWorker();
     ensureInstallMenuItem();
