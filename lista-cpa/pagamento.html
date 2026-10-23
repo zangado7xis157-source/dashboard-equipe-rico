@@ -9,9 +9,9 @@
 *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 15% 0,#173b5538,transparent 28%),radial-gradient(circle at 90% 10%,#5a172236,transparent 30%),linear-gradient(180deg,#050c12,#081923 60%,#07151f)}
 .wrap{width:min(760px,calc(100% - 28px));margin:auto;padding:34px 0 50px}.brand{font-size:26px;font-weight:1000;letter-spacing:.5px;margin-bottom:24px}.brand b{color:var(--red)}
 .card{border:1px solid var(--line);background:linear-gradient(180deg,#0d2130,#091823);border-radius:22px;padding:26px;box-shadow:0 25px 80px #0008}.tag{display:inline-flex;align-items:center;gap:8px;border:1px solid #ffc33a55;background:#ffc33a10;color:var(--gold);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.7px}
-h1{font-size:clamp(31px,7vw,48px);margin:18px 0 8px}.price{font-size:42px;font-weight:1000;color:var(--red);margin:6px 0 20px}.muted{color:var(--muted);line-height:1.55}.step{margin-top:22px;padding-top:22px;border-top:1px solid #234256}.step h2{font-size:17px;margin:0 0 10px}.pixbox{width:100%;min-height:130px;resize:none;border:1px solid #35566e;background:#07131c;color:#dfe9f0;border-radius:14px;padding:14px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;outline:none;word-break:break-all}
+h1{font-size:clamp(31px,7vw,48px);margin:18px 0 8px}.price{font-size:42px;font-weight:1000;color:var(--red);margin:6px 0 20px}.muted{color:var(--muted);line-height:1.55}.step{margin-top:22px;padding-top:22px;border-top:1px solid #234256}.step h2{font-size:17px;margin:0 0 10px}.qrwrap{display:grid;place-items:center;margin:16px 0 18px}.qrbox{background:#fff;border-radius:18px;padding:14px;border:1px solid #ffffff55;box-shadow:0 14px 45px #0006}.qrbox img{display:block;width:min(270px,70vw);height:auto}.qrlabel{text-align:center;color:#c9d5dd;font-size:12px;margin-top:10px}.pixbox{width:100%;min-height:130px;resize:none;border:1px solid #35566e;background:#07131c;color:#dfe9f0;border-radius:14px;padding:14px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;outline:none;word-break:break-all}
 .btn{width:100%;min-height:52px;border:0;border-radius:13px;margin-top:12px;font-weight:1000;font-size:14px;cursor:pointer}.copy{background:linear-gradient(90deg,#ff3447,#ff5637);color:white;box-shadow:0 10px 30px #ff34472d}.whats{display:grid;place-items:center;text-decoration:none;background:#1fc76a;color:#03140a}.back{display:grid;place-items:center;text-decoration:none;background:#102636;color:#d7e1e8;border:1px solid #31516a}.notice{margin-top:16px;border:1px solid #35566e;border-left:4px solid var(--gold);border-radius:13px;padding:13px 14px;color:#c6d1d9;font-size:12px;line-height:1.55}.ok{color:var(--green);font-weight:900;margin-top:9px;min-height:18px;font-size:12px}
-@media(max-width:520px){.card{padding:20px}.wrap{padding-top:20px}}
+@media(max-width:520px){.card{padding:20px}.wrap{padding-top:20px}.qrbox{padding:11px}}
 </style>
 </head>
 <body>
@@ -23,7 +23,8 @@ h1{font-size:clamp(31px,7vw,48px);margin:18px 0 8px}.price{font-size:42px;font-w
 <div class="price">R$ 49,99</div>
 <p class="muted">Faça o pagamento pelo PIX abaixo. Depois, envie o comprovante pelo WhatsApp para receber sua key de acesso.</p>
 <div class="step">
-<h2>1. Copie o PIX</h2>
+<h2>1. Pague pelo QR Code ou Copia e Cola</h2>
+<div class="qrwrap"><div><div class="qrbox"><img src="pix-qr.svg" alt="QR Code PIX de R$ 49,99"></div><div class="qrlabel">Escaneie pelo aplicativo do seu banco</div></div></div>
 <textarea id="pix" class="pixbox" readonly>00020126580014BR.GOV.BCB.PIX01363b9328f7-c182-4c35-b30e-dd8c21d68d1c520400005303986540549.995802BR592569.686.828 RAY FERNANDES 6009SAO PAULO610805409000622505212ZMpEChCPy2xASd1p9z3e630407D7</textarea>
 <button id="copyBtn" class="btn copy">📋 COPIAR PIX</button>
 <div id="copyMsg" class="ok"></div>
