@@ -1,6 +1,16 @@
 (()=>{
 'use strict';
-const BUILD='2026.10.23.3';
+const BUILD='2026.10.23.4';
+let resizeBusy=false;
+
+function ensureFinalCss(){
+  if(document.getElementById('ricoFinalApprovedCss')) return;
+  const link=document.createElement('link');
+  link.id='ricoFinalApprovedCss';
+  link.rel='stylesheet';
+  link.href=`/rico-final-layout.css?v=${encodeURIComponent(BUILD)}`;
+  document.head.appendChild(link);
+}
 
 function injectFinalTheme(){
   if(document.getElementById('ricoFinalMonoFix')) return;
@@ -23,17 +33,40 @@ body #appScreen .rico-money-box.deposit,body #appScreen .rico-money-box.withdraw
 body #appScreen svg *,body #appScreen svg path,body #appScreen svg circle,body #appScreen svg rect{stroke:#f4f4f5!important}
 body #appScreen .side-menu-icon,body #appScreen .main-menu-toggle{filter:grayscale(1)!important}
 body #appScreen #ricoCycleTabsBar{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
-body #appScreen #ricoProfitChartCard{display:block!important;width:100%!important;box-sizing:border-box!important;margin:14px 0!important;padding:22px!important;border:1px solid #30343a!important;border-radius:20px!important;background:#090b0e!important}
+body #appScreen #ricoProfitChartCard{display:block!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;margin:14px 0 18px!important;padding:20px 24px 22px!important;border:1px solid #30343a!important;border-radius:18px!important;background:#090b0e!important;overflow:hidden!important}
+body #appScreen #ricoProfitChartCard .rico-chart-wrap{display:block!important;position:relative!important;width:100%!important;max-width:none!important;min-width:0!important;height:430px!important;margin-top:18px!important;overflow:hidden!important}
+body #appScreen #ricoProfitChartCard .rico-chart-wrap canvas,body #appScreen #ricoProfitCanvas{display:block!important;width:100%!important;max-width:none!important;min-width:100%!important;height:100%!important}
+body #appScreen #ricoProfitChartCard .rico-chart-metrics,body #appScreen #ricoProfitChartCard .rico-chart-note{display:none!important}
 body #appScreen .rico-chart-select{background:#0b0d10!important;color:#fff!important;border-color:#343840!important}
-body #appScreen .rico-chart-metric{background:#080a0d!important;border-color:#2d3137!important}
 body #appScreen .rico-chart-dot{background:#f4f4f5!important;box-shadow:none!important}
 body #appScreen .rico-cycle-compact{background:#0b0d10!important;border-color:#343840!important}
-@media(max-width:720px){body #appScreen #ricoProfitChartCard{padding:16px!important;border-radius:16px!important}}
+@media(max-width:900px){body #appScreen #ricoProfitChartCard .rico-chart-wrap{height:360px!important}}
+@media(max-width:720px){body #appScreen #ricoProfitChartCard{padding:16px!important;border-radius:16px!important}body #appScreen #ricoProfitChartCard .rico-chart-wrap{height:300px!important}}
 `;
   document.head.appendChild(s);
 }
 
+function forceChartResize(){
+  if(resizeBusy)return;
+  const chart=document.getElementById('ricoProfitChartCard');
+  const wrap=chart?.querySelector('.rico-chart-wrap');
+  const canvas=document.getElementById('ricoProfitCanvas');
+  if(!chart||!wrap||!canvas)return;
+  const target=Math.round(wrap.getBoundingClientRect().width);
+  const actual=Math.round(canvas.getBoundingClientRect().width);
+  if(target<300)return;
+  if(Math.abs(target-actual)>3 || Number(canvas.dataset.ricoFullWidth)!==target){
+    resizeBusy=true;
+    canvas.dataset.ricoFullWidth=String(target);
+    canvas.style.setProperty('width','100%','important');
+    canvas.style.setProperty('height','100%','important');
+    try{window.dispatchEvent(new Event('resize'))}catch(_){}
+    setTimeout(()=>{resizeBusy=false},120);
+  }
+}
+
 function fixLayout(){
+  ensureFinalCss();
   injectFinalTheme();
   const bar=document.getElementById('ricoCycleTabsBar');
   if(bar){
@@ -44,10 +77,8 @@ function fixLayout(){
     bar.style.setProperty('border','0','important');
   }
   const chart=document.getElementById('ricoProfitChartCard');
-  const layout=document.querySelector('.grid.layout.dashboard-view');
-  if(chart&&layout&&chart.nextElementSibling!==layout){
-    layout.parentNode.insertBefore(chart,layout);
-  }
+  const metrics=document.querySelector('.grid.metrics.dashboard-view');
+  if(chart&&metrics&&chart.previousElementSibling!==metrics){metrics.insertAdjacentElement('afterend',chart)}
 
   const app=document.getElementById('appScreen');
   if(app){
@@ -63,13 +94,19 @@ function fixLayout(){
       if(chromatic(bg) && !el.matches('button.primary,.rico-new-screen,.er-period-btn.active,.monthly-payment-btn,.network-join-btn,#finishCycleBtn')) el.style.setProperty('background-color','#0b0d10','important');
     });
   }
+  forceChartResize();
 }
 
 function boot(){
   fixLayout();
   const observer=new MutationObserver(()=>fixLayout());
   observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
-  setInterval(fixLayout,1000);
+  if('ResizeObserver' in window){
+    const ro=new ResizeObserver(()=>forceChartResize());
+    const wait=()=>{const chart=document.getElementById('ricoProfitChartCard');if(chart)ro.observe(chart);else setTimeout(wait,250)};wait();
+  }
+  setInterval(fixLayout,700);
+  [200,500,900,1400,2200,3500].forEach(ms=>setTimeout(()=>{fixLayout();forceChartResize()},ms));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 console.info('Equipe Rico final layout fix',BUILD);
