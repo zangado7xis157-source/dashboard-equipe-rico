@@ -40,6 +40,16 @@
     document.head.appendChild(script);
   }
 
+  function ensureFinalLayoutFix() {
+    if (document.getElementById("ricoFinalLayoutFixScript")) return;
+    const script = document.createElement("script");
+    script.id = "ricoFinalLayoutFixScript";
+    script.src = `/rico-final-layout-fix.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
+    script.defer = true;
+    script.onerror = () => console.error("Falha ao carregar correção final do dashboard");
+    document.head.appendChild(script);
+  }
+
   async function registerFreshServiceWorker() {
     if (!("serviceWorker" in navigator)) return null;
     try {
@@ -179,6 +189,7 @@
   async function boot() {
     ensureMonochromeStyles();
     ensureProfitChart();
+    ensureFinalLayoutFix();
     cleanLatestQuery();
     await registerFreshServiceWorker();
     ensureInstallMenuItem();
