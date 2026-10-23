@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pagamento • LISTA PRIME</title>
+<style>
+:root{--bg:#050d14;--panel:#0b1d2a;--line:#294b60;--text:#f5f7fb;--muted:#9eb0bd;--red:#ff3447;--gold:#ffc33a;--green:#35d889}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 15% 0,#173b5538,transparent 28%),radial-gradient(circle at 90% 10%,#5a172236,transparent 30%),linear-gradient(180deg,#050c12,#081923 60%,#07151f)}
+.wrap{width:min(760px,calc(100% - 28px));margin:auto;padding:34px 0 50px}.brand{font-size:26px;font-weight:1000;letter-spacing:.5px;margin-bottom:24px}.brand b{color:var(--red)}
+.card{border:1px solid var(--line);background:linear-gradient(180deg,#0d2130,#091823);border-radius:22px;padding:26px;box-shadow:0 25px 80px #0008}.tag{display:inline-flex;align-items:center;gap:8px;border:1px solid #ffc33a55;background:#ffc33a10;color:var(--gold);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.7px}
+h1{font-size:clamp(31px,7vw,48px);margin:18px 0 8px}.price{font-size:42px;font-weight:1000;color:var(--red);margin:6px 0 20px}.muted{color:var(--muted);line-height:1.55}.step{margin-top:22px;padding-top:22px;border-top:1px solid #234256}.step h2{font-size:17px;margin:0 0 10px}.pixbox{width:100%;min-height:130px;resize:none;border:1px solid #35566e;background:#07131c;color:#dfe9f0;border-radius:14px;padding:14px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;outline:none;word-break:break-all}
+.btn{width:100%;min-height:52px;border:0;border-radius:13px;margin-top:12px;font-weight:1000;font-size:14px;cursor:pointer}.copy{background:linear-gradient(90deg,#ff3447,#ff5637);color:white;box-shadow:0 10px 30px #ff34472d}.whats{display:grid;place-items:center;text-decoration:none;background:#1fc76a;color:#03140a}.back{display:grid;place-items:center;text-decoration:none;background:#102636;color:#d7e1e8;border:1px solid #31516a}.notice{margin-top:16px;border:1px solid #35566e;border-left:4px solid var(--gold);border-radius:13px;padding:13px 14px;color:#c6d1d9;font-size:12px;line-height:1.55}.ok{color:var(--green);font-weight:900;margin-top:9px;min-height:18px;font-size:12px}
+@media(max-width:520px){.card{padding:20px}.wrap{padding-top:20px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="brand">LISTA <b>PRIME</b></div>
+<section class="card">
+<div class="tag">🔒 PAGAMENTO DO ACESSO</div>
+<h1>Libere seus 30 dias</h1>
+<div class="price">R$ 49,99</div>
+<p class="muted">Faça o pagamento pelo PIX abaixo. Depois, envie o comprovante pelo WhatsApp para receber sua key de acesso.</p>
+<div class="step">
+<h2>1. Copie o PIX</h2>
+<textarea id="pix" class="pixbox" readonly>00020126580014BR.GOV.BCB.PIX01363b9328f7-c182-4c35-b30e-dd8c21d68d1c520400005303986540549.995802BR592569.686.828 RAY FERNANDES 6009SAO PAULO610805409000622505212ZMpEChCPy2xASd1p9z3e630407D7</textarea>
+<button id="copyBtn" class="btn copy">📋 COPIAR PIX</button>
+<div id="copyMsg" class="ok"></div>
+</div>
+<div class="step">
+<h2>2. Já pagou?</h2>
+<p class="muted">Clique abaixo e envie o comprovante. Após a conferência, sua key de 30 dias será enviada pelo WhatsApp.</p>
+<a class="btn whats" href="https://wa.me/5535910238277?text=J%C3%A1%20paguei%20%E2%80%94%20enviar%20comprovante" target="_blank" rel="noopener noreferrer">✅ JÁ PAGUEI — ENVIAR COMPROVANTE</a>
+<div class="notice">A liberação não é automática. O comprovante será conferido antes do envio da key. Cada key libera 30 dias de acesso à Lista Prime.</div>
+<a class="btn back" href="./">← VOLTAR PARA A LISTA PRIME</a>
+</div>
+</section>
+</main>
+<script>
+const pix=document.getElementById('pix');
+document.getElementById('copyBtn').onclick=async()=>{try{await navigator.clipboard.writeText(pix.value.trim());document.getElementById('copyMsg').textContent='PIX copiado. Abra seu banco e use a opção PIX Copia e Cola.'}catch(e){pix.focus();pix.select();document.execCommand('copy');document.getElementById('copyMsg').textContent='PIX copiado.'}};
+</script>
+</body>
+</html>
