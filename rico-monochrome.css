@@ -1,0 +1,229 @@
+/* Dashboard EQUIPE RICO — tema monocromático global */
+:root,
+body.rico-ops-v2-ready{
+  --bg:#050607!important;
+  --panel:#0b0d10!important;
+  --panel2:#101216!important;
+  --line:#2a2e34!important;
+  --muted:#9298a2!important;
+  --text:#f7f7f8!important;
+  --green:#f4f4f5!important;
+  --green2:#d5d7db!important;
+  --blue:#e7e8ea!important;
+  --yellow:#dedfe2!important;
+  --purple:#cacdd2!important;
+  --red:#b8bcc2!important;
+  --rico-bg:#050607!important;
+  --rico-panel:#0b0d10!important;
+  --rico-panel-2:#101216!important;
+  --rico-line:rgba(255,255,255,.16)!important;
+  --rico-blue:#f4f4f5!important;
+  --rico-blue-2:#d7d7d9!important;
+  --rico-cyan:#ececee!important;
+  --rico-green:#f4f4f5!important;
+  --rico-red:#d1d1d4!important;
+  --rico-yellow:#e4e4e7!important;
+  --rico-purple:#cfcfd2!important;
+}
+
+html,body{background:#050607!important;color:#f7f7f8!important}
+body{background-image:none!important}
+#appScreen,#authScreen,#paywallScreen{color:#f7f7f8!important}
+
+.card,.mini,.box,.side-menu,.monthly-payment-banner,.network-invite-card,.games-access-card,.games-lock-box,.report-card,.month-main,.month-side,.month-progress-card,.achievement-card,.achievement-note,.admin-metric,.er-profile-card,.er-help,.er-ranking-card,.rico-cycle-hub,#ricoCycleTabsBar,#ricoOpsV2{
+  background:linear-gradient(145deg,#0b0d10,#070809)!important;
+  border-color:#2d3137!important;
+  box-shadow:none!important;
+}
+
+h1,h2,h3,h4,h5,h6,strong,.value,.profit,.month-big-profit,.achievement-name,.achievement-card h3,.admin-email,.rico-ops-title,.rico-screen-name,.er-rank-name,.er-rank-pos,.er-rank-profit{
+  color:#fff!important;
+}
+.muted,.range,.period,.label,small,.side-menu-sub,.rico-ops-sub,.rico-cycle-note,.rico-cycle-result,.rico-screen-meta,.rico-ops-foot,.er-view-sub,.er-ranking-note,.er-upload-note,.er-save-msg,.games-note,.admin-small{
+  color:#969ba3!important;
+}
+
+button,.primary,.secondary,.danger,.rico-new-screen,.rico-action-btn,.er-period-btn,.network-join-btn,.games-lock-pay,.games-lock-key,.monthly-payment-btn,.game-copy-btn{
+  box-shadow:none!important;
+}
+.primary,.rico-new-screen,.er-period-btn.active,.network-join-btn,.monthly-payment-btn,.games-lock-pay{
+  background:#f4f4f5!important;
+  color:#08090a!important;
+  border-color:#f4f4f5!important;
+}
+.secondary,.danger,.er-period-btn,.games-lock-key,.game-copy-btn{
+  background:#0b0d10!important;
+  color:#f4f4f5!important;
+  border-color:#343840!important;
+}
+.secondary:hover,.danger:hover,.er-period-btn:hover,.game-copy-btn:hover{border-color:#f4f4f5!important;color:#fff!important}
+
+input,select,textarea{
+  background:#080a0d!important;
+  color:#f5f5f5!important;
+  border-color:#30343a!important;
+  box-shadow:none!important;
+}
+input::placeholder,textarea::placeholder{color:#767c85!important}
+
+.trialbadge,.admin-status,.rico-cycle-state,.rico-cycle-badge,.game-provider-badge,.game-recent-badge{
+  background:#111318!important;
+  color:#f4f4f5!important;
+  border-color:#353941!important;
+  box-shadow:none!important;
+}
+
+.main-menu-bar,.side-menu-head,.side-menu-foot,.toolbar,.month-detail-top{
+  border-color:#24282e!important;
+}
+.side-menu{background:#070809!important}
+.side-menu-item{background:#090b0e!important;color:#f4f4f5!important;border-color:transparent!important}
+.side-menu-item:hover{background:#111318!important;border-color:#2f3339!important}
+.side-menu-item.active{background:#f4f4f5!important;color:#08090a!important;border-color:#f4f4f5!important}
+.side-menu-item.active .side-menu-title{color:#08090a!important}
+.side-menu-item.active .side-menu-sub{color:#4c5159!important}
+.side-menu-brand,.side-menu-brand span{color:#fff!important}
+.side-menu-icon{filter:grayscale(1)!important}
+
+/* Operações por ciclo */
+body.rico-ops-v2-ready #ricoCycleTabsBar{
+  background:linear-gradient(180deg,#0b0d10,#070809)!important;
+  border-color:#343840!important;
+}
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-tabs-head,
+body.rico-ops-v2-ready #ricoCycleTabsBar #ricoCycleTabs,
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-active-strip{
+  background:#080a0d!important;
+  border-color:#2a2e34!important;
+}
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-tabs-title,
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-active-name,
+body.rico-ops-v2-ready #ricoCycleTabsBar #ricoNewCycleBtn{
+  color:#f4f4f5!important;
+}
+body.rico-ops-v2-ready #ricoCycleTabsBar #ricoNewCycleBtn{
+  background:#0d0f12!important;
+  border-color:#3b4047!important;
+}
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-tab{
+  background:#0b0d10!important;
+  color:#a5aab2!important;
+  border-color:#2d3137!important;
+}
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-tab.active{
+  background:#f4f4f5!important;
+  color:#08090a!important;
+  border-color:#f4f4f5!important;
+  box-shadow:inset 0 -3px 0 #fff!important;
+}
+body.rico-ops-v2-ready #ricoCycleTabsBar .rico-cycle-tab.active .rico-cycle-tab-name{color:#08090a!important}
+#ricoOpsV2{
+  background:linear-gradient(180deg,#0b0d10,#070809 72%)!important;
+  border-color:#343840!important;
+  box-shadow:0 18px 56px rgba(0,0,0,.32)!important;
+}
+.rico-ops-head{
+  background:linear-gradient(180deg,#101216,#0a0c0f)!important;
+  border-color:#2d3137!important;
+}
+.rico-ops-logo,.rico-cycle-profit-icon{
+  background:#15171b!important;
+  color:#fff!important;
+  border-color:#3a3e45!important;
+  box-shadow:none!important;
+}
+.rico-cycle-profit-card{
+  background:#0c0e11!important;
+  border-color:#363a41!important;
+  box-shadow:none!important;
+}
+.rico-cycle-profit-card strong,.rico-cycle-profit-card.negative strong,.rico-profit,.rico-profit.negative,.rico-profit.neutral{
+  color:#f7f7f8!important;
+}
+.rico-new-screen{
+  background:#f4f4f5!important;
+  color:#08090a!important;
+  border-color:#f4f4f5!important;
+}
+.rico-ops-table-wrap{background:#07090c!important}
+.rico-ops-table thead th{
+  background:#0b0d10!important;
+  border-color:#30343a!important;
+  color:#b6bac1!important;
+}
+.rico-ops-table thead th:nth-child(n){color:#d9dce0!important}
+.rico-ops-table tbody td{
+  background:linear-gradient(90deg,#0a0c0f,#08090b)!important;
+  border-color:#202329!important;
+}
+.rico-ops-table tbody tr:hover td{background:linear-gradient(90deg,#111318,#0c0d10)!important}
+.rico-money-box{
+  background:#0c0e11!important;
+  border-color:#363a41!important;
+  color:#f5f5f5!important;
+}
+.rico-money-box.deposit,.rico-money-box.withdraw,.rico-money-box.chest,.rico-money-box.zero{color:#f5f5f5!important}
+.rico-cycle-badge{background:#111318!important;color:#f4f4f5!important;border-color:#3b4047!important}
+.rico-cycle-badge i{background:#f4f4f5!important;box-shadow:none!important}
+.rico-screen-link{color:#dedfe2!important}
+.rico-action-open,.rico-action-delete{
+  background:#0d0f12!important;
+  color:#f4f4f5!important;
+  border-color:#3b4047!important;
+}
+.rico-action-open:hover,.rico-action-delete:hover{background:#f4f4f5!important;color:#08090a!important}
+.rico-ops-foot{background:#080a0d!important;border-color:#202329!important;color:#8f959e!important}
+.rico-ops-foot strong{color:#f4f4f5!important}
+
+/* Relatórios e metas */
+.report-card,.month-main,.month-side,.month-progress-card{background:#0b0d10!important;border-color:#2d3137!important}
+.month-progress-track,.achievement-track{background:#171a1f!important}
+.month-progress-bar,.achievement-bar{background:#f4f4f5!important;box-shadow:none!important}
+.month-area{fill:rgba(255,255,255,.08)!important}
+.month-line{stroke:#f4f4f5!important}
+.month-gridline{stroke:rgba(255,255,255,.09)!important}
+.month-positive,.profit-positive,.profit-negative{color:#f7f7f8!important}
+.month-side-box{background:#0c0e11!important;border-color:#2f3339!important}
+
+/* Plaquinhas / conquistas — preservadas, apenas monocromáticas */
+.achievement-card{
+  background:linear-gradient(145deg,#0d0f12,#08090b)!important;
+  border-color:#353941!important;
+  box-shadow:none!important;
+}
+.achievement-card.unlocked{border-color:#d8dade!important}
+.achievement-card.locked{opacity:.72!important}
+.achievement-badge{filter:grayscale(1)!important}
+.achievement-status{color:#f4f4f5!important}
+.achievement-actions select{background:#080a0d!important;color:#fff!important;border-color:#343840!important}
+
+/* Ranking e configurações */
+.er-ranking-row{border-color:#202329!important;background:#090b0e!important}
+.er-ranking-row.me{background:#121419!important}
+.er-avatar{background:#15171b!important;color:#fff!important;border-color:#3a3e45!important}
+.er-period-btn.active{background:#f4f4f5!important;color:#08090a!important}
+
+/* Jogos */
+.games-catalog-head,.games-filter-row{border-color:#262a30!important}
+.game-filter-btn{background:#0b0d10!important;color:#dfe1e4!important;border-color:#343840!important}
+.game-filter-btn.active{background:#f4f4f5!important;color:#08090a!important;border-color:#f4f4f5!important}
+.game-catalog-card{background:#0b0d10!important;border-color:#2d3137!important;box-shadow:none!important}
+.game-catalog-body{background:#0b0d10!important}
+.game-catalog-name,.game-catalog-meta{color:#f4f4f5!important}
+.games-lock-overlay{background:rgba(5,6,7,.78)!important}
+
+/* Admin */
+.admin-status.paid,.admin-status.trial,.admin-status.expired{background:#111318!important;color:#f4f4f5!important;border-color:#353941!important}
+#adminUsersTable th{background:#0b0d10!important;color:#d4d7dc!important;border-color:#2d3137!important}
+#adminUsersTable td{background:#090b0e!important;color:#f4f4f5!important;border-color:#202329!important}
+
+/* Auth / paywall / modal */
+.auth-card,.paywall-card,.network-invite-card{background:#0b0d10!important;border-color:#2d3137!important;box-shadow:none!important}
+#authMsg,#unlockMsg{color:#b7bbc2!important}
+
+/* Remove brilhos coloridos remanescentes */
+[style*="color:var(--green)"],[style*="color:var(--blue)"],[style*="color:var(--yellow)"],[style*="color:var(--purple)"],[style*="color:var(--red)"]{color:#f4f4f5!important}
+svg stop{stop-color:#f4f4f5!important}
+
+/* Fotos e capas continuam naturais; a interface é monocromática. */
+img{box-shadow:none}
