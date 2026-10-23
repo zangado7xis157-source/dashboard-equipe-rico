@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 
-const BUILD='2026.10.23.1';
-const state={period:'today',rows:[],loading:false,timer:null,resize:null};
+const BUILD='2026.10.23.2';
+const state={period:'today',rows:[],loading:false,timer:null,resize:null,cycleTimer:null};
 const $=id=>document.getElementById(id);
 const db=()=>{try{return typeof sb!=='undefined'?sb:null}catch(_){return null}};
 const currentUser=()=>{try{return typeof user!=='undefined'&&user?.id?user:null}catch(_){return null}};
@@ -15,10 +15,12 @@ function injectStyles(){
   const s=document.createElement('style');
   s.id='ricoProfitChartStyles';
   s.textContent=`
-#ricoProfitChartCard{margin:16px 0;padding:22px;border:1px solid #2f3339;border-radius:20px;background:linear-gradient(145deg,#0a0c0f,#060708);box-shadow:0 20px 55px rgba(0,0,0,.28);overflow:hidden}
+#ricoProfitChartCard{margin:15px 0 14px;padding:22px;border:1px solid #2f3339;border-radius:20px;background:linear-gradient(145deg,#0a0c0f,#060708);box-shadow:0 20px 55px rgba(0,0,0,.28);overflow:hidden}
 .rico-chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}.rico-chart-kicker{font-size:13px;color:#a4a9b1;font-weight:850;margin-bottom:5px}.rico-chart-big{font-size:clamp(34px,5vw,62px);line-height:.98;font-weight:950;letter-spacing:-.045em;color:#fff;text-shadow:0 0 16px rgba(255,255,255,.16)}
 .rico-chart-select{min-width:120px;background:#090b0e!important;color:#fff!important;border:1px solid #343840!important;border-radius:14px!important;padding:12px 14px!important;font-weight:900!important}.rico-chart-wrap{position:relative;width:100%;height:360px;margin-top:20px}.rico-chart-wrap canvas{width:100%;height:100%;display:block}.rico-chart-empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#818791;font-weight:800;font-size:13px;pointer-events:none}.rico-chart-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}.rico-chart-metric{border:1px solid #282c31;border-radius:15px;padding:15px 16px;background:#080a0d}.rico-chart-metric span{display:flex;align-items:center;gap:8px;color:#a5aab2;font-size:12px;font-weight:800}.rico-chart-dot{width:9px;height:9px;border-radius:50%;background:#f4f4f5;box-shadow:0 0 9px rgba(255,255,255,.28)}.rico-chart-metric strong{display:block;margin-top:8px;color:#fff;font-size:clamp(19px,2.2vw,28px);font-weight:950;letter-spacing:-.025em}.rico-chart-note{margin-top:9px;color:#747a83;font-size:10px}
-@media(max-width:720px){#ricoProfitChartCard{padding:16px;border-radius:16px}.rico-chart-wrap{height:280px}.rico-chart-metrics{grid-template-columns:1fr}.rico-chart-head{align-items:center}.rico-chart-big{font-size:38px}.rico-chart-select{min-width:106px}}
+#ricoCycleTabsBar{display:none!important}
+.rico-cycle-compact{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 10px;border:1px solid #343840;border-radius:11px;background:#0b0d10}.rico-cycle-compact span{font-size:10px;color:#8f959d;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.rico-cycle-compact select{min-width:130px;max-width:190px;background:#080a0d!important;color:#f4f4f5!important;border:0!important;padding:7px 28px 7px 7px!important;font-size:11px!important;font-weight:900!important;box-shadow:none!important;outline:0!important}
+@media(max-width:720px){#ricoProfitChartCard{padding:16px;border-radius:16px}.rico-chart-wrap{height:280px}.rico-chart-metrics{grid-template-columns:1fr}.rico-chart-head{align-items:center}.rico-chart-big{font-size:38px}.rico-chart-select{min-width:106px}.rico-cycle-compact{width:100%;box-sizing:border-box}.rico-cycle-compact select{flex:1;max-width:none}}
 `;
   document.head.appendChild(s);
 }
@@ -50,6 +52,37 @@ function mount(){
   $('ricoChartPeriod').value=state.period;
   $('ricoChartPeriod').addEventListener('change',async e=>{state.period=e.target.value;await refresh(true)});
   return card;
+}
+
+function syncCycleDock(){
+  const bar=$('ricoCycleTabsBar');
+  if(!bar)return;
+  bar.style.display='none';
+  const buttons=[...bar.querySelectorAll('[data-cycle]')];
+  const head=document.querySelector('#ricoOpsV2 .rico-ops-head-right');
+  if(!head||!buttons.length)return;
+  let dock=$('ricoCycleCompactDock');
+  if(!dock){
+    dock=document.createElement('label');
+    dock.id='ricoCycleCompactDock';
+    dock.className='rico-cycle-compact';
+    dock.innerHTML='<span>Ciclo</span><select id="ricoCycleCompactSelect" aria-label="Selecionar ciclo"></select>';
+    head.insertBefore(dock,head.firstChild);
+    $('ricoCycleCompactSelect').addEventListener('change',e=>{
+      const target=bar.querySelector(`[data-cycle="${CSS.escape(e.target.value)}"]`);
+      target?.click();
+      setTimeout(()=>{refresh(true);syncCycleDock()},120);
+    });
+  }
+  const select=$('ricoCycleCompactSelect');
+  if(!select)return;
+  const signature=buttons.map(b=>`${b.dataset.cycle}:${b.textContent.trim()}:${b.classList.contains('on')}`).join('|');
+  if(select.dataset.signature!==signature){
+    const selected=buttons.find(b=>b.classList.contains('on'))?.dataset.cycle||buttons[0]?.dataset.cycle||'';
+    select.innerHTML=buttons.map(b=>`<option value="${String(b.dataset.cycle).replace(/"/g,'&quot;')}" ${b.dataset.cycle===selected?'selected':''}>${b.textContent.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;')}</option>`).join('');
+    select.dataset.signature=signature;
+    select.value=selected;
+  }
 }
 
 function range(){
@@ -139,6 +172,7 @@ function render(rows){
 
 async function refresh(force=false){
   if(state.loading)return;const card=mount();if(!card)return;
+  syncCycleDock();
   if(!currentUser()||!db()){setTimeout(()=>refresh(true),600);return}
   state.loading=true;
   try{const rows=await loadRows();const sig=JSON.stringify(rows.map(x=>[x.id,x.value,x.entry_type,x.entry_date,x.created_at]));if(force||sig!==state.sig){state.sig=sig;state.rows=rows;render(rows)}}finally{state.loading=false}
@@ -149,7 +183,7 @@ function bindRefreshTriggers(){
   window.addEventListener('resize',()=>{clearTimeout(state.resize);state.resize=setTimeout(()=>state.series&&draw(state.series),120)});
 }
 
-function boot(){injectStyles();mount();bindRefreshTriggers();refresh(true);state.timer=setInterval(()=>refresh(false),12000)}
+function boot(){injectStyles();mount();bindRefreshTriggers();refresh(true);state.timer=setInterval(()=>refresh(false),12000);state.cycleTimer=setInterval(syncCycleDock,700)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 console.info('Equipe Rico profit chart',BUILD);
 })();
