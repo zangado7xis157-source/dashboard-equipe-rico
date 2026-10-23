@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RICO.CPA — Lista de Casas</title>
+<style>
+  :root {
+    --bg: #061523;
+    --panel: #0d2233;
+    --panel-2: #13304a;
+    --panel-3: #183e5f;
+    --line: #4d7391;
+    --text: #f4f7fb;
+    --muted: #93a8b6;
+    --blue: #2b87d9;
+    --blue-2: #1f6fb6;
+    --green: #1fd28b;
+    --gold: #f2bd3b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(circle at top right, rgba(255,255,255,.10), transparent 24%),
+      radial-gradient(circle at top left, rgba(76,151,230,.16), transparent 28%),
+      linear-gradient(180deg, #04111d 0%, #061a2b 45%, var(--bg) 100%);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .shell {
+    width: min(1200px, calc(100% - 28px));
+    margin: 20px auto 40px;
+    position: relative;
+  }
+
+  .shell::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 26px;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,.06);
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: rgba(7, 22, 36, .96);
+    border: 1px solid #446884;
+    border-radius: 18px 18px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(14px);
+  }
+
+  .menu {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.28);
+    background: linear-gradient(180deg, #173550, #10293e);
+    color: white;
+    font-size: 22px;
+    user-select: none;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    letter-spacing: .5px;
+    font-size: 20px;
+  }
+
+  .brand-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    background:
+      linear-gradient(145deg, rgba(39,122,197,.98), rgba(14,50,78,.98));
+    border: 1px solid rgba(255,255,255,.26);
+    box-shadow: inset 0 0 20px rgba(255,255,255,.06);
+  }
+
+  .content {
+    background: rgba(8, 27, 44, .97);
+    border: 1px solid #446884;
+    border-top: 0;
+    border-radius: 0 0 18px 18px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  .controls {
+    padding: 18px;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    background: rgba(9, 29, 46, .97);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .search {
+    position: relative;
+  }
+
+  .search input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid rgba(255,255,255,.20);
+    background: #12344f;
+    border-radius: 13px;
+    padding: 0 16px 0 46px;
+    color: white;
+    outline: none;
+    font-size: 15px;
+  }
+
+  .search input::placeholder { color: #86a4b7; }
+  .search span {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: .8;
+  }
+
+  .count {
+    height: 48px;
+    min-width: 150px;
+    border-radius: 13px;
+    background: linear-gradient(180deg, #163b59, #102e47);
+    border: 1px solid rgba(255,255,255,.20);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    font-weight: 800;
+    color: #f4c54b;
+  }
+
+  .chips {
+    margin-top: 13px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+
+  .chip {
+    border: 1px solid rgba(255,255,255,.18);
+    background: linear-gradient(180deg, #143552, #102a41);
+    color: #c9d5dc;
+    padding: 10px 15px;
+    border-radius: 999px;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .chip.active {
+    background: linear-gradient(180deg, #ffd35d, #d79b17);
+    border-color: #f6cd58;
+    color: #171006;
+    box-shadow: 0 3px 14px rgba(242,189,59,.18);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .card {
+    border: 1px solid rgba(255,255,255,.16);
+    background: linear-gradient(180deg, #12314a, #0f2a40);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,.30);
+    box-shadow: 0 10px 25px rgba(0,0,0,.28), 0 0 0 1px rgba(255,255,255,.05) inset;
+  }
+
+  .art {
+    aspect-ratio: 1.75 / 1;
+    margin: 10px 10px 0;
+    border-radius: 15px;
+    background:
+      radial-gradient(circle at 25% 20%, rgba(255,255,255,.13), transparent 24%),
+      radial-gradient(circle at 75% 80%, rgba(68,147,230,.18), transparent 28%),
+      linear-gradient(135deg, #0d2740, #123b5d 55%, #0a2136);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .art::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(120deg, transparent 0 26%, rgba(255,255,255,.12) 26% 27%, transparent 27% 56%, rgba(255,255,255,.09) 56% 57%, transparent 57%),
+      linear-gradient(0deg, rgba(255,255,255,.03), rgba(255,255,255,.03));
+    pointer-events: none;
+  }
+
+  .logo-wrap {
+    width: 110px;
+    height: 110px;
+    border-radius: 26px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 18px 40px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+
+  .logo-wrap img {
+    width: 78px;
+    height: 78px;
+    object-fit: contain;
+    border-radius: 16px;
+  }
+
+  .domain-text {
+    position: absolute;
+    bottom: 11px;
+    left: 12px;
+    right: 12px;
+    text-align: center;
+    font-weight: 900;
+    letter-spacing: .3px;
+    color: #eaf4fa;
+    text-shadow: 0 2px 8px rgba(0,0,0,.65);
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: .6px;
+    background: linear-gradient(180deg, #ffe16c, #d69b16);
+    color: #2a1a00;
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+  }
+
+  .info {
+    padding: 13px 14px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .name {
+    font-size: 15px;
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .open {
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 11px;
+    font-size: 12px;
+    font-weight: 900;
+    background: transparent;
+    color: #ffd052;
+    cursor: pointer;
+  }
+
+  .empty {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+    color: #8ea7b7;
+  }
+
+  footer {
+    text-align: center;
+    color: #7891a1;
+    font-size: 12px;
+    padding: 0 18px 18px;
+  }
+
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 590px) {
+    .shell { width: 100%; margin: 0; }
+    .topbar, .content { border-radius: 0; }
+    .row { grid-template-columns: 1fr; }
+    .count { width: 100%; min-width: 0; }
+    .grid { grid-template-columns: 1fr; padding: 12px; }
+    .controls { padding: 14px 12px; }
+    .brand { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="menu">☰</div>
+      <div class="brand">
+        <div class="brand-badge">⚡</div>
+        <span>RICO.CPA</span>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="controls">
+        <div class="row">
+          <label class="search">
+            <span>⌕</span>
+            <input id="search" type="search" placeholder="Buscar plataforma pelo nome..." autocomplete="off" />
+          </label>
+          <div class="count"><span id="count">0</span>&nbsp;casas</div>
+        </div>
+
+        <div class="chips">
+          <button class="chip active" data-filter="all">✦ Todas</button>
+          <button class="chip" data-filter="launch">🔥 Lançamentos</button>
+        </div>
+      </div>
+
+      <div id="grid" class="grid"></div>
+      <div id="empty" class="empty">Nenhuma casa encontrada.</div>
+      <footer>Versão de teste • RICO.CPA</footer>
+    </section>
+  </main>
+
+<script>
+const houses = [{"name": "FGHTRTUU", "domain": "fghtrtuu.com", "url": "https://fghtrtuu.com/"}, {"name": "18A1", "domain": "18a1.com", "url": "https://18a1.com/"}, {"name": "SUPERSTAR07", "domain": "superstar07.com", "url": "https://superstar07.com/main/inicio"}, {"name": "QXQX3", "domain": "qxqx3.com", "url": "https://qxqx3.com/"}, {"name": "POPDEZ99", "domain": "popdez99.com", "url": "https://popdez99.com/"}, {"name": "LV567", "domain": "lv567.com", "url": "https://lv567.com/"}, {"name": "K5821", "domain": "k5821.com", "url": "https://k5821.com/"}, {"name": "58678B", "domain": "58678b.win", "url": "https://58678b.win/"}, {"name": "JKEHP11H", "domain": "jkehp11h.com", "url": "https://jkehp11h.com/"}, {"name": "UALRU7YR", "domain": "ualru7yr.com", "url": "https://ualru7yr.com/"}, {"name": "T4N8WFK", "domain": "t4n8wfk.com", "url": "https://t4n8wfk.com/"}];
+
+houses.forEach(h => { if (typeof h.launch === 'undefined') h.launch = false; });
+
+const grid = document.getElementById('grid');
+const search = document.getElementById('search');
+const count = document.getElementById('count');
+const empty = document.getElementById('empty');
+
+function favicon(domain) {
+  return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
+}
+
+function render(items) {
+  grid.innerHTML = '';
+  count.textContent = items.length;
+  empty.style.display = items.length ? 'none' : 'block';
+
+  items.forEach((house, index) => {
+    const card = document.createElement('article');
+    card.className = 'card';
+
+    const art = document.createElement('div');
+    art.className = 'art';
+
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.textContent = index < 3 ? 'DESTAQUE' : 'NOVA';
+
+    const logoWrap = document.createElement('div');
+    logoWrap.className = 'logo-wrap';
+
+    const img = document.createElement('img');
+    img.src = favicon(house.domain);
+    img.alt = `Logo ${house.name}`;
+    img.loading = 'lazy';
+
+    const domain = document.createElement('div');
+    domain.className = 'domain-text';
+    domain.textContent = house.domain;
+
+    logoWrap.appendChild(img);
+    art.appendChild(badge);
+    art.appendChild(logoWrap);
+    art.appendChild(domain);
+
+    const info = document.createElement('div');
+    info.className = 'info';
+
+    const name = document.createElement('div');
+    name.className = 'name';
+    name.textContent = house.name;
+
+    const open = document.createElement('button');
+    open.className = 'open';
+    open.textContent = 'ABRIR →';
+    open.addEventListener('click', () => window.open(house.url, '_blank', 'noopener,noreferrer'));
+
+    info.appendChild(name);
+    info.appendChild(open);
+
+    card.appendChild(art);
+    card.appendChild(info);
+
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      window.open(house.url, '_blank', 'noopener,noreferrer');
+    });
+    card.style.cursor = 'pointer';
+
+    grid.appendChild(card);
+  });
+}
+
+let activeFilter = 'all';
+
+function applyFilters() {
+  const q = search.value.trim().toLowerCase();
+  const filtered = houses.filter(h => {
+    const matchesSearch = h.name.toLowerCase().includes(q) || h.domain.toLowerCase().includes(q);
+    const matchesTab = activeFilter === 'all' || (activeFilter === 'launch' && h.launch);
+    return matchesSearch && matchesTab;
+  });
+  render(filtered);
+}
+
+search.addEventListener('input', applyFilters);
+
+document.querySelectorAll('.chip[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chip[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    applyFilters();
+  });
+});
+
+applyFilters();
+</script>
+</body>
+</html>
