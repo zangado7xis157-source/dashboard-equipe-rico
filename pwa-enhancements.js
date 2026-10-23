@@ -30,6 +30,16 @@
     } catch (_) {}
   }
 
+  function ensureProfitChart() {
+    if (document.getElementById("ricoProfitChartScript")) return;
+    const script = document.createElement("script");
+    script.id = "ricoProfitChartScript";
+    script.src = `/rico-profit-chart.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
+    script.defer = true;
+    script.onerror = () => console.error("Falha ao carregar gráfico de lucro");
+    document.head.appendChild(script);
+  }
+
   async function registerFreshServiceWorker() {
     if (!("serviceWorker" in navigator)) return null;
     try {
@@ -168,6 +178,7 @@
 
   async function boot() {
     ensureMonochromeStyles();
+    ensureProfitChart();
     cleanLatestQuery();
     await registerFreshServiceWorker();
     ensureInstallMenuItem();
