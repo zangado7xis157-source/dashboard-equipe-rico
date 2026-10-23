@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const RICO_BUILD_VERSION = "d8ecc840687cec85b112eca5ace78fd8fff96fc8";
+  const RICO_BUILD_VERSION = "38680cbc08452f7175725474a59d6265185ef9bf";
   const VERSION_URL = "/app-version.json";
   const POLL_MS = 15000;
   let updating = false;
