@@ -1,0 +1,61 @@
+/* EQUIPE RICO — ajuste final aprovado: gráfico grande + preto/branco */
+#ricoCycleTabsBar{display:none!important;visibility:hidden!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;overflow:hidden!important}
+
+#ricoProfitChartCard{
+  width:100%!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  margin:14px 0 18px!important;
+  padding:20px 24px 22px!important;
+  border:1px solid #30343a!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#090b0e 0%,#060708 100%)!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#ricoProfitChartCard .rico-chart-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:18px!important;flex-wrap:wrap!important}
+#ricoProfitChartCard .rico-chart-kicker{color:#f4f4f5!important;font-size:13px!important;font-weight:900!important}
+#ricoProfitChartCard .rico-chart-big{color:#fff!important;font-size:clamp(42px,4.3vw,72px)!important;line-height:1!important;text-shadow:0 0 16px rgba(255,255,255,.12)!important}
+#ricoProfitChartCard .rico-chart-select{min-width:132px!important;max-width:180px!important;background:#090b0e!important;color:#fff!important;border:1px solid #343840!important}
+#ricoProfitChartCard .rico-chart-wrap{
+  display:block!important;
+  position:relative!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  height:430px!important;
+  margin:18px 0 0!important;
+  overflow:hidden!important;
+}
+#ricoProfitChartCard .rico-chart-wrap canvas,
+#ricoProfitCanvas{
+  display:block!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:100%!important;
+  height:100%!important;
+}
+/* Na prévia aprovada, o foco é o gráfico grande. */
+#ricoProfitChartCard .rico-chart-metrics,
+#ricoProfitChartCard .rico-chart-note{display:none!important}
+
+/* Tema monocromático absoluto */
+#appScreen h1,#appScreen h1 span,#appScreen h2,#appScreen h3,#appScreen strong,#appScreen .value{color:#fff!important}
+#appScreen a:not(.network-join-btn),#appScreen [style*="color:"]{color:#f4f4f5!important}
+.main-menu-toggle,.rico-ops-logo,.rico-cycle-profit-icon,.side-menu-icon{background:#111318!important;color:#fff!important;border-color:#3a3e45!important;box-shadow:none!important}
+.client-hero,.client-brand,.client-profile,.detail-hero,[class*="hero"]{background:linear-gradient(180deg,#101216,#080a0d)!important;border-color:#30343a!important;color:#fff!important}
+.notice,.warning,.alert,.reminder,[class*="reminder"],[class*="warning"],[class*="notice"]{background:#0d0f12!important;border-color:#343840!important;color:#e4e4e7!important;box-shadow:none!important}
+.deposit-section,.withdraw-section,.chest-section,[class*="deposit"],[class*="withdraw"],[class*="chest"]{border-color:#2d3137!important}
+.rico-money-box.deposit,.rico-money-box.withdraw,.rico-money-box.chest{background:#0c0e11!important;color:#f5f5f5!important;border-color:#363a41!important}
+button:not(.primary):not(.rico-new-screen):not(.monthly-payment-btn):not(.network-join-btn){box-shadow:none!important}
+
+@media(max-width:900px){
+  #ricoProfitChartCard{padding:18px!important}
+  #ricoProfitChartCard .rico-chart-wrap{height:360px!important}
+}
+@media(max-width:600px){
+  #ricoProfitChartCard{padding:14px!important;border-radius:15px!important}
+  #ricoProfitChartCard .rico-chart-big{font-size:38px!important}
+  #ricoProfitChartCard .rico-chart-wrap{height:300px!important}
+  #ricoProfitChartCard .rico-chart-select{width:100%!important;max-width:none!important}
+}
