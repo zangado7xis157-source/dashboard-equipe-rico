@@ -34,6 +34,7 @@
       .rico-daily-goal-fill{height:100%;width:0;background:linear-gradient(90deg,#9a9a9a,#f3f3f3);border-radius:999px;transition:width .35s ease,background .25s ease}
       .rico-daily-goal.done .rico-daily-goal-fill{background:linear-gradient(90deg,#18b95c,#38ef88)}
       .rico-daily-goal-foot{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:11px;color:#a8a8a8;font-weight:800;flex-wrap:wrap}.rico-daily-goal.done .rico-daily-goal-status{color:#65ef9c}
+      #testNotificationsBtn{white-space:nowrap}
       @media(max-width:620px){.rico-daily-goal{padding:14px}.rico-daily-goal-values{font-size:19px}.rico-daily-goal-actions{width:100%}.rico-daily-goal-input{flex:1;width:auto;max-width:none}.rico-daily-goal-save{flex:0 0 auto}}
     `;
     document.head.appendChild(s);
@@ -62,6 +63,39 @@
     anchor.parentNode.insertBefore(box, anchor);
     $id('ricoGoalSave').addEventListener('click', saveGoal);
     renderGoal();
+  }
+
+  function injectTestButton(){
+    if ($id('testNotificationsBtn')) return;
+    const enable = $id('enableNotificationsBtn');
+    if (!enable || !enable.parentNode) return;
+    const btn = document.createElement('button');
+    btn.id = 'testNotificationsBtn';
+    btn.className = 'secondary';
+    btn.type = 'button';
+    btn.textContent = 'Testar notificação';
+    btn.addEventListener('click', async () => {
+      if (typeof sendRicoPush !== 'function') return alert('O sistema de notificações ainda não foi carregado. Atualize a página e tente novamente.');
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Enviando...';
+      try {
+        const result = await sendRicoPush('🔔 Teste Equipe Rico','✅ Notificação funcionando corretamente. O push em tempo real está ativo.');
+        if (result?.ok) {
+          alert(`Teste enviado com sucesso para ${result.sent || 1} aparelho(s). Confira o celular.`);
+        } else if (result?.reason === 'no_subscription') {
+          alert('Nenhum celular está cadastrado para notificações nesta conta. Abra o app no celular, toque em Ativar notificações e tente novamente.');
+        } else {
+          alert('O teste foi enviado, mas não houve confirmação de entrega. Confira se as notificações estão permitidas no celular.');
+        }
+      } catch(e){
+        alert('Falha ao enviar a notificação de teste: '+(e?.message||e));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+    enable.insertAdjacentElement('afterend', btn);
   }
 
   function dailyProfit(){
@@ -141,7 +175,7 @@
   }
 
   async function tick(){
-    injectStyles(); injectWidget();
+    injectStyles(); injectWidget(); injectTestButton();
     if (user?.id) await loadGoal();
     const p=dailyProfit();
     if (p!==lastProfit) renderGoal();
