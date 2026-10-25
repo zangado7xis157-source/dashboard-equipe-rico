@@ -1,11 +1,9 @@
 (() => {
+  'use strict';
   const $id = (id) => document.getElementById(id);
   const todayKey = () => {
     const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
-    const day = String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${day}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   };
   const money = (v) => {
     try { return typeof fmt === 'function' ? fmt(Number(v)||0) : (Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
@@ -16,13 +14,14 @@
   let loadedFor = null;
   let busy = false;
   let lastProfit = null;
+  let mounted = false;
 
   function injectStyles(){
     if ($id('ricoDailyGoalStyle')) return;
     const s = document.createElement('style');
     s.id = 'ricoDailyGoalStyle';
     s.textContent = `
-      .rico-daily-goal{margin:0 0 16px;padding:16px 17px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(135deg,#111,#191919);box-shadow:0 14px 34px rgba(0,0,0,.22);color:#fff;transition:.25s ease}
+      .rico-daily-goal{margin:0 0 16px;padding:16px 17px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(135deg,#111,#191919);box-shadow:0 14px 34px rgba(0,0,0,.22);color:#fff;transition:border-color .25s ease,background .25s ease;overflow-anchor:none!important}
       .rico-daily-goal.done{border-color:rgba(49,230,124,.7);background:linear-gradient(135deg,rgba(12,55,31,.98),rgba(8,35,20,.98));box-shadow:0 14px 38px rgba(49,230,124,.12),inset 0 0 34px rgba(49,230,124,.06)}
       .rico-daily-goal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
       .rico-daily-goal-title{font-size:12px;font-weight:950;letter-spacing:.13em;color:#f5f5f5}.rico-daily-goal.done .rico-daily-goal-title{color:#75f0a8}
@@ -40,54 +39,46 @@
     document.head.appendChild(s);
   }
 
-  function injectWidget(){
+  function mountWidgetOnce(){
+    let box = $id('ricoDailyGoal');
+    if (box) { mounted = true; return true; }
+
     const chart = $id('ricoProfitChartCard');
     const metrics = document.querySelector('.grid.metrics.dashboard-view');
-    let box = $id('ricoDailyGoal');
+    const fallback = document.querySelector('.cycle-board') || document.querySelector('.cycle-save-reminder');
+    if (!chart?.parentNode && !metrics?.parentNode && !fallback?.parentNode) return false;
 
-    if (!box) {
-      box = document.createElement('section');
-      box.id = 'ricoDailyGoal';
-      box.className = 'rico-daily-goal dashboard-view';
-      box.innerHTML = `
-        <div class="rico-daily-goal-head">
-          <div>
-            <div class="rico-daily-goal-title">🎯 META DO DIA</div>
-            <div class="rico-daily-goal-values"><b id="ricoGoalCurrent">R$ 0,00</b> <span>/ <b id="ricoGoalTarget">sem meta</b></span></div>
-          </div>
-          <div class="rico-daily-goal-actions">
-            <input id="ricoGoalInput" class="rico-daily-goal-input" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex.: 500,00">
-            <button id="ricoGoalSave" class="rico-daily-goal-save" type="button">Definir meta</button>
-          </div>
+    box = document.createElement('section');
+    box.id = 'ricoDailyGoal';
+    box.className = 'rico-daily-goal dashboard-view';
+    box.innerHTML = `
+      <div class="rico-daily-goal-head">
+        <div>
+          <div class="rico-daily-goal-title">🎯 META DO DIA</div>
+          <div class="rico-daily-goal-values"><b id="ricoGoalCurrent">R$ 0,00</b> <span>/ <b id="ricoGoalTarget">sem meta</b></span></div>
         </div>
-        <div class="rico-daily-goal-track"><div id="ricoGoalFill" class="rico-daily-goal-fill"></div></div>
-        <div class="rico-daily-goal-foot"><span id="ricoGoalStatus">Escolha quanto deseja atingir hoje.</span><span id="ricoGoalPct">0%</span></div>`;
+        <div class="rico-daily-goal-actions">
+          <input id="ricoGoalInput" class="rico-daily-goal-input" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex.: 500,00">
+          <button id="ricoGoalSave" class="rico-daily-goal-save" type="button">Definir meta</button>
+        </div>
+      </div>
+      <div class="rico-daily-goal-track"><div id="ricoGoalFill" class="rico-daily-goal-fill"></div></div>
+      <div class="rico-daily-goal-foot"><span id="ricoGoalStatus">Escolha quanto deseja atingir hoje.</span><span id="ricoGoalPct">0%</span></div>`;
 
-      if (chart?.parentNode) {
-        chart.parentNode.insertBefore(box, chart);
-      } else if (metrics?.parentNode) {
-        metrics.insertAdjacentElement('afterend', box);
-      } else {
-        const fallback = document.querySelector('.cycle-board') || document.querySelector('.cycle-save-reminder');
-        if (!fallback?.parentNode) return;
-        fallback.parentNode.insertBefore(box, fallback);
-      }
-      $id('ricoGoalSave')?.addEventListener('click', saveGoal);
-    }
+    if (chart?.parentNode) chart.parentNode.insertBefore(box, chart);
+    else if (metrics?.parentNode) metrics.insertAdjacentElement('afterend', box);
+    else fallback.parentNode.insertBefore(box, fallback);
 
-    const liveChart = $id('ricoProfitChartCard');
-    if (liveChart?.parentNode && (box.parentNode !== liveChart.parentNode || box.nextElementSibling !== liveChart)) {
-      liveChart.parentNode.insertBefore(box, liveChart);
-    }
-
-    box.classList.remove('hidden');
+    $id('ricoGoalSave')?.addEventListener('click', saveGoal);
+    mounted = true;
     renderGoal();
+    return true;
   }
 
   function injectTestButton(){
-    if ($id('testNotificationsBtn')) return;
+    if ($id('testNotificationsBtn')) return true;
     const enable = $id('enableNotificationsBtn');
-    if (!enable || !enable.parentNode) return;
+    if (!enable?.parentNode) return false;
     const btn = document.createElement('button');
     btn.id = 'testNotificationsBtn';
     btn.className = 'secondary';
@@ -107,6 +98,7 @@
       finally { btn.disabled = false; btn.textContent = original; }
     });
     enable.insertAdjacentElement('afterend', btn);
+    return true;
   }
 
   function dailyProfit(){
@@ -117,7 +109,12 @@
         const t = totals(list); return Number(t.s||0) + Number(t.b||0) - Number(t.d||0);
       }
       let d=0,s=0,b=0;
-      for(const e of list){const v=Number(e.value||0); if(e.entry_type==='deposito'||e.entry_type==='deposito_mae')d+=v; else if(e.entry_type==='saque')s+=v; else if(e.entry_type==='bau')b+=v;}
+      for(const e of list){
+        const v=Number(e.value||0);
+        if(e.entry_type==='deposito'||e.entry_type==='deposito_mae') d+=v;
+        else if(e.entry_type==='saque') s+=v;
+        else if(e.entry_type==='bau') b+=v;
+      }
       return s+b-d;
     } catch { return 0; }
   }
@@ -154,19 +151,21 @@
   }
 
   function renderGoal(){
-    const box=$id('ricoDailyGoal'); if(!box) return;
-    const profit=dailyProfit(); lastProfit=profit;
-    const target=Number(goalRow?.target||0);
-    $id('ricoGoalCurrent').textContent=money(profit);
-    $id('ricoGoalTarget').textContent=target?money(target):'sem meta';
-    const pct=target>0?Math.max(0,Math.min(100,(profit/target)*100)):0;
-    $id('ricoGoalFill').style.width=`${pct}%`;
-    $id('ricoGoalPct').textContent=target?`${Math.round(pct)}%`:'0%';
-    const done=target>0 && profit>=target;
+    const box = $id('ricoDailyGoal'); if(!box) return;
+    const profit = dailyProfit(); lastProfit = profit;
+    const target = Number(goalRow?.target||0);
+    if($id('ricoGoalCurrent')) $id('ricoGoalCurrent').textContent = money(profit);
+    if($id('ricoGoalTarget')) $id('ricoGoalTarget').textContent = target ? money(target) : 'sem meta';
+    const pct = target>0 ? Math.max(0,Math.min(100,(profit/target)*100)) : 0;
+    if($id('ricoGoalFill')) $id('ricoGoalFill').style.width = `${pct}%`;
+    if($id('ricoGoalPct')) $id('ricoGoalPct').textContent = target ? `${Math.round(pct)}%` : '0%';
+    const done = target>0 && profit>=target;
     box.classList.toggle('done',done);
-    if(!target) $id('ricoGoalStatus').textContent='Escolha quanto deseja atingir hoje.';
-    else if(done) $id('ricoGoalStatus').textContent=`✅ Meta batida! ${money(profit-target)} acima da meta.`;
-    else $id('ricoGoalStatus').textContent=`Faltam ${money(Math.max(0,target-profit))} para atingir a meta.`;
+    if($id('ricoGoalStatus')) {
+      if(!target) $id('ricoGoalStatus').textContent='Escolha quanto deseja atingir hoje.';
+      else if(done) $id('ricoGoalStatus').textContent=`✅ Meta batida! ${money(profit-target)} acima da meta.`;
+      else $id('ricoGoalStatus').textContent=`Faltam ${money(Math.max(0,target-profit))} para atingir a meta.`;
+    }
   }
 
   async function maybeNotifyGoal(){
@@ -185,16 +184,45 @@
     } catch(e){ console.warn('Push da meta falhou:',e); }
   }
 
-  async function tick(){
-    injectStyles(); injectWidget(); injectTestButton();
+  async function refreshValues(){
+    if (!mounted) mountWidgetOnce();
+    injectTestButton();
     if (user?.id) await loadGoal();
-    const p=dailyProfit();
-    if (p!==lastProfit) renderGoal();
+    const p = dailyProfit();
+    if (p !== lastProfit) renderGoal();
     await maybeNotifyGoal();
   }
 
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden) tick(); });
-  window.addEventListener('focus',tick);
-  setInterval(tick,1400);
-  setTimeout(tick,200);
+  function boot(){
+    injectStyles();
+    if (!mountWidgetOnce()) {
+      const observer = new MutationObserver(() => {
+        if (mountWidgetOnce()) {
+          injectTestButton();
+          observer.disconnect();
+          refreshValues();
+        }
+      });
+      observer.observe(document.body,{childList:true,subtree:true});
+      setTimeout(() => { observer.disconnect(); mountWidgetOnce(); refreshValues(); }, 5000);
+    } else {
+      injectTestButton();
+      refreshValues();
+    }
+
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden) refreshValues(); });
+    window.addEventListener('focus',refreshValues,{passive:true});
+
+    /* Atualiza somente valores; nunca move elementos do layout. */
+    setInterval(() => {
+      const p = dailyProfit();
+      if (p !== lastProfit) {
+        renderGoal();
+        maybeNotifyGoal();
+      }
+    },5000);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
 })();
