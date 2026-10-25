@@ -1,3 +1,4 @@
+# push icon fix trigger
 name: Fix push notification icon
 
 on:
@@ -20,7 +21,7 @@ jobs:
       - name: Add app icon to push notifications
         run: |
           python - <<'PY'
-          from pathlib import Path
+          from pathlib import import Path
           p = Path('sw.js')
           text = p.read_text(encoding='utf-8')
           old = 'self.registration.showNotification(d.title||"Equipe Rico",{body:d.body||"",data:{url:d.url||"/"},tag:d.tag||undefined})'
