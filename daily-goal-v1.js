@@ -41,27 +41,46 @@
   }
 
   function injectWidget(){
-    if ($id('ricoDailyGoal')) return;
-    const anchor = document.querySelector('.cycle-board') || document.querySelector('.cycle-save-reminder') || $id('profitOverview');
-    if (!anchor) return;
-    const box = document.createElement('section');
-    box.id = 'ricoDailyGoal';
-    box.className = 'rico-daily-goal';
-    box.innerHTML = `
-      <div class="rico-daily-goal-head">
-        <div>
-          <div class="rico-daily-goal-title">🎯 META DO DIA</div>
-          <div class="rico-daily-goal-values"><b id="ricoGoalCurrent">R$ 0,00</b> <span>/ <b id="ricoGoalTarget">sem meta</b></span></div>
+    const chart = $id('ricoProfitChartCard');
+    const metrics = document.querySelector('.grid.metrics.dashboard-view');
+    let box = $id('ricoDailyGoal');
+
+    if (!box) {
+      box = document.createElement('section');
+      box.id = 'ricoDailyGoal';
+      box.className = 'rico-daily-goal dashboard-view';
+      box.innerHTML = `
+        <div class="rico-daily-goal-head">
+          <div>
+            <div class="rico-daily-goal-title">🎯 META DO DIA</div>
+            <div class="rico-daily-goal-values"><b id="ricoGoalCurrent">R$ 0,00</b> <span>/ <b id="ricoGoalTarget">sem meta</b></span></div>
+          </div>
+          <div class="rico-daily-goal-actions">
+            <input id="ricoGoalInput" class="rico-daily-goal-input" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex.: 500,00">
+            <button id="ricoGoalSave" class="rico-daily-goal-save" type="button">Definir meta</button>
+          </div>
         </div>
-        <div class="rico-daily-goal-actions">
-          <input id="ricoGoalInput" class="rico-daily-goal-input" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Ex.: 500,00">
-          <button id="ricoGoalSave" class="rico-daily-goal-save" type="button">Definir meta</button>
-        </div>
-      </div>
-      <div class="rico-daily-goal-track"><div id="ricoGoalFill" class="rico-daily-goal-fill"></div></div>
-      <div class="rico-daily-goal-foot"><span id="ricoGoalStatus">Escolha quanto deseja atingir hoje.</span><span id="ricoGoalPct">0%</span></div>`;
-    anchor.parentNode.insertBefore(box, anchor);
-    $id('ricoGoalSave').addEventListener('click', saveGoal);
+        <div class="rico-daily-goal-track"><div id="ricoGoalFill" class="rico-daily-goal-fill"></div></div>
+        <div class="rico-daily-goal-foot"><span id="ricoGoalStatus">Escolha quanto deseja atingir hoje.</span><span id="ricoGoalPct">0%</span></div>`;
+
+      if (chart?.parentNode) {
+        chart.parentNode.insertBefore(box, chart);
+      } else if (metrics?.parentNode) {
+        metrics.insertAdjacentElement('afterend', box);
+      } else {
+        const fallback = document.querySelector('.cycle-board') || document.querySelector('.cycle-save-reminder');
+        if (!fallback?.parentNode) return;
+        fallback.parentNode.insertBefore(box, fallback);
+      }
+      $id('ricoGoalSave')?.addEventListener('click', saveGoal);
+    }
+
+    const liveChart = $id('ricoProfitChartCard');
+    if (liveChart?.parentNode && (box.parentNode !== liveChart.parentNode || box.nextElementSibling !== liveChart)) {
+      liveChart.parentNode.insertBefore(box, liveChart);
+    }
+
+    box.classList.remove('hidden');
     renderGoal();
   }
 
@@ -81,19 +100,11 @@
       btn.textContent = 'Enviando...';
       try {
         const result = await sendRicoPush('🔔 Teste Equipe Rico','✅ Notificação funcionando corretamente. O push em tempo real está ativo.');
-        if (result?.ok) {
-          alert(`Teste enviado com sucesso para ${result.sent || 1} aparelho(s). Confira o celular.`);
-        } else if (result?.reason === 'no_subscription') {
-          alert('Nenhum celular está cadastrado para notificações nesta conta. Abra o app no celular, toque em Ativar notificações e tente novamente.');
-        } else {
-          alert('O teste foi enviado, mas não houve confirmação de entrega. Confira se as notificações estão permitidas no celular.');
-        }
-      } catch(e){
-        alert('Falha ao enviar a notificação de teste: '+(e?.message||e));
-      } finally {
-        btn.disabled = false;
-        btn.textContent = original;
-      }
+        if (result?.ok) alert(`Teste enviado com sucesso para ${result.sent || 1} aparelho(s). Confira o celular.`);
+        else if (result?.reason === 'no_subscription') alert('Nenhum celular está cadastrado para notificações nesta conta. Abra o app no celular, toque em Ativar notificações e tente novamente.');
+        else alert('O teste foi enviado, mas não houve confirmação de entrega. Confira se as notificações estão permitidas no celular.');
+      } catch(e){ alert('Falha ao enviar a notificação de teste: '+(e?.message||e)); }
+      finally { btn.disabled = false; btn.textContent = original; }
     });
     enable.insertAdjacentElement('afterend', btn);
   }
