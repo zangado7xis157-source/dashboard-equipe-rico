@@ -1,0 +1,46 @@
+name: Fix push notification icon
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Add app icon to push notifications
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('sw.js')
+          text = p.read_text(encoding='utf-8')
+          old = 'self.registration.showNotification(d.title||"Equipe Rico",{body:d.body||"",data:{url:d.url||"/"},tag:d.tag||undefined})'
+          new = 'self.registration.showNotification(d.title||"Equipe Rico",{body:d.body||"",icon:d.icon||"/pwa-icon.svg",badge:d.badge||"/pwa-icon.svg",data:{url:d.url||"/"},tag:d.tag||undefined})'
+          if new in text:
+              print('Push icon already configured')
+          elif old in text:
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print('Push icon configured')
+          else:
+              raise SystemExit('Target showNotification call not found')
+          PY
+
+      - name: Commit fix
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sw.js
+          git commit -m "fix: exibir logo do app no push"
+          git push
