@@ -1,7 +1,8 @@
 (()=>{
 'use strict';
-const BUILD='2026.10.23.4';
-let resizeBusy=false;
+const BUILD='2026.10.25.scrollfix1';
+let resizeRaf=0;
+let layoutDone=false;
 
 function ensureFinalCss(){
   if(document.getElementById('ricoFinalApprovedCss')) return;
@@ -18,7 +19,8 @@ function injectFinalTheme(){
   s.id='ricoFinalMonoFix';
   s.textContent=`
 /* Equipe Rico — correção final de posição + monocromático */
-body #appScreen{background:#050607!important;color:#f4f4f5!important}
+html,body{overflow-anchor:none!important}
+body #appScreen{background:#050607!important;color:#f4f4f5!important;overflow-anchor:none!important}
 body #appScreen *:not(img):not(canvas){background-image:none!important;box-shadow:none!important;text-shadow:none!important}
 body #appScreen *{border-color:#30343a!important}
 body #appScreen h1,body #appScreen h1 *,body #appScreen h2,body #appScreen h2 *,body #appScreen h3,body #appScreen h3 *,body #appScreen strong,body #appScreen .value,body #appScreen .profit,body #appScreen .rico-profit,body #appScreen .er-rank-profit,body #appScreen .er-rank-name{color:#fff!important}
@@ -40,6 +42,7 @@ body #appScreen #ricoProfitChartCard .rico-chart-metrics,body #appScreen #ricoPr
 body #appScreen .rico-chart-select{background:#0b0d10!important;color:#fff!important;border-color:#343840!important}
 body #appScreen .rico-chart-dot{background:#f4f4f5!important;box-shadow:none!important}
 body #appScreen .rico-cycle-compact{background:#0b0d10!important;border-color:#343840!important}
+body #appScreen .history-sections,body #appScreen .history-panel,body #appScreen #ricoOpsV2{overflow-anchor:none!important}
 @media(max-width:900px){body #appScreen #ricoProfitChartCard .rico-chart-wrap{height:360px!important}}
 @media(max-width:720px){body #appScreen #ricoProfitChartCard{padding:16px!important;border-radius:16px!important}body #appScreen #ricoProfitChartCard .rico-chart-wrap{height:300px!important}}
 `;
@@ -47,27 +50,31 @@ body #appScreen .rico-cycle-compact{background:#0b0d10!important;border-color:#3
 }
 
 function forceChartResize(){
-  if(resizeBusy)return;
-  const chart=document.getElementById('ricoProfitChartCard');
-  const wrap=chart?.querySelector('.rico-chart-wrap');
-  const canvas=document.getElementById('ricoProfitCanvas');
-  if(!chart||!wrap||!canvas)return;
-  const target=Math.round(wrap.getBoundingClientRect().width);
-  const actual=Math.round(canvas.getBoundingClientRect().width);
-  if(target<300)return;
-  if(Math.abs(target-actual)>3 || Number(canvas.dataset.ricoFullWidth)!==target){
-    resizeBusy=true;
-    canvas.dataset.ricoFullWidth=String(target);
+  cancelAnimationFrame(resizeRaf);
+  resizeRaf=requestAnimationFrame(()=>{
+    const chart=document.getElementById('ricoProfitChartCard');
+    const wrap=chart?.querySelector('.rico-chart-wrap');
+    const canvas=document.getElementById('ricoProfitCanvas');
+    if(!chart||!wrap||!canvas)return;
+    const target=Math.round(wrap.getBoundingClientRect().width);
+    if(target<300)return;
     canvas.style.setProperty('width','100%','important');
     canvas.style.setProperty('height','100%','important');
-    try{window.dispatchEvent(new Event('resize'))}catch(_){}
-    setTimeout(()=>{resizeBusy=false},120);
+  });
+}
+
+function placeChartOnce(){
+  const chart=document.getElementById('ricoProfitChartCard');
+  const metrics=document.querySelector('.grid.metrics.dashboard-view');
+  if(chart&&metrics&&chart.previousElementSibling!==metrics){
+    metrics.insertAdjacentElement('afterend',chart);
   }
 }
 
 function fixLayout(){
   ensureFinalCss();
   injectFinalTheme();
+
   const bar=document.getElementById('ricoCycleTabsBar');
   if(bar){
     bar.style.setProperty('display','none','important');
@@ -76,38 +83,37 @@ function fixLayout(){
     bar.style.setProperty('padding','0','important');
     bar.style.setProperty('border','0','important');
   }
-  const chart=document.getElementById('ricoProfitChartCard');
-  const metrics=document.querySelector('.grid.metrics.dashboard-view');
-  if(chart&&metrics&&chart.previousElementSibling!==metrics){metrics.insertAdjacentElement('afterend',chart)}
 
-  const app=document.getElementById('appScreen');
-  if(app){
-    app.querySelectorAll('*:not(img):not(canvas)').forEach(el=>{
-      const cs=getComputedStyle(el);
-      const color=cs.color;
-      const bg=cs.backgroundColor;
-      const chromatic=(value)=>{
-        const m=String(value||'').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);if(!m)return false;
-        const [r,g,b]=m.slice(1).map(Number);return Math.max(r,g,b)-Math.min(r,g,b)>18;
-      };
-      if(chromatic(color) && !el.closest('img')) el.style.setProperty('color','#f4f4f5','important');
-      if(chromatic(bg) && !el.matches('button.primary,.rico-new-screen,.er-period-btn.active,.monthly-payment-btn,.network-join-btn,#finishCycleBtn')) el.style.setProperty('background-color','#0b0d10','important');
-    });
-  }
+  placeChartOnce();
   forceChartResize();
+  layoutDone=true;
 }
 
 function boot(){
   fixLayout();
-  const observer=new MutationObserver(()=>fixLayout());
-  observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+
+  /* Só observa novos nós até os componentes tardios aparecerem.
+     Não observa class/style e não roda em loop durante o scroll. */
+  const observer=new MutationObserver(()=>{
+    if(!document.getElementById('ricoProfitChartCard')) return;
+    placeChartOnce();
+    forceChartResize();
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
+  setTimeout(()=>observer.disconnect(),5000);
+
   if('ResizeObserver' in window){
-    const ro=new ResizeObserver(()=>forceChartResize());
-    const wait=()=>{const chart=document.getElementById('ricoProfitChartCard');if(chart)ro.observe(chart);else setTimeout(wait,250)};wait();
+    const chart=document.getElementById('ricoProfitChartCard');
+    if(chart){
+      const ro=new ResizeObserver(()=>forceChartResize());
+      ro.observe(chart);
+    }
   }
-  setInterval(fixLayout,700);
-  [200,500,900,1400,2200,3500].forEach(ms=>setTimeout(()=>{fixLayout();forceChartResize()},ms));
+
+  window.addEventListener('orientationchange',()=>setTimeout(forceChartResize,180),{passive:true});
+  window.addEventListener('pageshow',()=>{if(layoutDone)forceChartResize()},{passive:true});
 }
+
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 console.info('Equipe Rico final layout fix',BUILD);
 })();
