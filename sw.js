@@ -37,7 +37,7 @@ self.addEventListener("fetch",e=>{
 self.addEventListener("push",e=>{
   let d={title:"Equipe Rico",body:"Você tem uma nova notificação.",url:"/"};
   try{if(e.data)d={...d,...e.data.json()}}catch(_){try{d.body=e.data.text()}catch(__){}}
-  e.waitUntil(self.registration.showNotification(d.title||"Equipe Rico",{body:d.body||"",data:{url:d.url||"/"},tag:d.tag||undefined}));
+  e.waitUntil(self.registration.showNotification(d.title||"Equipe Rico",{body:d.body||"",icon:d.icon||"/pwa-icon.svg",badge:d.badge||"/pwa-icon.svg",data:{url:d.url||"/"},tag:d.tag||undefined}));
 });
 self.addEventListener("notificationclick",e=>{
   e.notification.close();
