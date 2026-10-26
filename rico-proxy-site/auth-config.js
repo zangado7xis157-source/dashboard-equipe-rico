@@ -1,0 +1,1 @@
+window.RICO_PROXY_CONFIG={supabaseUrl:'https://ytjwwgskilygayjrycfk.supabase.co',supabaseKey:'sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8'};
