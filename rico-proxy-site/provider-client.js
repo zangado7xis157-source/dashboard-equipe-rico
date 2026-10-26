@@ -17,11 +17,22 @@ function providerErrorMessage(code){
   return map[code]||`Não foi possível concluir: ${code}`;
 }
 
+function refreshGeneratorStatus(){
+  const output=document.querySelector('.proxy-output');
+  if(!output||output.dataset.generated==='1') return;
+  if(!currentUser){output.textContent='Entre na sua conta e tenha um plano ativo para gerar proxies.';return;}
+  if(currentAccount&&currentAccount.status==='active'&&Number(currentAccount.total_bytes)>Number(currentAccount.used_bytes||0)){
+    output.textContent='Plano ativo. Escolha as opções acima e clique em Gerar proxy.';
+  }else{
+    output.textContent='Você precisa ter um plano ativo com tráfego disponível para gerar proxies.';
+  }
+}
+
 async function syncProviderUsage(){
   if(!currentUser||!currentAccount||currentAccount.status!=='active') return;
   try{
     const result=await invokeProvider({action:'sync'});
-    if(result?.data?.configured){ await loadCustomerData(); }
+    if(result?.data?.configured){ await loadCustomerData(); refreshGeneratorStatus(); }
   }catch(e){ console.warn('Rico Proxy sync:',e.message); }
 }
 
@@ -62,22 +73,24 @@ function wireProviderButtons(){
       const output=document.querySelector('.proxy-output');
       const old=generate.textContent;
       generate.disabled=true;generate.textContent='Gerando...';
-      if(output) output.textContent='Conectando com a NextProxy...';
+      if(output){output.dataset.generated='0';output.textContent='Conectando com a NextProxy...';}
       try{
         await invokeProvider({action:'provision'});
         const result=await invokeProvider(getGeneratorValues());
-        if(output) output.textContent=formatProxyOutput(result.data);
+        if(output){output.dataset.generated='1';output.textContent=formatProxyOutput(result.data);}
         await syncProviderUsage();
       }catch(e){
-        if(output) output.textContent=providerErrorMessage(e.message||'erro');
+        if(output){output.dataset.generated='0';output.textContent=providerErrorMessage(e.message||'erro');}
       }finally{generate.disabled=false;generate.textContent=old;}
     };
   }
+  refreshGeneratorStatus();
 }
 
 (async()=>{
   const wait=()=>new Promise(r=>setTimeout(r,150));
   for(let i=0;i<30 && !window.supabase;i++) await wait();
   wireProviderButtons();
-  setTimeout(syncProviderUsage,1200);
+  setTimeout(()=>{refreshGeneratorStatus();syncProviderUsage();},1200);
+  setInterval(refreshGeneratorStatus,1500);
 })();
