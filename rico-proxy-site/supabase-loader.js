@@ -1,0 +1,1 @@
+(()=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.onload=()=>{const a=document.createElement('script');a.src='app.js';document.body.appendChild(a)};document.head.appendChild(s)})();
