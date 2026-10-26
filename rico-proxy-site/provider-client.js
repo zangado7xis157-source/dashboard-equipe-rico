@@ -29,7 +29,7 @@ function refreshGeneratorStatus(){
   if(!output||output.dataset.generated==='1'||output.dataset.busy==='1') return;
   if(!currentUser){output.textContent='Entre na sua conta e tenha um plano ativo para gerar proxies.';return;}
   if(currentAccount&&currentAccount.status==='active'&&Number(currentAccount.total_bytes)>Number(currentAccount.used_bytes||0)){
-    output.textContent='Plano ativo. Escolha as opções acima e clique em Gerar proxy.';
+    output.textContent='Plano ativo. Escolha o tipo e clique em Gerar proxy.';
   }else{
     output.textContent='Você precisa ter um plano ativo com tráfego disponível para gerar proxies.';
   }
@@ -45,31 +45,27 @@ async function syncProviderUsage(){
 
 function getGeneratorValues(){
   const box=document.querySelector('.generator');
-  const selects=box?.querySelectorAll('select')||[];
+  const type=box?.querySelector('select');
   const qty=box?.querySelector('input[type="number"]');
-  const label=(selects[0]?.value||'Rotativa').toLowerCase();
-  const countryLabel=selects[1]?.value||'Brasil';
-  const countryMap={'Brasil':'BR','Estados Unidos':'US','Portugal':'PT'};
+  const label=(type?.value||'Rotativa').toLowerCase();
   const session=label.includes('sticky')?'sticky':'rotating';
   const time=session==='sticky'?30:undefined;
-  return {action:'generate',num:Math.max(1,Math.min(100,Number(qty?.value||1))),session,time,country:countryMap[countryLabel]||'BR'};
+  return {action:'generate',num:Math.max(1,Math.min(100,Number(qty?.value||1))),session,time,country:'BR'};
 }
 
 function formatProxyOutput(data){
   const items=Array.isArray(data?.items)?data.items:[];
   if(!items.length) return 'Nenhuma proxy retornada.';
-  const lines=items.map(item=>`${item.host}:${item.port}:${item.username}:${item.password}`);
-  if(data?.rotatingNote) lines.push('',data.rotatingNote);
-  return lines.join('\n');
+  return items.map(item=>`${item.host}:${item.port}:${item.username}:${item.password}`).join('\n');
 }
 
 function updateQuantityForMode(){
   const box=document.querySelector('.generator');
-  const selects=box?.querySelectorAll('select')||[];
+  const type=box?.querySelector('select');
   const qty=box?.querySelector('input[type="number"]');
-  if(!qty||!selects[0]) return;
+  if(!qty||!type) return;
   const field=qty.closest('.field');
-  const rotating=(selects[0].value||'').toLowerCase().includes('rotativa');
+  const rotating=(type.value||'').toLowerCase().includes('rotativa');
   if(rotating){
     qty.value='1';
     qty.disabled=true;
@@ -84,6 +80,7 @@ function updateQuantityForMode(){
 async function handleGenerate(){
   const generate=document.querySelector('[data-action="generate"]');
   const output=document.querySelector('.proxy-output');
+  const copy=document.querySelector('[data-action="copy-proxy"]');
   if(!generate) return;
   if(!currentUser){authForm('login');return;}
   if(!currentAccount||currentAccount.status!=='active'||Number(currentAccount.total_bytes)<=Number(currentAccount.used_bytes||0)){
@@ -93,11 +90,14 @@ async function handleGenerate(){
   const old=generate.textContent;
   generate.disabled=true;
   generate.textContent='Gerando...';
+  if(copy) copy.style.display='none';
   if(output){output.dataset.generated='0';output.dataset.busy='1';output.textContent='Preparando conexão da proxy...';}
   try{
     await invokeProvider({action:'provision'});
     const result=await invokeProvider(getGeneratorValues());
-    if(output){output.dataset.generated='1';output.textContent=formatProxyOutput(result.data);}
+    const formatted=formatProxyOutput(result.data);
+    if(output){output.dataset.generated='1';output.textContent=formatted;}
+    if(copy && formatted && formatted!=='Nenhuma proxy retornada.') copy.style.display='inline-flex';
     await syncProviderUsage();
   }catch(e){
     console.error('Falha ao gerar proxy',e);
@@ -109,11 +109,31 @@ async function handleGenerate(){
   }
 }
 
+async function copyProxy(){
+  const output=document.querySelector('.proxy-output');
+  const button=document.querySelector('[data-action="copy-proxy"]');
+  const text=output?.textContent?.trim()||'';
+  if(!text) return;
+  try{
+    await navigator.clipboard.writeText(text);
+    if(button){const old=button.textContent;button.textContent='Copiado!';setTimeout(()=>button.textContent=old,1400);}
+  }catch{
+    const area=document.createElement('textarea');
+    area.value=text;document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();
+    if(button){const old=button.textContent;button.textContent='Copiado!';setTimeout(()=>button.textContent=old,1400);}
+  }
+}
+
 function wireProviderButtons(){
   const generate=document.querySelector('[data-action="generate"]');
   if(generate && generate.dataset.ricoGeneratorReady!=='1'){
     generate.dataset.ricoGeneratorReady='1';
     generate.onclick=handleGenerate;
+  }
+  const copy=document.querySelector('[data-action="copy-proxy"]');
+  if(copy && copy.dataset.ricoCopyReady!=='1'){
+    copy.dataset.ricoCopyReady='1';
+    copy.onclick=copyProxy;
   }
   const type=document.querySelector('.generator select');
   if(type && type.dataset.ricoModeReady!=='1'){
