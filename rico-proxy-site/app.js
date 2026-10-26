@@ -1,7 +1,121 @@
-const modal=document.querySelector('#modal');const content=document.querySelector('#modal-content');
-const close=()=>modal.classList.remove('open');document.querySelector('.modal-close').onclick=close;modal.onclick=e=>{if(e.target===modal)close()};
-document.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>{const type=btn.dataset.open;content.innerHTML=`<h3>${type==='login'?'Entrar no painel':'Criar sua conta'}</h3><p>Base demonstrativa. Autenticação real entra junto com backend e pagamento.</p><div class="field"><label>E-mail</label><input placeholder="voce@email.com"></div><div class="field"><label>Senha</label><input type="password" placeholder="••••••••"></div><button class="primary full">${type==='login'?'Entrar':'Criar conta'}</button>`;modal.classList.add('open')});
-document.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=()=>{content.innerHTML=`<h3>${btn.dataset.buy}</h3><p>Os preços serão definidos quando conectarmos o fornecedor e sua margem.</p><button class="primary full">Continuar</button>`;modal.classList.add('open')});
-document.querySelector('[data-action="recharge"]').onclick=()=>{content.innerHTML=`<h3>Recarregar tráfego</h3><p>O cliente mantém a conta existente. Após aprovação do pagamento, o backend aumenta o limite em GB.</p><div class="field"><label>Quantidade</label><select><option>5 GB</option><option>10 GB</option><option>25 GB</option><option>50 GB</option></select></div><button class="primary full">Ir para pagamento</button>`;modal.classList.add('open')};
-document.querySelector('[data-action="generate"]').onclick=()=>alert('Na integração real, esse botão chama a API da NextProxy pelo seu backend.');
+const SUPABASE_URL='https://ytjwwgskilygayjrycfk.supabase.co';
+const SUPABASE_KEY='sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8';
+const { createClient } = window.supabase || {};
+let sb = null;
+let currentUser = null;
+let currentAccount = null;
+
+const modal=document.querySelector('#modal');
+const content=document.querySelector('#modal-content');
+const close=()=>modal.classList.remove('open');
+document.querySelector('.modal-close').onclick=close;
+modal.onclick=e=>{if(e.target===modal)close()};
+
+function showMessage(text,type='info'){
+  const el=document.createElement('div');
+  el.style.cssText=`margin:12px 0;padding:12px;border-radius:10px;font-size:13px;line-height:1.5;border:1px solid ${type==='error'?'#6b2530':'#21466f'};background:${type==='error'?'#2a1016':'#08192c'};color:${type==='error'?'#ff9aa8':'#84c6ff'}`;
+  el.textContent=text;
+  return el;
+}
+
+function bytesToGB(n){return `${((Number(n)||0)/1e9).toFixed(2)} GB`}
+
+async function ensureProfile(user, displayName=''){
+  const { data } = await sb.from('rico_proxy_profiles').select('user_id,display_name').eq('user_id',user.id).maybeSingle();
+  if(data) return data;
+  const name=displayName || user.user_metadata?.display_name || (user.email?.split('@')[0]||'Cliente');
+  const { data:created, error }=await sb.from('rico_proxy_profiles').insert({user_id:user.id,display_name:name}).select().single();
+  if(error) throw error;
+  return created;
+}
+
+async function loadCustomerData(){
+  if(!currentUser) return;
+  let profile=null;
+  try{ profile=await ensureProfile(currentUser); }catch(e){ console.error(e); }
+  const { data:account }=await sb.from('rico_proxy_customer_accounts').select('*').eq('user_id',currentUser.id).maybeSingle();
+  currentAccount=account||null;
+
+  const greeting=document.querySelector('.dash-header small');
+  const avatar=document.querySelector('.dash-header .user');
+  const cards=document.querySelectorAll('.dash-cards > div');
+  const name=profile?.display_name || currentUser.email?.split('@')[0] || 'Cliente';
+  if(greeting) greeting.textContent=`Olá, ${name}`;
+  if(avatar) avatar.textContent=name.slice(0,2).toUpperCase();
+  if(cards[0]){
+    cards[0].querySelector('strong').textContent=account?.plan_name || 'Nenhum plano ativo';
+    cards[0].querySelector('small').textContent=account?.status==='active'?'● Ativo':'Aguardando contratação';
+    cards[0].querySelector('small').className=account?.status==='active'?'ok':'';
+  }
+  if(cards[1]){
+    const remaining=Math.max((Number(account?.total_bytes)||0)-(Number(account?.used_bytes)||0),0);
+    cards[1].querySelector('strong').textContent=bytesToGB(remaining);
+    cards[1].querySelector('small').textContent='tráfego disponível';
+  }
+  if(cards[2]){
+    cards[2].querySelector('strong').textContent=bytesToGB(account?.used_bytes||0);
+    cards[2].querySelector('small').textContent='ciclo atual';
+  }
+  const actions=document.querySelector('.actions');
+  if(actions){
+    actions.innerHTML=`<span style="font-size:12px;color:#8fa0b8;max-width:160px;overflow:hidden;text-overflow:ellipsis">${currentUser.email}</span><button class="ghost" id="logout-btn">Sair</button>`;
+    document.querySelector('#logout-btn').onclick=async()=>{await sb.auth.signOut();currentUser=null;currentAccount=null;location.reload()};
+  }
+}
+
+function authForm(type){
+  const signup=type==='signup';
+  content.innerHTML=`<h3>${signup?'Criar sua conta':'Entrar no painel'}</h3><p>${signup?'Crie sua conta individual do Rico Proxy.':'Acesse seus planos, consumo e recargas.'}</p>${signup?'<div class="field"><label>Nome</label><input id="auth-name" autocomplete="name" placeholder="Seu nome"></div>':''}<div class="field"><label>E-mail</label><input id="auth-email" type="email" autocomplete="email" placeholder="voce@email.com"></div><div class="field"><label>Senha</label><input id="auth-password" type="password" autocomplete="current-password" minlength="6" placeholder="Mínimo 6 caracteres"></div><div id="auth-feedback"></div><button class="primary full" id="auth-submit">${signup?'Criar conta':'Entrar'}</button>`;
+  modal.classList.add('open');
+  document.querySelector('#auth-submit').onclick=async()=>{
+    const email=document.querySelector('#auth-email').value.trim();
+    const password=document.querySelector('#auth-password').value;
+    const name=signup?document.querySelector('#auth-name').value.trim():'';
+    const feedback=document.querySelector('#auth-feedback');
+    feedback.innerHTML='';
+    if(!email||password.length<6){feedback.append(showMessage('Digite um e-mail válido e uma senha com pelo menos 6 caracteres.','error'));return;}
+    const btn=document.querySelector('#auth-submit');btn.disabled=true;btn.textContent='Processando...';
+    try{
+      if(signup){
+        const { data,error }=await sb.auth.signUp({email,password,options:{data:{display_name:name||email.split('@')[0],app:'rico_proxy'},emailRedirectTo:location.origin}});
+        if(error) throw error;
+        if(data.session){currentUser=data.user;await ensureProfile(data.user,name);close();await loadCustomerData();document.querySelector('#dashboard-demo').scrollIntoView({behavior:'smooth'});}
+        else{feedback.append(showMessage('Conta criada. Confira seu e-mail para confirmar o cadastro antes de entrar.'));}
+      }else{
+        const {data,error}=await sb.auth.signInWithPassword({email,password});
+        if(error) throw error;
+        currentUser=data.user;await ensureProfile(data.user);close();await loadCustomerData();document.querySelector('#dashboard-demo').scrollIntoView({behavior:'smooth'});
+      }
+    }catch(e){feedback.append(showMessage(e.message||'Não foi possível concluir.','error'));}
+    finally{btn.disabled=false;btn.textContent=signup?'Criar conta':'Entrar';}
+  };
+}
+
+async function initAuth(){
+  if(!createClient){console.error('Supabase JS não carregado.');return;}
+  sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+  const {data:{session}}=await sb.auth.getSession();
+  if(session?.user){currentUser=session.user;await loadCustomerData();}
+  sb.auth.onAuthStateChange(async(_event,session)=>{if(session?.user){currentUser=session.user;await loadCustomerData();}});
+}
+
+document.querySelectorAll('[data-open]').forEach(btn=>btn.onclick=()=>authForm(btn.dataset.open));
+document.querySelectorAll('[data-buy]').forEach(btn=>btn.onclick=()=>{
+  if(!currentUser){authForm('signup');return;}
+  content.innerHTML=`<h3>${btn.dataset.buy}</h3><p>Seu cadastro já está ativo. O checkout será ligado na próxima etapa; depois da aprovação, este plano será liberado automaticamente na sua conta.</p><button class="primary full" id="close-plan">Entendi</button>`;modal.classList.add('open');document.querySelector('#close-plan').onclick=close;
+});
+
+document.querySelector('[data-action="recharge"]').onclick=()=>{
+  if(!currentUser){authForm('login');return;}
+  if(!currentAccount){content.innerHTML=`<h3>Recarregar tráfego</h3><p>Você ainda não possui um plano ativo. Primeiro compre um plano; depois a recarga adicionará GB à mesma conta.</p><button class="primary full" id="go-plans">Ver planos</button>`;modal.classList.add('open');document.querySelector('#go-plans').onclick=()=>{close();document.querySelector('#plans').scrollIntoView({behavior:'smooth'})};return;}
+  content.innerHTML=`<h3>Recarregar tráfego</h3><p>A recarga mantém sua conta e adiciona GB ao limite atual após a aprovação do pagamento.</p><div class="field"><label>Quantidade</label><select><option>5 GB</option><option>10 GB</option><option>25 GB</option><option>50 GB</option></select></div><button class="primary full">Pagamento será conectado na próxima etapa</button>`;modal.classList.add('open');
+};
+
+document.querySelector('[data-action="generate"]').onclick=()=>{
+  if(!currentUser){authForm('login');return;}
+  if(!currentAccount || currentAccount.status!=='active'){alert('Você precisa ter um plano ativo para gerar proxies.');return;}
+  alert('Sua conta está pronta. A geração real será ligada à API da NextProxy na próxima etapa.');
+};
 document.querySelector('[data-demo="dashboard"]').onclick=()=>document.querySelector('#dashboard-demo').scrollIntoView({behavior:'smooth',block:'center'});
+
+initAuth();
