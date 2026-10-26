@@ -8,19 +8,41 @@ async function ricoCallFunction(name, body){
     body:JSON.stringify(body||{})
   });
   const j=await r.json().catch(()=>({}));
-  if(!r.ok||j.error) throw new Error(j.error||'Falha na operação');
+  if(!r.ok||j.error){const e=new Error(j.error||'Falha na operação');e.code=j.error;e.data=j;throw e;}
   return j;
 }
 
 function moneyBR(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function stockErrorMessage(e){
+  const c=e?.code||e?.message;
+  if(c==='insufficient_provider_stock') return 'Este pacote está temporariamente sem estoque. Escolha uma quantidade menor ou tente novamente após a reposição.';
+  if(c==='pending_payment_exists') return 'Você já possui um Pix pendente. Pague ou aguarde a expiração antes de gerar outro.';
+  if(c==='sales_paused') return 'Novas compras estão temporariamente pausadas.';
+  if(c==='stock_check_failed'||c==='provider_not_configured') return 'Não foi possível confirmar o estoque agora. Tente novamente em instantes.';
+  return e?.message||'Não foi possível gerar o Pix.';
+}
+
+async function getRicoStock(){
+  try{
+    const r=await fetch(`${SUPABASE_URL}/functions/v1/rico-proxy-stock-status`,{headers:{'apikey':SUPABASE_KEY}});
+    return await r.json();
+  }catch{return {available:false,status:'error'};}
+}
 
 async function openRicoRecharge(){
   if(!currentUser){authForm('login');return;}
+  const stock=await getRicoStock();
+  if(!stock.available){
+    content.innerHTML=`<h3>Estoque temporariamente indisponível</h3><p>No momento não há tráfego suficiente para novas compras ou recargas. Seu saldo atual continua salvo normalmente.</p><button class="primary full" id="rp-close-stock">Entendi</button>`;
+    modal.classList.add('open');document.querySelector('#rp-close-stock').onclick=close;return;
+  }
   const {data:plans,error}=await sb.from('rico_proxy_plans').select('id,gb,price').eq('active',true).order('gb');
-  if(error||!plans?.length){alert('Nenhum pacote disponível no momento.');return;}
-  const options=plans.map(p=>`<option value="${p.id}">${p.gb} GB — ${moneyBR(p.price)}</option>`).join('');
+  const sellable=(plans||[]).filter(p=>Number(p.gb)<=Number(stock.availableForSaleGB||0));
+  if(error||!sellable.length){alert('Nenhum pacote disponível no momento.');return;}
+  const options=sellable.map(p=>`<option value="${p.id}">${p.gb} GB — ${moneyBR(p.price)}</option>`).join('');
   content.innerHTML=`<h3>Escolha seu pacote</h3>
   <p>Selecione a quantidade de GB. O pagamento será via Pix e, após a confirmação, os GB serão adicionados automaticamente à mesma conta.</p>
+  ${stock.low?'<div style="margin:10px 0;padding:10px 12px;border-radius:10px;background:#231b08;border:1px solid #66511a;color:#ffd879;font-size:12px">Estoque limitado: alguns pacotes podem ficar indisponíveis.</div>':''}
   <div class="field"><label>Pacote</label><select id="rp-plan">${options}</select></div>
   <div class="field"><label>CPF ou CNPJ</label><input id="rp-doc" inputmode="numeric" placeholder="Somente números"></div>
   <div class="field"><label>Nome</label><input id="rp-name" placeholder="Seu nome"></div>
@@ -55,8 +77,16 @@ async function openRicoRecharge(){
           else{vf.append(showMessage('Pagamento ainda não confirmado. Tente novamente em alguns instantes.'));vb.disabled=false;vb.textContent='Já paguei — verificar';}
         }catch(e){vf.append(showMessage(e.message||'Erro ao verificar pagamento.','error'));vb.disabled=false;vb.textContent='Já paguei — verificar';}
       };
-    }catch(e){fb.append(showMessage(e.message||'Não foi possível gerar o Pix.','error'));btn.disabled=false;btn.textContent='Gerar Pix';}
+    }catch(e){fb.append(showMessage(stockErrorMessage(e),'error'));btn.disabled=false;btn.textContent='Gerar Pix';}
   };
+}
+
+async function refreshStockBadge(){
+  const plans=document.querySelector('#plans .section-head');if(!plans)return;
+  let badge=document.querySelector('#rico-stock-badge');if(!badge){badge=document.createElement('div');badge.id='rico-stock-badge';badge.style.cssText='margin:14px auto 0;max-width:520px;padding:10px 12px;border-radius:10px;font-size:12px';plans.appendChild(badge);}
+  const s=await getRicoStock();
+  if(s.available){badge.textContent=s.low?'⚠ Estoque limitado — alguns pacotes podem ficar indisponíveis.':'● Estoque disponível para novas ativações';badge.style.background=s.low?'#231b08':'#071c14';badge.style.border=s.low?'1px solid #66511a':'1px solid #16593d';badge.style.color=s.low?'#ffd879':'#67dda5';}
+  else{badge.textContent='Estoque temporariamente indisponível para novas ativações';badge.style.background='#281015';badge.style.border='1px solid #6b2530';badge.style.color='#ff9aa8';}
 }
 
 setInterval(()=>{
@@ -67,3 +97,4 @@ setInterval(()=>{
     b.onclick=openRicoRecharge;
   });
 },700);
+setTimeout(refreshStockBadge,1200);setInterval(refreshStockBadge,60000);
