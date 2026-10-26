@@ -1,7 +1,13 @@
 async function invokeProvider(body){
   if(!sb) throw new Error('auth_not_ready');
   const {data,error}=await sb.functions.invoke('rico-proxy-provider',{body});
-  if(error) throw error;
+  if(error){
+    const context=error.context;
+    if(context?.json){
+      try{const j=await context.json();if(j?.error)throw new Error(j.error)}catch(e){if(e?.message&&e.message!==error.message)throw e}
+    }
+    throw error;
+  }
   if(data?.error) throw new Error(data.error);
   return data;
 }
@@ -9,10 +15,10 @@ async function invokeProvider(body){
 function providerErrorMessage(code){
   const map={
     provider_not_configured:'A integração com o fornecedor ainda precisa da chave privada da NextProxy no servidor.',
-    no_active_plan:'Você ainda não possui um plano ativo.',
+    no_active_plan:'Você ainda não possui um plano ativo ou ficou sem tráfego.',
     unauthorized:'Entre na sua conta novamente.',
-    proxy_extract_traffic_exhausted:'O tráfego deste produto acabou. Faça uma recarga.',
-    egress_ip_unavailable:'Não foi possível preparar a conexão segura com o fornecedor.',
+    provider_credentials_missing:'Sua conta foi criada, mas as credenciais da proxy não foram encontradas. Sincronize e tente novamente.',
+    gateway_not_found:'Não foi possível localizar o gateway da NextProxy agora. Tente novamente.',
     auth_not_ready:'A sessão ainda está carregando. Tente novamente em alguns segundos.'
   };
   return map[code]||`Não foi possível concluir: ${code}`;
@@ -44,22 +50,35 @@ function getGeneratorValues(){
   const label=(selects[0]?.value||'Rotativa').toLowerCase();
   const countryLabel=selects[1]?.value||'Brasil';
   const countryMap={'Brasil':'BR','Estados Unidos':'US','Portugal':'PT'};
-  let session='rotating';
-  let time;
-  if(label.includes('sticky')){ session='sticky'; time=30; }
-  return {action:'extract',num:Math.max(1,Math.min(100,Number(qty?.value||1))),session,time,country:countryMap[countryLabel]||'BR'};
+  const session=label.includes('sticky')?'sticky':'rotating';
+  const time=session==='sticky'?30:undefined;
+  return {action:'generate',num:Math.max(1,Math.min(100,Number(qty?.value||1))),session,time,country:countryMap[countryLabel]||'BR'};
 }
 
 function formatProxyOutput(data){
   const items=Array.isArray(data?.items)?data.items:[];
   if(!items.length) return 'Nenhuma proxy retornada.';
-  const user=data.username||'';
-  const pass=data.password||'';
-  return items.map(item=>{
-    const host=item.ip||item.host||item.address||'';
-    const port=item.port||'';
-    return user&&pass?`${host}:${port}:${user}:${pass}`:`${host}:${port}`;
-  }).join('\n');
+  const lines=items.map(item=>`${item.host}:${item.port}:${item.username}:${item.password}`);
+  if(data?.rotatingNote) lines.push('',data.rotatingNote);
+  return lines.join('\n');
+}
+
+function updateQuantityForMode(){
+  const box=document.querySelector('.generator');
+  const selects=box?.querySelectorAll('select')||[];
+  const qty=box?.querySelector('input[type="number"]');
+  if(!qty||!selects[0]) return;
+  const field=qty.closest('.field');
+  const rotating=(selects[0].value||'').toLowerCase().includes('rotativa');
+  if(rotating){
+    qty.value='1';
+    qty.disabled=true;
+    if(field){const label=field.querySelector('label');if(label)label.textContent='Quantidade (Rotativa = 1 endpoint)';}
+  }else{
+    qty.disabled=false;
+    if(Number(qty.value)<1)qty.value='5';
+    if(field){const label=field.querySelector('label');if(label)label.textContent='Quantidade';}
+  }
 }
 
 async function handleGenerate(){
@@ -74,7 +93,7 @@ async function handleGenerate(){
   const old=generate.textContent;
   generate.disabled=true;
   generate.textContent='Gerando...';
-  if(output){output.dataset.generated='0';output.dataset.busy='1';output.textContent='Gerando proxies...';}
+  if(output){output.dataset.generated='0';output.dataset.busy='1';output.textContent='Preparando conexão da proxy...';}
   try{
     await invokeProvider({action:'provision'});
     const result=await invokeProvider(getGeneratorValues());
@@ -96,6 +115,12 @@ function wireProviderButtons(){
     generate.dataset.ricoGeneratorReady='1';
     generate.onclick=handleGenerate;
   }
+  const type=document.querySelector('.generator select');
+  if(type && type.dataset.ricoModeReady!=='1'){
+    type.dataset.ricoModeReady='1';
+    type.addEventListener('change',updateQuantityForMode);
+  }
+  updateQuantityForMode();
   refreshGeneratorStatus();
 }
 
