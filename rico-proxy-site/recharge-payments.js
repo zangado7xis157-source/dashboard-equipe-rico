@@ -19,8 +19,8 @@ async function openRicoRecharge(){
   const {data:plans,error}=await sb.from('rico_proxy_plans').select('id,gb,price').eq('active',true).order('gb');
   if(error||!plans?.length){alert('Nenhum pacote disponível no momento.');return;}
   const options=plans.map(p=>`<option value="${p.id}">${p.gb} GB — ${moneyBR(p.price)}</option>`).join('');
-  content.innerHTML=`<h3>Recarregar tráfego</h3>
-  <p>Escolha o pacote. O pagamento será via Pix e, após a confirmação, os GB serão adicionados automaticamente à mesma conta.</p>
+  content.innerHTML=`<h3>Escolha seu pacote</h3>
+  <p>Selecione a quantidade de GB. O pagamento será via Pix e, após a confirmação, os GB serão adicionados automaticamente à mesma conta.</p>
   <div class="field"><label>Pacote</label><select id="rp-plan">${options}</select></div>
   <div class="field"><label>CPF ou CNPJ</label><input id="rp-doc" inputmode="numeric" placeholder="Somente números"></div>
   <div class="field"><label>Nome</label><input id="rp-name" placeholder="Seu nome"></div>
@@ -61,8 +61,9 @@ async function openRicoRecharge(){
 
 setInterval(()=>{
   if(typeof sb==='undefined'||!sb) return;
-  const b=document.querySelector('[data-action="recharge"]');
-  if(!b||b.dataset.ricoPixReady==='1') return;
-  b.dataset.ricoPixReady='1';
-  b.onclick=openRicoRecharge;
+  document.querySelectorAll('[data-action="recharge"]').forEach(b=>{
+    if(b.dataset.ricoPixReady==='1') return;
+    b.dataset.ricoPixReady='1';
+    b.onclick=openRicoRecharge;
+  });
 },700);
