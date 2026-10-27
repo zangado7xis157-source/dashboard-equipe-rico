@@ -1,8 +1,8 @@
 {
   "name": "rico-china-extension-delivery",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "commonjs",
-  "scripts": {"start": "node server.js"},
+  "scripts": {"start": "node server-v2.js"},
   "dependencies": {"express": "^4.21.2"}
 }
