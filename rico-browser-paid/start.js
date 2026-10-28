@@ -1,5 +1,6 @@
 const nativeFetch = global.fetch;
 
+// Mantém a correção do limite de 30 caracteres do checkout Asaas.
 global.fetch = async (url, options = {}) => {
   try {
     if (String(url).includes('/checkouts') && options.body) {
@@ -14,6 +15,40 @@ global.fetch = async (url, options = {}) => {
     }
   } catch {}
   return nativeFetch(url, options);
+};
+
+// Acopla as notificações push sem alterar o server.js principal.
+const express = require('express');
+const { registerPushRoutes, notifySaleFromAsaas } = require('./push_notify');
+
+const originalPost = express.application.post;
+express.application.post = function(path, ...handlers) {
+  if (path === '/webhook/asaas') {
+    handlers = handlers.map((handler) => function(req, res, next) {
+      const evt = req.body;
+      let out;
+      try {
+        out = handler.call(this, req, res, next);
+      } finally {
+        setImmediate(() => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            notifySaleFromAsaas(evt).catch((e) => console.error('push_notify_error', e.message || e));
+          }
+        });
+      }
+      return out;
+    });
+  }
+  return originalPost.call(this, path, ...handlers);
+};
+
+const originalListen = express.application.listen;
+express.application.listen = function(...args) {
+  if (!this.__pushRoutesRegistered) {
+    registerPushRoutes(this);
+    this.__pushRoutesRegistered = true;
+  }
+  return originalListen.apply(this, args);
 };
 
 require('./server.js');
