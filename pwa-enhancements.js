@@ -92,12 +92,29 @@
   }
 
   function ensureAchievementForceV4() {
-    if (document.getElementById("ricoAchievementForceV4Script")) return;
+    if (document.getElementById("ricoAchievementForceV4Script")) {
+      ensureAchievementBrandV5();
+      return;
+    }
     const script = document.createElement("script");
     script.id = "ricoAchievementForceV4Script";
     script.src = "/rico-achievement-force-v4.js?fresh=20261030-1905";
     script.async = false;
-    script.onerror = () => console.error("Falha ao carregar gerador premium v4");
+    script.onload = () => ensureAchievementBrandV5();
+    script.onerror = () => {
+      console.error("Falha ao carregar gerador premium v4");
+      ensureAchievementBrandV5();
+    };
+    document.head.appendChild(script);
+  }
+
+  function ensureAchievementBrandV5() {
+    if (document.getElementById("ricoAchievementBrandV5Script")) return;
+    const script = document.createElement("script");
+    script.id = "ricoAchievementBrandV5Script";
+    script.src = "/rico-achievement-brand-v5.js?fresh=20261030-1912";
+    script.async = false;
+    script.onerror = () => console.error("Falha ao carregar logo final das plaquinhas");
     document.head.appendChild(script);
   }
 
