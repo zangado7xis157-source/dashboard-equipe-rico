@@ -65,19 +65,39 @@
     const script = document.createElement("script");
     script.id = "ricoAchievementPlaqueScript";
     script.src = `/rico-achievement-plaque.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
-    script.defer = true;
+    script.async = false;
     script.onload = () => ensurePremiumAchievementPlaque();
-    script.onerror = () => console.error("Falha ao carregar plaquinhas para impressão");
+    script.onerror = () => {
+      console.error("Falha ao carregar plaquinhas para impressão");
+      ensureAchievementForceV4();
+    };
     document.head.appendChild(script);
   }
 
   function ensurePremiumAchievementPlaque() {
-    if (document.getElementById("ricoAchievementPlaquePremiumScript")) return;
+    if (document.getElementById("ricoAchievementPlaquePremiumScript")) {
+      ensureAchievementForceV4();
+      return;
+    }
     const script = document.createElement("script");
     script.id = "ricoAchievementPlaquePremiumScript";
     script.src = `/rico-achievement-plaque-premium.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
-    script.defer = true;
-    script.onerror = () => console.error("Falha ao carregar fundo premium das plaquinhas");
+    script.async = false;
+    script.onload = () => ensureAchievementForceV4();
+    script.onerror = () => {
+      console.error("Falha ao carregar fundo premium das plaquinhas");
+      ensureAchievementForceV4();
+    };
+    document.head.appendChild(script);
+  }
+
+  function ensureAchievementForceV4() {
+    if (document.getElementById("ricoAchievementForceV4Script")) return;
+    const script = document.createElement("script");
+    script.id = "ricoAchievementForceV4Script";
+    script.src = "/rico-achievement-force-v4.js?fresh=20261030-1905";
+    script.async = false;
+    script.onerror = () => console.error("Falha ao carregar gerador premium v4");
     document.head.appendChild(script);
   }
 
