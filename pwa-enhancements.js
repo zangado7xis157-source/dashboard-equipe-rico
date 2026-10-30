@@ -66,7 +66,18 @@
     script.id = "ricoAchievementPlaqueScript";
     script.src = `/rico-achievement-plaque.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
     script.defer = true;
+    script.onload = () => ensurePremiumAchievementPlaque();
     script.onerror = () => console.error("Falha ao carregar plaquinhas para impressão");
+    document.head.appendChild(script);
+  }
+
+  function ensurePremiumAchievementPlaque() {
+    if (document.getElementById("ricoAchievementPlaquePremiumScript")) return;
+    const script = document.createElement("script");
+    script.id = "ricoAchievementPlaquePremiumScript";
+    script.src = `/rico-achievement-plaque-premium.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
+    script.defer = true;
+    script.onerror = () => console.error("Falha ao carregar fundo premium das plaquinhas");
     document.head.appendChild(script);
   }
 
