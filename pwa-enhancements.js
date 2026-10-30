@@ -60,6 +60,16 @@
     document.head.appendChild(script);
   }
 
+  function ensureAchievementPlaque() {
+    if (document.getElementById("ricoAchievementPlaqueScript")) return;
+    const script = document.createElement("script");
+    script.id = "ricoAchievementPlaqueScript";
+    script.src = `/rico-achievement-plaque.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
+    script.defer = true;
+    script.onerror = () => console.error("Falha ao carregar plaquinhas para impressão");
+    document.head.appendChild(script);
+  }
+
   async function registerFreshServiceWorker() {
     if (!("serviceWorker" in navigator)) return null;
     try {
@@ -201,6 +211,7 @@
     ensureProfitChart();
     ensureFinalLayoutFix();
     ensureLifetimePayment();
+    ensureAchievementPlaque();
     cleanLatestQuery();
     await registerFreshServiceWorker();
     ensureInstallMenuItem();
