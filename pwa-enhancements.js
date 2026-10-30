@@ -50,6 +50,16 @@
     document.head.appendChild(script);
   }
 
+  function ensureLifetimePayment() {
+    if (document.getElementById("ricoLifetimePaymentScript")) return;
+    const script = document.createElement("script");
+    script.id = "ricoLifetimePaymentScript";
+    script.src = `/rico-lifetime-payment.js?v=${encodeURIComponent(RICO_BUILD_VERSION)}`;
+    script.defer = true;
+    script.onerror = () => console.error("Falha ao carregar pagamento vitalício");
+    document.head.appendChild(script);
+  }
+
   async function registerFreshServiceWorker() {
     if (!("serviceWorker" in navigator)) return null;
     try {
@@ -190,6 +200,7 @@
     ensureMonochromeStyles();
     ensureProfitChart();
     ensureFinalLayoutFix();
+    ensureLifetimePayment();
     cleanLatestQuery();
     await registerFreshServiceWorker();
     ensureInstallMenuItem();
