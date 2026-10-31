@@ -9,53 +9,53 @@
 *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 15% 0,#173b5538,transparent 28%),radial-gradient(circle at 90% 10%,#5a172236,transparent 30%),linear-gradient(180deg,#050c12,#081923 60%,#07151f)}
 .wrap{width:min(760px,calc(100% - 28px));margin:auto;padding:34px 0 50px}.brand{font-size:26px;font-weight:1000;letter-spacing:.5px;margin-bottom:24px}.brand b{color:var(--red)}
 .card{border:1px solid var(--line);background:linear-gradient(180deg,#0d2130,#091823);border-radius:22px;padding:26px;box-shadow:0 25px 80px #0008}.tag{display:inline-flex;align-items:center;gap:8px;border:1px solid #ffc33a55;background:#ffc33a10;color:var(--gold);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.7px}
-h1{font-size:clamp(31px,7vw,48px);margin:18px 0 8px}.price{font-size:42px;font-weight:1000;color:var(--red);margin:6px 0 20px}.muted{color:var(--muted);line-height:1.55}.step{margin-top:22px;padding-top:22px;border-top:1px solid #234256}.step h2{font-size:17px;margin:0 0 10px}.qrwrap{display:grid;place-items:center;margin:16px 0 18px}.qrbox{background:#fff;border-radius:18px;padding:14px;border:1px solid #ffffff55;box-shadow:0 14px 45px #0006}.qrbox img{display:block;width:min(270px,70vw);height:auto}.qrlabel{text-align:center;color:#c9d5dd;font-size:12px;margin-top:10px}.pixbox{width:100%;min-height:130px;resize:none;border:1px solid #35566e;background:#07131c;color:#dfe9f0;border-radius:14px;padding:14px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;outline:none;word-break:break-all}
-.prepay{margin:28px -26px 4px;padding:28px 26px 26px;background:#020305;border-top:1px solid #262832;border-bottom:1px solid #262832}.prepay h2{font-size:clamp(28px,5vw,42px);line-height:1;margin:0 0 18px;letter-spacing:-1.3px}.faqgrid{display:grid;gap:10px}.faqcard{background:#111116;border:1px solid #2b2b34;border-radius:12px;padding:18px}.faqhead{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;font-weight:900;font-size:15px}.faqx{color:var(--red);font-size:18px;line-height:1;font-weight:1000}.faqcard p{margin:12px 0 0;color:#aeb1bd;line-height:1.55;font-size:14px}.faqcard b{color:#f4f5f7}.prepaynote{margin-top:14px;padding:12px 14px;border:1px solid #5a4b1c;background:#ffc33a0b;border-radius:10px;color:#d8d0b5;font-size:12px;line-height:1.5}
-.btn{width:100%;min-height:52px;border:0;border-radius:13px;margin-top:12px;font-weight:1000;font-size:14px;cursor:pointer}.copy{background:linear-gradient(90deg,#ff3447,#ff5637);color:white;box-shadow:0 10px 30px #ff34472d}.whats{display:grid;place-items:center;text-decoration:none;background:#1fc76a;color:#03140a}.back{display:grid;place-items:center;text-decoration:none;background:#102636;color:#d7e1e8;border:1px solid #31516a}.notice{margin-top:16px;border:1px solid #35566e;border-left:4px solid var(--gold);border-radius:13px;padding:13px 14px;color:#c6d1d9;font-size:12px;line-height:1.55}.ok{color:var(--green);font-weight:900;margin-top:9px;min-height:18px;font-size:12px}
-@media(max-width:520px){.card{padding:20px}.wrap{padding-top:20px}.qrbox{padding:11px}.prepay{margin:24px -20px 2px;padding:24px 20px}.faqcard{padding:15px}.faqcard p{font-size:13px}}
+h1{font-size:clamp(31px,7vw,48px);margin:18px 0 8px}.price{font-size:42px;font-weight:1000;color:var(--red);margin:6px 0 20px}.muted{color:var(--muted);line-height:1.55}.prepay{margin:28px -26px 4px;padding:28px 26px 26px;background:#020305;border-top:1px solid #262832;border-bottom:1px solid #262832}.prepay h2{font-size:clamp(28px,5vw,42px);line-height:1;margin:0 0 18px;letter-spacing:-1.3px}.faqgrid{display:grid;gap:10px}.faqcard{background:#111116;border:1px solid #2b2b34;border-radius:12px;padding:18px}.faqhead{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;font-weight:900;font-size:15px}.faqx{color:var(--red);font-size:18px;line-height:1;font-weight:1000}.faqcard p{margin:12px 0 0;color:#aeb1bd;line-height:1.55;font-size:14px}.faqcard b{color:#f4f5f7}.prepaynote{margin-top:14px;padding:12px 14px;border:1px solid #5a4b1c;background:#ffc33a0b;border-radius:10px;color:#d8d0b5;font-size:12px;line-height:1.5}
+.btn{width:100%;min-height:52px;border:0;border-radius:13px;margin-top:12px;font-weight:1000;font-size:14px;cursor:pointer}.btn:disabled{opacity:.6;cursor:wait}.pay{background:linear-gradient(90deg,#ff3447,#ff5637);color:white;box-shadow:0 10px 30px #ff34472d}.back{display:grid;place-items:center;text-decoration:none;background:#102636;color:#d7e1e8;border:1px solid #31516a}.status{margin-top:18px;border:1px solid #35566e;border-radius:14px;padding:16px;color:#c6d1d9;font-size:13px;line-height:1.6;display:none}.status.show{display:block}.status.ok{border-color:#23714c;background:#071d14;color:#8bf0b5}.status.err{border-color:#79313b;background:#250b10;color:#ff9aa7}.keyrow{margin-top:12px}.keyrow code{display:block;background:#061018;border:1px solid #31516a;border-radius:10px;padding:12px;overflow-wrap:anywhere;color:#fff;font:12px/1.5 ui-monospace,Consolas,monospace}.copy{background:#17344a;color:#fff;border:1px solid #31516a}.secure{margin-top:14px;color:#8fa7b7;font-size:12px;text-align:center}.secure b{color:#d8e6ef}
+@media(max-width:520px){.card{padding:20px}.wrap{padding-top:20px}.prepay{margin:24px -20px 2px;padding:24px 20px}.faqcard{padding:15px}.faqcard p{font-size:13px}}
 </style>
 </head>
 <body>
 <main class="wrap">
 <div class="brand">LISTA <b>PRIME</b></div>
 <section class="card">
-<div class="tag">🔒 PAGAMENTO DO ACESSO</div>
+<div class="tag">🔒 PAGAMENTO AUTOMÁTICO</div>
 <h1>Libere seus 30 dias</h1>
 <div class="price">R$ 49,99</div>
-<p class="muted">Antes de pagar, leia as regras abaixo. Depois do pagamento, envie o comprovante pelo WhatsApp para receber sua key de acesso.</p>
+<p class="muted">Pague pelo PIX no Asaas. Assim que o pagamento for confirmado, sua key é criada e o acesso deste dispositivo é liberado automaticamente.</p>
 
 <section class="prepay">
 <h2>PERGUNTAS DE QUEM VAI ENTRAR</h2>
 <div class="faqgrid">
-<div class="faqcard"><div class="faqhead"><span>É garantido que eu vou lucrar?</span><span class="faqx">×</span></div><p><b>Não.</b> A Lista Prime não garante lucro, método ou resultado em nenhuma plataforma. Ela organiza links e informações para facilitar sua consulta. O resultado depende da sua operação e das regras de cada plataforma.</p></div>
-<div class="faqcard"><div class="faqhead"><span>As casas pagam CPA? Tem método garantido?</span><span class="faqx">×</span></div><p>Não garantimos pagamento, disponibilidade ou resultado de nenhuma casa. Cada plataforma possui regras próprias e pode alterar condições sem aviso. <b>Confira sempre rollover, saque e termos da própria plataforma.</b></p></div>
-<div class="faqcard"><div class="faqhead"><span>Como recebo o acesso depois de pagar?</span><span class="faqx">×</span></div><p>Você paga o PIX nesta página e envia o comprovante no WhatsApp. Após a conferência, você recebe sua <b>key individual com 30 dias de acesso</b>. A liberação não é automática.</p></div>
-<div class="faqcard"><div class="faqhead"><span>Serve para quem está começando?</span><span class="faqx">×</span></div><p>Sim. A Lista Prime organiza plataformas e jogos para rollover em um só lugar, facilitando a consulta. Mesmo assim, você continua responsável por entender a operação e conferir as regras de cada plataforma.</p></div>
-<div class="faqcard"><div class="faqhead"><span>Posso usar a mesma key em vários aparelhos?</span><span class="faqx">×</span></div><p>Não. Cada key é individual e fica vinculada ao dispositivo em que for ativada. Se houver troca de aparelho ou algum problema, entre em contato com o suporte.</p></div>
-<div class="faqcard"><div class="faqhead"><span>O acesso renova automaticamente?</span><span class="faqx">×</span></div><p>Não. A key vale por <b>30 dias</b>. Depois do vencimento, para continuar com acesso, é necessário realizar um novo pagamento e receber uma nova key.</p></div>
+<div class="faqcard"><div class="faqhead"><span>É garantido que eu vou lucrar?</span><span class="faqx">×</span></div><p><b>Não.</b> A Lista Prime não garante lucro, método ou resultado em nenhuma plataforma. Ela organiza links e informações para facilitar sua consulta.</p></div>
+<div class="faqcard"><div class="faqhead"><span>As casas pagam CPA? Tem método garantido?</span><span class="faqx">×</span></div><p>Não garantimos pagamento, disponibilidade ou resultado de nenhuma casa. Cada plataforma possui regras próprias e pode alterar condições sem aviso.</p></div>
+<div class="faqcard"><div class="faqhead"><span>Como recebo o acesso depois de pagar?</span><span class="faqx">×</span></div><p>Agora é <b>automático</b>: o Asaas confirma o PIX, o sistema gera sua key de 30 dias e libera este dispositivo sem precisar enviar comprovante.</p></div>
+<div class="faqcard"><div class="faqhead"><span>Posso usar a mesma key em vários aparelhos?</span><span class="faqx">×</span></div><p>Não. Cada acesso fica vinculado ao dispositivo em que é ativado.</p></div>
+<div class="faqcard"><div class="faqhead"><span>O acesso renova automaticamente?</span><span class="faqx">×</span></div><p>Não. O acesso vale por <b>30 dias</b>. Ao vencer, basta fazer um novo pagamento.</p></div>
 </div>
 <div class="prepaynote">Ao realizar o pagamento, você declara que leu e entendeu as informações acima.</div>
 </section>
 
-<div class="step">
-<h2>1. Pague pelo QR Code ou Copia e Cola</h2>
-<div class="qrwrap"><div><div class="qrbox"><img src="pix-qr.svg" alt="QR Code PIX de R$ 49,99"></div><div class="qrlabel">Escaneie pelo aplicativo do seu banco</div></div></div>
-<textarea id="pix" class="pixbox" readonly>00020126580014BR.GOV.BCB.PIX01363b9328f7-c182-4c35-b30e-dd8c21d68d1c520400005303986540549.995802BR592569.686.828 RAY FERNANDES 6009SAO PAULO610805409000622505212ZMpEChCPy2xASd1p9z3e630407D7</textarea>
-<button id="copyBtn" class="btn copy">📋 COPIAR PIX</button>
-<div id="copyMsg" class="ok"></div>
-</div>
-<div class="step">
-<h2>2. Já pagou?</h2>
-<p class="muted">Clique abaixo e envie o comprovante. Após a conferência, sua key de 30 dias será enviada pelo WhatsApp.</p>
-<a class="btn whats" href="https://wa.me/5535910238277?text=J%C3%A1%20paguei%20%E2%80%94%20enviar%20comprovante" target="_blank" rel="noopener noreferrer">✅ JÁ PAGUEI — ENVIAR COMPROVANTE</a>
-<div class="notice">A liberação não é automática. O comprovante será conferido antes do envio da key. Cada key libera 30 dias de acesso à Lista Prime.</div>
+<button id="payBtn" class="btn pay">GERAR PIX NO ASAAS — R$ 49,99</button>
+<div class="secure">PIX processado pelo <b>Asaas</b> • confirmação e liberação automáticas</div>
+<div id="status" class="status"><div id="statusText"></div><div id="keyArea"></div></div>
 <a class="btn back" href="./">← VOLTAR PARA A LISTA PRIME</a>
-</div>
 </section>
 </main>
 <script>
-const pix=document.getElementById('pix');
-document.getElementById('copyBtn').onclick=async()=>{try{await navigator.clipboard.writeText(pix.value.trim());document.getElementById('copyMsg').textContent='PIX copiado. Abra seu banco e use a opção PIX Copia e Cola.'}catch(e){pix.focus();pix.select();document.execCommand('copy');document.getElementById('copyMsg').textContent='PIX copiado.'}};
+const BILLING_API='https://rico-browser-android-pago.onrender.com';
+const STORAGE='rico_list_prime_billing_v1';
+const SB_URL='https://ytjwwgskilygayjrycfk.supabase.co';
+const SB_KEY='sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8';
+const payBtn=document.getElementById('payBtn');const box=document.getElementById('status');const text=document.getElementById('statusText');const keyArea=document.getElementById('keyArea');
+function deviceId(){let id=localStorage.getItem('lista_prime_device');if(!id){id=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2));localStorage.setItem('lista_prime_device',id)}return id}
+async function sha256(v){const d=new TextEncoder().encode(v.trim());const h=await crypto.subtle.digest('SHA-256',d);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function rpc(fn,body){const r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{'content-type':'application/json','apikey':SB_KEY,'authorization':'Bearer '+SB_KEY},body:JSON.stringify(body)});if(!r.ok)throw new Error('Falha de conexão');return r.json()}
+function show(message,type=''){box.className='status show'+(type?' '+type:'');text.textContent=message}
+function showKey(key){keyArea.innerHTML='';const row=document.createElement('div');row.className='keyrow';const code=document.createElement('code');code.textContent=key;const copy=document.createElement('button');copy.className='btn copy';copy.textContent='COPIAR KEY';copy.onclick=async()=>{await navigator.clipboard.writeText(key);copy.textContent='KEY COPIADA'};row.append(code,copy);keyArea.appendChild(row)}
+async function activateAutomatically(key){try{const h=await sha256(key);const d=await rpc('redeem_list_prime_key',{p_key_hash:h,p_device_id:deviceId()});return Boolean(d&&d.ok)}catch{return false}}
+async function checkPayment(token,attempt=0){show('Aguardando a confirmação do PIX pelo Asaas...');try{const r=await fetch(`${BILLING_API}/api/products/status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({billingToken:token})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Não foi possível verificar o pagamento.');if(j.paid&&j.fulfilled&&j.keys?.primaryKey){localStorage.removeItem(STORAGE);const key=j.keys.primaryKey;const activated=await activateAutomatically(key);showKey(key);if(activated){show('Pagamento confirmado ✅ Acesso de 30 dias liberado automaticamente neste dispositivo.','ok');setTimeout(()=>location.href='./',1800)}else show('Pagamento confirmado ✅ Sua key foi criada. Se o acesso não abrir sozinho, copie a key abaixo e use na tela inicial.','ok');history.replaceState({},'',location.pathname);return}if(attempt<100)setTimeout(()=>checkPayment(token,attempt+1),3000);else show('Pagamento ainda pendente. Se você já pagou, recarregue esta página para verificar novamente.')}catch(e){show(e.message||'Erro ao verificar o pagamento.','err')}}
+payBtn.onclick=async()=>{const old=payBtn.textContent;payBtn.disabled=true;payBtn.textContent='ABRINDO ASAAS...';try{const r=await fetch(`${BILLING_API}/api/products/checkout`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product:'list_prime',plan:'monthly'})});const j=await r.json().catch(()=>({}));if(!r.ok||!j.checkoutUrl||!j.billingToken)throw new Error(j.error||'Não foi possível gerar o PIX.');localStorage.setItem(STORAGE,JSON.stringify({token:j.billingToken,createdAt:Date.now(),checkoutId:j.checkoutId}));location.href=j.checkoutUrl}catch(e){show(e.message||'Não foi possível abrir o Asaas.','err');payBtn.disabled=false;payBtn.textContent=old}};
+(function resume(){let saved=null;try{saved=JSON.parse(localStorage.getItem(STORAGE)||'null')}catch{}const q=new URLSearchParams(location.search);if(q.get('billing')==='cancelado'){show('Pagamento cancelado. Você pode gerar um novo PIX.','err');return}if(q.get('billing')==='expirado'){show('O PIX expirou. Gere um novo pagamento.','err');return}if(saved?.token&&(q.get('billing')==='return'||Date.now()-Number(saved.createdAt||0)<7200000))checkPayment(saved.token)})();
 </script>
 </body>
 </html>
