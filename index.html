@@ -33,7 +33,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   requestAnimationFrame(()=>line.classList.add('show'));
   await sleep(250);title.classList.add('show');
   await sleep(330);protocol.classList.add('show');
-  const pagePromise=fetch('/app.html?v=20261031-1',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Falha ao carregar central');return r.text()});
+  const pagePromise=fetch('/app.html?v=20261031-2',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Falha ao carregar central');return r.text()}).then(html=>html.replace(/R\$ 129,99/g,'R$ 199,99'));
   await sleep(1050);
   intro.classList.add('fade');
   await sleep(450);
