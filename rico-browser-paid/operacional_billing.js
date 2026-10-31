@@ -7,7 +7,7 @@ const BILLING_SECRET = process.env.RICO_PRODUCT_BILLING_SECRET || '';
 const SUPABASE_URL = 'https://ytjwwgskilygayjrycfk.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8';
 const OPERACIONAL_ORIGIN = 'https://operacional-equipe-rico.onrender.com';
-const PRICE = 129.99;
+const PRICE = 199.99;
 
 function safeEqual(a, b) {
   const aa = Buffer.from(String(a || ''), 'utf8');
