@@ -17,9 +17,10 @@ global.fetch = async (url, options = {}) => {
   return nativeFetch(url, options);
 };
 
-// Acopla as notificações push sem alterar o server.js principal.
+// Acopla as notificações push e o billing do Dashboard sem alterar o server.js principal.
 const express = require('express');
 const { registerPushRoutes, notifySaleFromAsaas } = require('./push_notify');
+const { registerDashboardBilling } = require('./dashboard_billing');
 
 const originalPost = express.application.post;
 express.application.post = function(path, ...handlers) {
@@ -44,6 +45,9 @@ express.application.post = function(path, ...handlers) {
 
 const originalListen = express.application.listen;
 express.application.listen = function(...args) {
+  if (!this.__dashboardBillingRegistered) {
+    registerDashboardBilling(this);
+  }
   if (!this.__pushRoutesRegistered) {
     registerPushRoutes(this);
     this.__pushRoutesRegistered = true;
