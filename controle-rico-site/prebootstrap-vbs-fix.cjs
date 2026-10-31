@@ -53,7 +53,7 @@ const downloadAnchor = "\napp.post('/api/download', async (req, res) => {";
 if (!source.includes(downloadAnchor)) {
   throw new Error('Ponto da rota de download não encontrado.');
 }
-const betaRoute = String.raw`
+const betaRoute = `
 app.post('/api/activate-beta', async (req, res) => {
   try {
     const rawKey = String(req.body?.key || '').trim().toUpperCase();
