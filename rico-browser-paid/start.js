@@ -22,6 +22,7 @@ const express = require('express');
 const { registerPushRoutes, notifySaleFromAsaas } = require('./push_notify');
 const { registerDashboardBilling } = require('./dashboard_billing');
 const { registerProductBilling } = require('./product_billing');
+const { registerOperacionalBilling } = require('./operacional_billing');
 
 const originalPost = express.application.post;
 express.application.post = function(path, ...handlers) {
@@ -51,6 +52,9 @@ express.application.listen = function(...args) {
   }
   if (!this.__productBillingRegistered) {
     registerProductBilling(this);
+  }
+  if (!this.__operacionalBillingRegistered) {
+    registerOperacionalBilling(this);
   }
   if (!this.__pushRoutesRegistered) {
     registerPushRoutes(this);
