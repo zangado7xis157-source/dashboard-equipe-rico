@@ -18,7 +18,7 @@
     <span class="tag">ACESSO 30 DIAS</span>
     <h1>Libere seu Operacional</h1>
     <p class="sub">Treinamentos e materiais da Equipe Rico reunidos em uma área exclusiva.</p>
-    <div class="price"><small>R$</small> 129,99</div>
+    <div class="price"><small>R$</small> 199,99</div>
     <div class="period">Pagamento único • acesso por 30 dias</div>
     <div class="items">
       <div class="item">Acesso aos treinamentos do Operacional</div>
@@ -27,7 +27,7 @@
       <div class="item">Liberação automática após confirmação</div>
     </div>
     <div class="vip"><b>Já é membro do VIP?</b><br>O acesso do VIP é liberado com uma key de 30 dias fornecida pela Equipe Rico. Não precisa comprar novamente.</div>
-    <button class="btn buy" id="buyBtn">COMPRAR POR R$ 129,99</button>
+    <button class="btn buy" id="buyBtn">COMPRAR POR R$ 199,99</button>
     <a class="btn back" href="./">JÁ TENHO MINHA KEY</a>
     <div id="status" class="status"></div>
     <div class="secure">PIX processado pelo Asaas • confirmação automática</div>
@@ -36,7 +36,7 @@
 <script>
 const BILLING_API='https://rico-browser-android-pago.onrender.com';
 const SB_URL='https://ytjwwgskilygayjrycfk.supabase.co';
-const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0and3Z3NraWx5Z2F5anJ5Y2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzM4NTUsImV4cCI6MjEwNjU0OTg1NX0.avTRZstKk41cVH9oQAqXxdPVw8Q6jv9ARXabuK_4HrM';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6Inl0and3Z3NraWx5Z2F5anJ5Y2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzM4NTUsImV4cCI6MjEwNjU0OTg1NX0.avTRZstKk41cVH9oQAqXxdPVw8Q6jv9ARXabuK_4HrM';
 const SESSION_KEY='rico_operacional_billing_session_v1';
 const STORAGE_HASH='rico_operacional_key_hash';
 const STORAGE_DEVICE='rico_operacional_device_v1';
@@ -46,10 +46,10 @@ function show(msg,type=''){statusBox.className='status show'+(type?' '+type:'');
 function getDeviceId(){let id=localStorage.getItem(STORAGE_DEVICE);if(!id){const a=new Uint8Array(24);crypto.getRandomValues(a);id='DEV-'+Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem(STORAGE_DEVICE,id)}return id}
 async function sha256Hex(text){const bytes=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('')}
 async function activate(rawKey){const hash=await sha256Hex(rawKey.trim().toUpperCase());const r=await fetch(SB_URL+'/rest/v1/rpc/activate_operacional_equipe_rico_key',{method:'POST',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json'},body:JSON.stringify({p_key_hash:hash,p_device_id:getDeviceId()})});if(!r.ok)throw new Error('Falha ao ativar acesso');const j=await r.json();if(!j?.ok)throw new Error(j?.message||'Falha ao ativar acesso');localStorage.setItem(STORAGE_HASH,hash);return j}
-async function createCheckout(){buyBtn.disabled=true;buyBtn.textContent='GERANDO PIX...';show('Criando seu pagamento seguro no Asaas...');try{const r=await fetch(BILLING_API+'/api/operacional/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const j=await r.json().catch(()=>({}));if(!r.ok||!j.checkoutUrl||!j.billingToken)throw new Error(j.error||'Não foi possível gerar o PIX.');localStorage.setItem(SESSION_KEY,JSON.stringify({billingToken:j.billingToken,checkoutId:j.checkoutId,createdAt:Date.now()}));location.href=j.checkoutUrl}catch(e){show(e.message||'Não foi possível gerar o PIX agora.','err');buyBtn.disabled=false;buyBtn.textContent='COMPRAR POR R$ 129,99'}}
+async function createCheckout(){buyBtn.disabled=true;buyBtn.textContent='GERANDO PIX...';show('Criando seu pagamento seguro no Asaas...');try{const r=await fetch(BILLING_API+'/api/operacional/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const j=await r.json().catch(()=>({}));if(!r.ok||!j.checkoutUrl||!j.billingToken)throw new Error(j.error||'Não foi possível gerar o PIX.');localStorage.setItem(SESSION_KEY,JSON.stringify({billingToken:j.billingToken,checkoutId:j.checkoutId,createdAt:Date.now()}));location.href=j.checkoutUrl}catch(e){show(e.message||'Não foi possível gerar o PIX agora.','err');buyBtn.disabled=false;buyBtn.textContent='COMPRAR POR R$ 199,99'}}
 async function checkPayment(){let saved=null;try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{}if(!saved?.billingToken){show('Não encontrei uma compra em andamento. Gere um novo pagamento.','err');return false}show('Pagamento localizado. Confirmando com o Asaas...');try{const r=await fetch(BILLING_API+'/api/operacional/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({billingToken:saved.billingToken})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Não foi possível verificar o pagamento.');if(!j.paid)return false;const rawKey=j.key;try{await activate(rawKey);localStorage.removeItem(SESSION_KEY);show('✅ Pagamento confirmado e acesso liberado automaticamente.<div class="key">'+rawKey+'</div>','ok');setTimeout(()=>location.href='./',1200)}catch(e){show('✅ Pagamento confirmado. Sua key foi gerada. Copie e use na tela de acesso:<div class="key">'+rawKey+'</div>','ok')}return true}catch(e){show(e.message||'Não foi possível verificar o pagamento.','err');return false}}
 buyBtn.addEventListener('click',createCheckout);
-(async()=>{const q=new URLSearchParams(location.search);const state=q.get('billing');if(state==='cancelado'){show('Pagamento cancelado. Você pode gerar um novo PIX quando quiser.','err');return}if(state==='expirado'){show('Esse PIX expirou. Gere um novo pagamento.','err');return}if(state==='return'){buyBtn.disabled=true;buyBtn.textContent='CONFIRMANDO PAGAMENTO...';let tries=0;const poll=async()=>{tries++;const done=await checkPayment();if(done)return;if(tries<100)setTimeout(poll,3000);else{show('O pagamento ainda não apareceu como confirmado. Use esta página novamente para recuperar a compra.','err');buyBtn.disabled=false;buyBtn.textContent='COMPRAR POR R$ 129,99'}};poll()}})();
+(async()=>{const q=new URLSearchParams(location.search);const state=q.get('billing');if(state==='cancelado'){show('Pagamento cancelado. Você pode gerar um novo PIX quando quiser.','err');return}if(state==='expirado'){show('Esse PIX expirou. Gere um novo pagamento.','err');return}if(state==='return'){buyBtn.disabled=true;buyBtn.textContent='CONFIRMANDO PAGAMENTO...';let tries=0;const poll=async()=>{tries++;const done=await checkPayment();if(done)return;if(tries<100)setTimeout(poll,3000);else{show('O pagamento ainda não apareceu como confirmado. Use esta página novamente para recuperar a compra.','err');buyBtn.disabled=false;buyBtn.textContent='COMPRAR POR R$ 199,99'}};poll()}})();
 </script>
 </body>
 </html>
