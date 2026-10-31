@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operacional Equipe Rico • Acesso</title>
+<style>
+:root{--bg:#07090d;--panel:#101722;--line:#273247;--txt:#f5f7fa;--muted:#97a3b5;--red:#ff334d;--red2:#b70d25;--green:#49df91}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--txt);background:radial-gradient(circle at 80% 5%,rgba(255,51,77,.14),transparent 28%),linear-gradient(180deg,#05070a,#0a0e15)}
+.wrap{width:min(720px,calc(100% - 28px));margin:auto;padding:34px 0 60px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:24px}.logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:1000;background:linear-gradient(145deg,var(--red),#790719)}.brand b{font-size:20px}.brand small{display:block;color:var(--muted);margin-top:2px}.card{background:linear-gradient(180deg,#111824,#0b1018);border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 26px 80px #0008}.tag{display:inline-flex;padding:7px 10px;border:1px solid rgba(255,51,77,.28);border-radius:999px;background:rgba(255,51,77,.08);color:#ff9aa6;font-size:11px;font-weight:900}h1{font-size:clamp(34px,8vw,54px);line-height:1;margin:17px 0 10px}.sub{color:var(--muted);line-height:1.6;margin:0}.price{font-size:46px;font-weight:1000;margin:24px 0 5px}.price small{font-size:16px}.period{color:var(--muted);font-size:13px;margin-bottom:22px}.items{display:grid;gap:10px;margin:22px 0}.item{padding:13px 14px;border:1px solid #222c3c;background:#0b111a;border-radius:12px;color:#d6dce5;font-size:14px}.item:before{content:'✓';color:var(--green);font-weight:1000;margin-right:9px}.vip{margin:20px 0;padding:15px;border:1px solid #3d4a60;border-radius:14px;background:#0c121c;color:#cbd3df;font-size:13px;line-height:1.55}.vip b{color:#fff}.btn{width:100%;min-height:54px;border:0;border-radius:13px;font-weight:1000;cursor:pointer;font-size:14px}.buy{background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;box-shadow:0 14px 28px rgba(255,51,77,.18)}.buy:disabled{opacity:.6;cursor:wait}.back{display:grid;place-items:center;text-decoration:none;background:#151d29;color:#fff;border:1px solid #303b4e;margin-top:11px}.status{display:none;margin-top:16px;padding:15px;border-radius:13px;border:1px solid #334157;background:#0a111b;color:#cbd5e2;line-height:1.55;font-size:13px}.status.show{display:block}.status.ok{border-color:#225d43;background:#071a12;color:#8aefb4}.status.err{border-color:#6d2932;background:#21090e;color:#ff9aa7}.key{margin-top:10px;padding:12px;border:1px solid #3a485c;border-radius:10px;background:#05090e;color:#fff;font:12px/1.5 ui-monospace,Consolas,monospace;overflow-wrap:anywhere}.secure{text-align:center;color:#7e8999;font-size:11px;margin-top:14px}
+@media(max-width:520px){.card{padding:21px}.wrap{padding-top:20px}.price{font-size:40px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand"><div class="logo">R</div><div><b>OPERACIONAL EQUIPE RICO</b><small>Acesso oficial</small></div></div>
+  <section class="card">
+    <span class="tag">ACESSO 30 DIAS</span>
+    <h1>Libere seu Operacional</h1>
+    <p class="sub">Treinamentos e materiais da Equipe Rico reunidos em uma área exclusiva.</p>
+    <div class="price"><small>R$</small> 129,99</div>
+    <div class="period">Pagamento único • acesso por 30 dias</div>
+    <div class="items">
+      <div class="item">Acesso aos treinamentos do Operacional</div>
+      <div class="item">Key individual vinculada ao primeiro dispositivo</div>
+      <div class="item">Pagamento PIX via Asaas</div>
+      <div class="item">Liberação automática após confirmação</div>
+    </div>
+    <div class="vip"><b>Já é membro do VIP?</b><br>O acesso do VIP é liberado com uma key de 30 dias fornecida pela Equipe Rico. Não precisa comprar novamente.</div>
+    <button class="btn buy" id="buyBtn">COMPRAR POR R$ 129,99</button>
+    <a class="btn back" href="./">JÁ TENHO MINHA KEY</a>
+    <div id="status" class="status"></div>
+    <div class="secure">PIX processado pelo Asaas • confirmação automática</div>
+  </section>
+</main>
+<script>
+const BILLING_API='https://rico-browser-android-pago.onrender.com';
+const SB_URL='https://ytjwwgskilygayjrycfk.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0and3Z3NraWx5Z2F5anJ5Y2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NzM4NTUsImV4cCI6MjEwNjU0OTg1NX0.avTRZstKk41cVH9oQAqXxdPVw8Q6jv9ARXabuK_4HrM';
+const SESSION_KEY='rico_operacional_billing_session_v1';
+const STORAGE_HASH='rico_operacional_key_hash';
+const STORAGE_DEVICE='rico_operacional_device_v1';
+const buyBtn=document.getElementById('buyBtn');
+const statusBox=document.getElementById('status');
+function show(msg,type=''){statusBox.className='status show'+(type?' '+type:'');statusBox.innerHTML=msg}
+function getDeviceId(){let id=localStorage.getItem(STORAGE_DEVICE);if(!id){const a=new Uint8Array(24);crypto.getRandomValues(a);id='DEV-'+Array.from(a,b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem(STORAGE_DEVICE,id)}return id}
+async function sha256Hex(text){const bytes=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,'0')).join('')}
+async function activate(rawKey){const hash=await sha256Hex(rawKey.trim().toUpperCase());const r=await fetch(SB_URL+'/rest/v1/rpc/activate_operacional_equipe_rico_key',{method:'POST',headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON,'Content-Type':'application/json'},body:JSON.stringify({p_key_hash:hash,p_device_id:getDeviceId()})});if(!r.ok)throw new Error('Falha ao ativar acesso');const j=await r.json();if(!j?.ok)throw new Error(j?.message||'Falha ao ativar acesso');localStorage.setItem(STORAGE_HASH,hash);return j}
+async function createCheckout(){buyBtn.disabled=true;buyBtn.textContent='GERANDO PIX...';show('Criando seu pagamento seguro no Asaas...');try{const r=await fetch(BILLING_API+'/api/operacional/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const j=await r.json().catch(()=>({}));if(!r.ok||!j.checkoutUrl||!j.billingToken)throw new Error(j.error||'Não foi possível gerar o PIX.');localStorage.setItem(SESSION_KEY,JSON.stringify({billingToken:j.billingToken,checkoutId:j.checkoutId,createdAt:Date.now()}));location.href=j.checkoutUrl}catch(e){show(e.message||'Não foi possível gerar o PIX agora.','err');buyBtn.disabled=false;buyBtn.textContent='COMPRAR POR R$ 129,99'}}
+async function checkPayment(){let saved=null;try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null')}catch{}if(!saved?.billingToken){show('Não encontrei uma compra em andamento. Gere um novo pagamento.','err');return false}show('Pagamento localizado. Confirmando com o Asaas...');try{const r=await fetch(BILLING_API+'/api/operacional/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({billingToken:saved.billingToken})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Não foi possível verificar o pagamento.');if(!j.paid)return false;const rawKey=j.key;try{await activate(rawKey);localStorage.removeItem(SESSION_KEY);show('✅ Pagamento confirmado e acesso liberado automaticamente.<div class="key">'+rawKey+'</div>','ok');setTimeout(()=>location.href='./',1200)}catch(e){show('✅ Pagamento confirmado. Sua key foi gerada. Copie e use na tela de acesso:<div class="key">'+rawKey+'</div>','ok')}return true}catch(e){show(e.message||'Não foi possível verificar o pagamento.','err');return false}}
+buyBtn.addEventListener('click',createCheckout);
+(async()=>{const q=new URLSearchParams(location.search);const state=q.get('billing');if(state==='cancelado'){show('Pagamento cancelado. Você pode gerar um novo PIX quando quiser.','err');return}if(state==='expirado'){show('Esse PIX expirou. Gere um novo pagamento.','err');return}if(state==='return'){buyBtn.disabled=true;buyBtn.textContent='CONFIRMANDO PAGAMENTO...';let tries=0;const poll=async()=>{tries++;const done=await checkPayment();if(done)return;if(tries<100)setTimeout(poll,3000);else{show('O pagamento ainda não apareceu como confirmado. Use esta página novamente para recuperar a compra.','err');buyBtn.disabled=false;buyBtn.textContent='COMPRAR POR R$ 129,99'}};poll()}})();
+</script>
+</body>
+</html>
