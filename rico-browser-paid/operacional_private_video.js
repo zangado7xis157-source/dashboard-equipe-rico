@@ -7,10 +7,10 @@ const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8
 const OPERACIONAL_ORIGIN = 'https://operacional-equipe-rico.onrender.com';
 
 const LESSONS = Object.freeze({
-  'aula-01': '1FVeJa9JXh5ZRcGCEZJ4Trh9msdH75fX4',
-  'aula-02': '1jZylMoArYs4uO9oNFxhlOUWsddUwNHoS',
-  'aula-03': '1UU-3n1LIFoUvL7GT_9yUqP9OU5UpeLwa',
-  'aula-04': '1l4MdylKTZ8b7KwNXAM-E5t6sfDZsyIMp',
+  'aula-01': process.env.OPERACIONAL_VIDEO_AULA_01 || '',
+  'aula-02': process.env.OPERACIONAL_VIDEO_AULA_02 || '',
+  'aula-03': process.env.OPERACIONAL_VIDEO_AULA_03 || '',
+  'aula-04': process.env.OPERACIONAL_VIDEO_AULA_04 || '',
 });
 
 function safeEqual(a, b) {
@@ -76,16 +76,10 @@ async function validateKey(keyHash, deviceId) {
 }
 
 async function fetchDriveVideo(fileId, range) {
-  const headers = {
-    'User-Agent': 'Mozilla/5.0',
-    Accept: '*/*',
-  };
+  const headers = { 'User-Agent': 'Mozilla/5.0', Accept: '*/*' };
   if (range) headers.Range = range;
-
   return fetch(`https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`, {
-    method: 'GET',
-    headers,
-    redirect: 'follow',
+    method: 'GET', headers, redirect: 'follow'
   });
 }
 
@@ -112,14 +106,10 @@ function registerOperacionalPrivateVideo(app) {
 
     try {
       const access = await validateKey(keyHash, deviceId);
-      if (!access?.ok) {
-        return res.status(401).json({ error: 'Acesso negado.', reason: access?.message || 'invalid_key' });
-      }
+      if (!access?.ok) return res.status(401).json({ error: 'Acesso negado.', reason: access?.message || 'invalid_key' });
 
       const token = signVideoToken({
-        kind: 'operacional-video',
-        lesson,
-        deviceId,
+        kind: 'operacional-video', lesson, deviceId,
         exp: Date.now() + 2 * 60 * 60 * 1000,
       });
 
@@ -136,20 +126,15 @@ function registerOperacionalPrivateVideo(app) {
   app.get('/api/operacional/video', async (req, res) => {
     const data = verifyVideoToken(req.query.token);
     if (!data) return res.status(401).send('Acesso ao video invalido ou expirado.');
-
     const fileId = LESSONS[data.lesson];
     if (!fileId) return res.status(404).send('Video nao encontrado.');
 
     try {
       const upstream = await fetchDriveVideo(fileId, req.headers.range);
       const contentType = String(upstream.headers.get('content-type') || '');
-      if (!upstream.ok || contentType.includes('text/html')) {
-        console.error('operacional_video_upstream_error', upstream.status, contentType);
-        return res.status(502).send('Nao foi possivel carregar este video agora.');
-      }
+      if (!upstream.ok || contentType.includes('text/html')) return res.status(502).send('Nao foi possivel carregar este video agora.');
 
-      const passthroughHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'];
-      for (const header of passthroughHeaders) {
+      for (const header of ['content-type','content-length','content-range','accept-ranges','etag','last-modified']) {
         const value = upstream.headers.get(header);
         if (value) res.setHeader(header, value);
       }
@@ -157,7 +142,6 @@ function registerOperacionalPrivateVideo(app) {
       res.setHeader('Content-Disposition', 'inline');
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.status(upstream.status);
-
       if (!upstream.body) return res.end();
       Readable.fromWeb(upstream.body).pipe(res);
     } catch (error) {
