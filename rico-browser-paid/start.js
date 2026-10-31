@@ -17,12 +17,13 @@ global.fetch = async (url, options = {}) => {
   return nativeFetch(url, options);
 };
 
-// Acopla as notificações push e os billings sem alterar o server.js principal.
+// Acopla as notificações push, billings e vídeos privados sem alterar o server.js principal.
 const express = require('express');
 const { registerPushRoutes, notifySaleFromAsaas } = require('./push_notify');
 const { registerDashboardBilling } = require('./dashboard_billing');
 const { registerProductBilling } = require('./product_billing');
 const { registerOperacionalBilling } = require('./operacional_billing');
+const { registerOperacionalPrivateVideo } = require('./operacional_private_video');
 
 const originalPost = express.application.post;
 express.application.post = function(path, ...handlers) {
@@ -55,6 +56,9 @@ express.application.listen = function(...args) {
   }
   if (!this.__operacionalBillingRegistered) {
     registerOperacionalBilling(this);
+  }
+  if (!this.__operacionalPrivateVideoRegistered) {
+    registerOperacionalPrivateVideo(this);
   }
   if (!this.__pushRoutesRegistered) {
     registerPushRoutes(this);
