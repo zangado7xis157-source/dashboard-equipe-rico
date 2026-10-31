@@ -9,7 +9,6 @@ const OPERACIONAL_ORIGIN = 'https://operacional-equipe-rico.onrender.com';
 const LESSONS = Object.freeze({
   'aula-01': process.env.OPERACIONAL_VIDEO_AULA_01 || '',
   'aula-02': process.env.OPERACIONAL_VIDEO_AULA_02 || '',
-  'aula-03': process.env.OPERACIONAL_VIDEO_AULA_03 || '',
   'aula-04': process.env.OPERACIONAL_VIDEO_AULA_04 || '',
 });
 
