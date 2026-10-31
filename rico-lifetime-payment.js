@@ -1,186 +1,332 @@
 (() => {
   "use strict";
 
-  const PIX_CODE = "00020126580014BR.GOV.BCB.PIX01363b9328f7-c182-4c35-b30e-dd8c21d68d1c520400005303986540579.995802BR592569.686.828 RAY FERNANDES 6009SAO PAULO61080540900062250521B38gz3pxvONgvIl1p9z3e6304F7D7";
-  const WHATSAPP_URL = "https://wa.me/5535910238277?text=ja%20paguei%20o%20acesso%20vitalicio%20de%20R%24%2079%2C99%20e%20quero%20minha%20key%20vitalicia%20do%20dashboard";
+  const BILLING_API = "https://rico-browser-android-pago.onrender.com";
+  const STORAGE_TOKEN = "rico_dashboard_billing_token";
+  const STORAGE_PLAN = "rico_dashboard_billing_plan";
+  const STORAGE_CHECKOUT = "rico_dashboard_billing_checkout";
+  const PLANS = {
+    monthly: { label: "Mensal", price: 29.99, note: "30 dias de acesso" },
+    lifetime: { label: "Vitalício", price: 79.99, note: "pagamento único" },
+  };
+
+  let selectedPlan = "monthly";
+  let polling = false;
+  let pollTimer = null;
+
+  const money = (value) => Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  function getUserId() {
+    try {
+      return typeof user !== "undefined" && user && user.id ? user.id : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   function injectStyles() {
-    if (document.getElementById("ricoLifetimePaymentStyles")) return;
+    if (document.getElementById("ricoBillingStyles")) return;
     const style = document.createElement("style");
-    style.id = "ricoLifetimePaymentStyles";
+    style.id = "ricoBillingStyles";
     style.textContent = `
-      .rico-lifetime-wrap{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12)}
-      .rico-lifetime-or{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8f96a3;text-align:center;margin:0 0 12px}
-      .rico-lifetime-card{border:1px solid #343840;border-radius:16px;padding:16px;background:linear-gradient(180deg,#0d0f12 0%,#090a0c 100%);text-align:left}
-      .rico-lifetime-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
-      .rico-lifetime-title{font-weight:900;font-size:16px;color:#fff}
-      .rico-lifetime-badge{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border:1px solid #4b515c;border-radius:999px;padding:6px 9px;color:#fff;white-space:nowrap}
-      .rico-lifetime-price{font-size:28px;font-weight:950;line-height:1;color:#fff;margin:5px 0 5px}
-      .rico-lifetime-price span{font-size:12px;font-weight:700;color:#9da4af}
-      .rico-lifetime-desc{font-size:12px;line-height:1.5;color:#aab0ba;margin:0 0 13px}
-      .rico-lifetime-btn{width:100%;border:0;border-radius:12px;padding:14px 16px;font:inherit;font-weight:900;cursor:pointer;background:#fff;color:#050607;transition:transform .15s ease,opacity .15s ease}
-      .rico-lifetime-btn:hover{transform:translateY(-1px)}
-      .rico-lifetime-btn:active{transform:translateY(0);opacity:.9}
-      .rico-pix-modal{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(8px)}
-      .rico-pix-modal.open{display:flex}
-      .rico-pix-box{width:min(430px,100%);max-height:92vh;overflow:auto;border:1px solid #343840;border-radius:20px;background:#08090b;color:#fff;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.58)}
-      .rico-pix-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
-      .rico-pix-head h3{font-size:20px;line-height:1.2;margin:0}
-      .rico-pix-close{border:1px solid #343840;background:#111318;color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}
-      .rico-pix-sub{margin:0 0 14px;color:#aab0ba;font-size:12px;line-height:1.5}
-      .rico-pix-qr{width:220px;height:220px;margin:0 auto 15px;padding:10px;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center}
-      .rico-pix-qr img,.rico-pix-qr canvas{max-width:100%!important;max-height:100%!important}
-      .rico-pix-label{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#9da4af;margin:0 0 7px}
-      .rico-pix-code{width:100%;min-height:92px;resize:none;border:1px solid #343840;border-radius:12px;background:#0d0f12;color:#e8e9ec;padding:11px;font:11px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;box-sizing:border-box}
-      .rico-pix-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:10px}
-      .rico-pix-copy,.rico-pix-whatsapp{border-radius:12px;padding:13px 14px;font:inherit;font-weight:900;text-align:center;text-decoration:none;cursor:pointer}
-      .rico-pix-copy{border:0;background:#fff;color:#050607}
-      .rico-pix-whatsapp{border:1px solid #343840;background:#111318;color:#fff}
-      .rico-pix-note{margin:11px 0 0;color:#8f96a3;font-size:11px;line-height:1.45;text-align:center}
-      @media (max-width:520px){.rico-lifetime-top{display:block}.rico-lifetime-badge{display:inline-block;margin-top:8px}.rico-pix-box{padding:16px}.rico-pix-qr{width:190px;height:190px}}
+      .rico-billing-panel{margin-top:16px;border:1px solid rgba(255,255,255,.13);border-radius:20px;background:linear-gradient(180deg,#0e1114 0%,#090b0d 100%);padding:18px;text-align:left;box-shadow:0 18px 55px rgba(0,0,0,.28)}
+      .rico-billing-kicker{font-size:10px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:#9aa2ad;margin-bottom:5px}
+      .rico-billing-title{font-size:20px;font-weight:950;color:#fff;line-height:1.15;margin-bottom:4px}
+      .rico-billing-sub{font-size:12px;line-height:1.5;color:#9fa6b1;margin-bottom:15px}
+      .rico-plan-list{display:grid;gap:9px}
+      .rico-plan{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border-radius:14px;border:1px solid #30353d;background:#0b0d10;color:#fff;cursor:pointer;text-align:left;transition:border-color .15s ease,transform .15s ease,background .15s ease}
+      .rico-plan:hover{transform:translateY(-1px);border-color:#555c68}
+      .rico-plan.selected{border-color:#f4f4f5;box-shadow:0 0 0 1px #f4f4f5 inset;background:#12151a}
+      .rico-plan-left{display:flex;align-items:center;gap:11px;min-width:0}
+      .rico-radio{width:18px;height:18px;border-radius:999px;border:2px solid #59606b;display:grid;place-items:center;flex:0 0 auto}
+      .rico-plan.selected .rico-radio{border-color:#fff}
+      .rico-plan.selected .rico-radio:after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+      .rico-plan-name{font-size:14px;font-weight:900}
+      .rico-plan-note{font-size:11px;color:#8f97a3;margin-top:2px}
+      .rico-plan-price{font-size:15px;font-weight:950;white-space:nowrap}
+      .rico-plan-badge{display:inline-block;margin-left:6px;border-radius:999px;border:1px solid #4a505a;padding:3px 6px;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#d9dce1;vertical-align:2px}
+      .rico-billing-summary{margin-top:12px;border:1px solid #292e35;border-radius:13px;padding:12px;background:#080a0c;display:flex;align-items:center;justify-content:space-between;gap:10px}
+      .rico-billing-summary span{font-size:11px;color:#939ba6}.rico-billing-summary strong{font-size:18px;color:#fff}
+      .rico-generate-pix{width:100%;margin-top:11px;border:0;border-radius:13px;padding:14px 16px;background:#fff;color:#050607;font:inherit;font-weight:950;cursor:pointer}
+      .rico-generate-pix:disabled{opacity:.55;cursor:wait}
+      .rico-billing-secure{text-align:center;color:#777f8a;font-size:10px;margin-top:9px;line-height:1.4}
+      .rico-billing-status{display:none;margin-top:12px;border-radius:13px;padding:12px;border:1px solid #30353d;background:#0b0d10;color:#c5cad1;font-size:12px;line-height:1.5}
+      .rico-billing-status.show{display:block}.rico-billing-status.success{border-color:#245c36;background:#08160e;color:#8af0a8}.rico-billing-status.error{border-color:#6b2630;background:#1a090c;color:#ff929d}
+      .rico-billing-actions{display:none;grid-template-columns:1fr;gap:8px;margin-top:9px}.rico-billing-actions.show{display:grid}
+      .rico-check-payment,.rico-open-payment,.rico-manual-key{width:100%;border-radius:12px;padding:12px 13px;font:inherit;font-weight:900;cursor:pointer;text-decoration:none;text-align:center;box-sizing:border-box}
+      .rico-check-payment{border:0;background:#f2f3f5;color:#08090a}.rico-open-payment,.rico-manual-key{border:1px solid #363c45;background:#12151a;color:#fff}
+      .rico-manual-key{margin-top:10px}
+      #paymentBtn.rico-old-payment-hidden{display:none!important}
+      .rico-billing-return{margin-top:8px;text-align:center;font-size:10px;color:#7f8791}
+      @media(max-width:520px){.rico-billing-panel{padding:15px}.rico-plan{padding:12px}.rico-plan-price{font-size:14px}}
     `;
     document.head.appendChild(style);
   }
 
-  function loadQRCodeLibrary() {
-    return new Promise((resolve, reject) => {
-      if (window.QRCode) return resolve();
-      const existing = document.getElementById("ricoQRCodeLib");
-      if (existing) {
-        existing.addEventListener("load", resolve, { once: true });
-        existing.addEventListener("error", reject, { once: true });
+  function panelHtml() {
+    return `
+      <div class="rico-billing-kicker">PAGAMENTO DO DASHBOARD</div>
+      <div class="rico-billing-title">Escolha seu plano</div>
+      <div class="rico-billing-sub">O PIX é gerado em um checkout seguro. Assim que o pagamento for confirmado, seu acesso é liberado automaticamente.</div>
+      <div class="rico-plan-list">
+        <button class="rico-plan selected" type="button" data-plan="monthly">
+          <div class="rico-plan-left"><span class="rico-radio"></span><div><div class="rico-plan-name">Mensal</div><div class="rico-plan-note">30 dias de acesso</div></div></div>
+          <div class="rico-plan-price">R$ 29,99</div>
+        </button>
+        <button class="rico-plan" type="button" data-plan="lifetime">
+          <div class="rico-plan-left"><span class="rico-radio"></span><div><div class="rico-plan-name">Vitalício <span class="rico-plan-badge">melhor opção</span></div><div class="rico-plan-note">Pagamento único, sem renovação</div></div></div>
+          <div class="rico-plan-price">R$ 79,99</div>
+        </button>
+      </div>
+      <div class="rico-billing-summary"><span>Total a pagar</span><strong id="ricoBillingTotal">R$ 29,99</strong></div>
+      <button class="rico-generate-pix" id="ricoGeneratePix" type="button">⚡ Gerar PIX — R$ 29,99</button>
+      <div class="rico-billing-secure">PIX via Asaas • confirmação automática • acesso liberado após aprovação</div>
+      <div class="rico-billing-status" id="ricoBillingStatus"></div>
+      <div class="rico-billing-actions" id="ricoBillingActions">
+        <button class="rico-check-payment" id="ricoCheckPayment" type="button">Verificar pagamento agora</button>
+        <a class="rico-open-payment" id="ricoOpenPayment" href="#" target="_blank" rel="noopener noreferrer">Abrir tela do PIX novamente</a>
+      </div>
+      <button class="rico-manual-key" id="ricoManualKey" type="button">Já tenho uma key</button>
+      <div class="rico-billing-return">Mensal adiciona 30 dias. O plano vitalício não vence.</div>`;
+  }
+
+  function setStatus(message, type = "") {
+    const box = document.getElementById("ricoBillingStatus");
+    if (!box) return;
+    box.textContent = message;
+    box.className = `rico-billing-status show${type ? ` ${type}` : ""}`;
+  }
+
+  function setActions(show) {
+    document.getElementById("ricoBillingActions")?.classList.toggle("show", Boolean(show));
+  }
+
+  function selectPlan(plan) {
+    if (!PLANS[plan]) return;
+    selectedPlan = plan;
+    document.querySelectorAll(".rico-plan[data-plan]").forEach((button) => {
+      button.classList.toggle("selected", button.dataset.plan === plan);
+    });
+    const price = money(PLANS[plan].price);
+    const total = document.getElementById("ricoBillingTotal");
+    const generate = document.getElementById("ricoGeneratePix");
+    if (total) total.textContent = price;
+    if (generate) generate.textContent = `⚡ Gerar PIX — ${price}`;
+  }
+
+  function revealManualKey() {
+    const paidArea = document.getElementById("paidArea");
+    if (paidArea) {
+      paidArea.style.display = "block";
+      paidArea.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
+  function saveCheckout(data) {
+    localStorage.setItem(STORAGE_TOKEN, data.billingToken);
+    localStorage.setItem(STORAGE_PLAN, data.plan);
+    localStorage.setItem(STORAGE_CHECKOUT, data.checkoutId);
+  }
+
+  function clearCheckout() {
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_PLAN);
+    localStorage.removeItem(STORAGE_CHECKOUT);
+  }
+
+  async function refreshAccessAfterPayment(plan) {
+    setStatus(plan === "lifetime" ? "Pagamento confirmado ✓ Acesso vitalício liberado automaticamente." : "Pagamento confirmado ✓ Acesso liberado por 30 dias.", "success");
+    setActions(false);
+    clearCheckout();
+    try {
+      if (typeof checkAccess === "function") {
+        await checkAccess();
+      } else {
+        setTimeout(() => window.location.reload(), 900);
+      }
+    } catch (_) {
+      setTimeout(() => window.location.reload(), 900);
+    }
+  }
+
+  async function verifyPayment({ silent = false } = {}) {
+    const billingToken = localStorage.getItem(STORAGE_TOKEN);
+    if (!billingToken) {
+      if (!silent) setStatus("Nenhum PIX pendente foi encontrado neste navegador.", "error");
+      return false;
+    }
+
+    try {
+      if (!silent) setStatus("Conferindo pagamento...");
+      const response = await fetch(`${BILLING_API}/api/dashboard/status`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ billingToken }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Não foi possível verificar o pagamento.");
+
+      if (data.paid && data.activated) {
+        await refreshAccessAfterPayment(data.plan || localStorage.getItem(STORAGE_PLAN) || "monthly");
+        return true;
+      }
+
+      setStatus("Aguardando confirmação do PIX. Assim que o pagamento for aprovado, o acesso será liberado automaticamente.");
+      setActions(true);
+      return false;
+    } catch (error) {
+      if (!silent) setStatus(error.message || "Falha ao verificar o pagamento.", "error");
+      return false;
+    }
+  }
+
+  function startPolling() {
+    if (polling) return;
+    polling = true;
+    let attempts = 0;
+    const tick = async () => {
+      if (!localStorage.getItem(STORAGE_TOKEN)) {
+        polling = false;
         return;
       }
-      const script = document.createElement("script");
-      script.id = "ricoQRCodeLib";
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-
-  function markPaymentStarted() {
-    try {
-      const uid = window.user?.id;
-      const key = uid ? `payment_started_${uid}` : "payment_started";
-      localStorage.setItem(key, "1");
-      const paidArea = document.getElementById("paidArea");
-      if (paidArea) paidArea.style.display = "block";
-    } catch (_) {}
-  }
-
-  function openPixModal() {
-    const modal = document.getElementById("ricoPixModal");
-    if (!modal) return;
-    markPaymentStarted();
-    modal.classList.add("open");
-    document.body.style.overflow = "hidden";
-
-    const qr = document.getElementById("ricoPixQr");
-    if (!qr || qr.dataset.ready === "1") return;
-    qr.dataset.ready = "1";
-    qr.innerHTML = '<span style="color:#111;font-size:12px">Gerando QR Code...</span>';
-    loadQRCodeLibrary().then(() => {
-      qr.innerHTML = "";
-      new QRCode(qr, {
-        text: PIX_CODE,
-        width: 200,
-        height: 200,
-        correctLevel: QRCode.CorrectLevel.M,
-      });
-    }).catch(() => {
-      qr.innerHTML = '<span style="color:#111;font-size:12px;text-align:center;line-height:1.4">Não foi possível carregar o QR Code.<br>Use o Pix Copia e Cola abaixo.</span>';
-    });
-  }
-
-  function closePixModal() {
-    document.getElementById("ricoPixModal")?.classList.remove("open");
-    document.body.style.overflow = "";
-  }
-
-  async function copyPix() {
-    const button = document.getElementById("ricoCopyPixBtn");
-    try {
-      await navigator.clipboard.writeText(PIX_CODE);
-    } catch (_) {
-      const field = document.getElementById("ricoPixCode");
-      if (field) {
-        field.focus();
-        field.select();
-        document.execCommand("copy");
+      attempts += 1;
+      const done = await verifyPayment({ silent: attempts % 3 !== 1 });
+      if (done || attempts >= 180) {
+        polling = false;
+        return;
       }
+      pollTimer = setTimeout(tick, 5000);
+    };
+    tick();
+  }
+
+  async function generatePix() {
+    const userId = getUserId();
+    if (!userId) {
+      setStatus("Entre na sua conta do Dashboard antes de gerar o PIX.", "error");
+      return;
     }
-    if (button) {
-      const original = button.textContent;
-      button.textContent = "Pix copiado ✓";
-      setTimeout(() => { button.textContent = original; }, 1800);
+
+    const button = document.getElementById("ricoGeneratePix");
+    const paymentWindow = window.open("about:blank", "ricoDashboardPix");
+    if (button) button.disabled = true;
+    setStatus("Gerando seu PIX seguro...");
+    setActions(false);
+
+    try {
+      const response = await fetch(`${BILLING_API}/api/dashboard/checkout`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ userId, plan: selectedPlan }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Não foi possível gerar o PIX agora.");
+
+      saveCheckout(data);
+      const openLink = document.getElementById("ricoOpenPayment");
+      if (openLink) openLink.href = data.checkoutUrl;
+
+      if (paymentWindow) {
+        paymentWindow.location.replace(data.checkoutUrl);
+      } else {
+        window.open(data.checkoutUrl, "_blank", "noopener,noreferrer");
+      }
+
+      setStatus("PIX gerado ✓ Conclua o pagamento na aba aberta. Esta tela vai conferir a aprovação automaticamente.");
+      setActions(true);
+      startPolling();
+    } catch (error) {
+      try { paymentWindow?.close(); } catch (_) {}
+      setStatus(error.message || "Não foi possível gerar o PIX.", "error");
+    } finally {
+      if (button) button.disabled = false;
     }
   }
 
-  function createModal() {
-    if (document.getElementById("ricoPixModal")) return;
-    const modal = document.createElement("div");
-    modal.id = "ricoPixModal";
-    modal.className = "rico-pix-modal";
-    modal.innerHTML = `
-      <div class="rico-pix-box" role="dialog" aria-modal="true" aria-labelledby="ricoPixTitle">
-        <div class="rico-pix-head">
-          <div>
-            <h3 id="ricoPixTitle">Acesso Vitalício — R$ 79,99</h3>
-          </div>
-          <button class="rico-pix-close" id="ricoPixClose" type="button" aria-label="Fechar">×</button>
-        </div>
-        <p class="rico-pix-sub">Escaneie o QR Code ou copie o código Pix abaixo para realizar o pagamento.</p>
-        <div class="rico-pix-qr" id="ricoPixQr"></div>
-        <div class="rico-pix-label">Pix Copia e Cola</div>
-        <textarea class="rico-pix-code" id="ricoPixCode" readonly></textarea>
-        <div class="rico-pix-actions">
-          <button class="rico-pix-copy" id="ricoCopyPixBtn" type="button">Copiar código Pix</button>
-          <a class="rico-pix-whatsapp" href="${WHATSAPP_URL}" target="_blank" rel="noopener noreferrer">Já paguei / Pedir key vitalícia</a>
-        </div>
-        <p class="rico-pix-note">O plano mensal de R$ 29,99 continua disponível normalmente acima.</p>
-      </div>`;
-    document.body.appendChild(modal);
-    document.getElementById("ricoPixCode").value = PIX_CODE;
-    document.getElementById("ricoPixClose").addEventListener("click", closePixModal);
-    document.getElementById("ricoCopyPixBtn").addEventListener("click", copyPix);
-    modal.addEventListener("click", (event) => { if (event.target === modal) closePixModal(); });
-    document.addEventListener("keydown", (event) => { if (event.key === "Escape") closePixModal(); });
+  function wirePanel(panel) {
+    panel.querySelectorAll(".rico-plan[data-plan]").forEach((button) => {
+      button.addEventListener("click", () => selectPlan(button.dataset.plan));
+    });
+    panel.querySelector("#ricoGeneratePix")?.addEventListener("click", generatePix);
+    panel.querySelector("#ricoCheckPayment")?.addEventListener("click", () => verifyPayment());
+    panel.querySelector("#ricoManualKey")?.addEventListener("click", revealManualKey);
+    selectPlan(localStorage.getItem(STORAGE_PLAN) || "monthly");
   }
 
-  function addLifetimeOption() {
+  function installPanel() {
     const paymentBtn = document.getElementById("paymentBtn");
-    if (!paymentBtn || document.getElementById("ricoLifetimeOption")) return;
+    if (!paymentBtn || document.getElementById("ricoBillingPanel")) return;
 
-    const wrap = document.createElement("div");
-    wrap.id = "ricoLifetimeOption";
-    wrap.className = "rico-lifetime-wrap";
-    wrap.innerHTML = `
-      <div class="rico-lifetime-or">ou</div>
-      <div class="rico-lifetime-card">
-        <div class="rico-lifetime-top">
-          <div>
-            <div class="rico-lifetime-title">Acesso Vitalício</div>
-            <div class="rico-lifetime-price">R$ 79,99 <span>pagamento único</span></div>
-          </div>
-          <div class="rico-lifetime-badge">Vitalício</div>
-        </div>
-        <p class="rico-lifetime-desc">Pague uma única vez e solicite sua key de acesso vitalício ao Dashboard.</p>
-        <button class="rico-lifetime-btn" id="ricoLifetimePayBtn" type="button">Pagar R$ 79,99 no Pix</button>
-      </div>`;
+    paymentBtn.classList.add("rico-old-payment-hidden");
+    paymentBtn.removeAttribute("target");
+    paymentBtn.href = "#";
 
-    paymentBtn.insertAdjacentElement("afterend", wrap);
-    document.getElementById("ricoLifetimePayBtn").addEventListener("click", openPixModal);
+    const panel = document.createElement("div");
+    panel.id = "ricoBillingPanel";
+    panel.className = "rico-billing-panel";
+    panel.innerHTML = panelHtml();
+    paymentBtn.insertAdjacentElement("afterend", panel);
+    wirePanel(panel);
+
+    if (localStorage.getItem(STORAGE_TOKEN)) {
+      setStatus("Pagamento pendente encontrado. Conferindo automaticamente...");
+      setActions(true);
+      startPolling();
+    }
+  }
+
+  function redirectLegacyPaymentLinks() {
+    const handle = (event, plan = "monthly") => {
+      event.preventDefault();
+      selectPlan(plan);
+      try {
+        if (typeof showPaywall === "function") showPaywall();
+      } catch (_) {}
+      setTimeout(() => document.getElementById("ricoBillingPanel")?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
+    };
+
+    document.querySelectorAll(".monthly-payment-btn,.games-payment-link").forEach((link) => {
+      if (link.dataset.ricoBillingWired === "1") return;
+      link.dataset.ricoBillingWired = "1";
+      link.removeAttribute("target");
+      link.href = "#";
+      link.addEventListener("click", (event) => handle(event, "monthly"));
+    });
+  }
+
+  function handleReturnQuery() {
+    const url = new URL(window.location.href);
+    const state = url.searchParams.get("billing");
+    if (!state) return;
+    url.searchParams.delete("billing");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+    if (state === "return" && localStorage.getItem(STORAGE_TOKEN)) {
+      setTimeout(() => {
+        installPanel();
+        setStatus("Pagamento concluído. Confirmando a aprovação...");
+        startPolling();
+      }, 400);
+    }
   }
 
   function boot() {
     injectStyles();
-    createModal();
-    addLifetimeOption();
+    installPanel();
+    redirectLegacyPaymentLinks();
+    handleReturnQuery();
 
-    const observer = new MutationObserver(addLifetimeOption);
+    const observer = new MutationObserver(() => {
+      installPanel();
+      redirectLegacyPaymentLinks();
+    });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    window.addEventListener("focus", () => {
+      if (localStorage.getItem(STORAGE_TOKEN)) verifyPayment({ silent: true });
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && localStorage.getItem(STORAGE_TOKEN)) verifyPayment({ silent: true });
+    });
   }
 
   if (document.readyState === "loading") {
