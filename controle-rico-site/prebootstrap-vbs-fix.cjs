@@ -53,7 +53,7 @@ const downloadAnchor = "\napp.post('/api/download', async (req, res) => {";
 if (!source.includes(downloadAnchor)) {
   throw new Error('Ponto da rota de download não encontrado.');
 }
-const betaRoute = `
+const betaRoute = String.raw`
 app.post('/api/activate-beta', async (req, res) => {
   try {
     const rawKey = String(req.body?.key || '').trim().toUpperCase();
@@ -62,9 +62,9 @@ app.post('/api/activate-beta', async (req, res) => {
       return res.status(200).json({ ok: false, message: 'invalid_key' });
     }
     const keyHash = crypto.createHash('sha256').update(rawKey, 'utf8').digest('hex');
-    const rpc = await fetch(\`${SUPABASE_URL}/rest/v1/rpc/activate_equipe_rico_beta_key\`, {
+    const rpc = await fetch(\`\${SUPABASE_URL}/rest/v1/rpc/activate_equipe_rico_beta_key\`, {
       method: 'POST',
-      headers: { apikey: SUPABASE_ANON, Authorization: \`Bearer ${SUPABASE_ANON}\`, 'Content-Type': 'application/json' },
+      headers: { apikey: SUPABASE_ANON, Authorization: \`Bearer \${SUPABASE_ANON}\`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_key_hash: keyHash, p_device_id: deviceId })
     });
     if (!rpc.ok) {
