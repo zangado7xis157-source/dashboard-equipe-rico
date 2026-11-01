@@ -26,9 +26,9 @@ async function download(url,target){
   console.log('Downloaded',size,'bytes');
 }
 
-function transcode(input,output,filter){
+function transcode(input,output,filter,maxrate='1200k',bufsize='2400k'){
   return new Promise((resolve,reject)=>{
-    const args=['-y','-i',input,'-vf',filter,'-r','30','-c:v','libx264','-preset','veryfast','-crf','24','-maxrate','1800k','-bufsize','3600k','-pix_fmt','yuv420p','-c:a','aac','-b:a','96k','-movflags','+faststart',output];
+    const args=['-y','-i',input,'-vf',filter,'-r','30','-c:v','libx264','-preset','veryfast','-crf','25','-maxrate',maxrate,'-bufsize',bufsize,'-pix_fmt','yuv420p','-profile:v','main','-level','3.1','-c:a','aac','-b:a','80k','-movflags','+faststart',output];
     console.log('Transcoding',path.basename(input),'->',path.basename(output));
     const p=spawn(ffmpegPath,args,{stdio:['ignore','ignore','pipe']});
     let err='';
@@ -50,10 +50,10 @@ function transcode(input,output,filter){
   const demoOut=path.join(OUT_DIR,'demo-light.mp4');
 
   await download(MAIN_SOURCE,mainRaw);
-  await transcode(mainRaw,mainOut,"scale=720:-2:flags=lanczos,drawbox=x=0:y=ih-250:w=340:h=250:color=black@1:t=fill");
+  await transcode(mainRaw,mainOut,"scale=720:-2:flags=lanczos,drawbox=x=0:y=ih-250:w=340:h=250:color=black@1:t=fill",'1250k','2500k');
 
   await download(DEMO_SOURCE,demoRaw);
-  await transcode(demoRaw,demoOut,'scale=720:-2:flags=lanczos');
+  await transcode(demoRaw,demoOut,'scale=720:-2:flags=lanczos','950k','1900k');
 
   console.log('All preview assets ready');
 })().catch(e=>{console.error(e.stack||e);process.exit(1)});
