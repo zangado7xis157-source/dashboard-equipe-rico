@@ -1,7 +1,14 @@
 const express=require('express');
 const sharp=require('sharp');
 const {Readable}=require('stream');
+const fs=require('fs');
+const path=require('path');
+const {spawn}=require('child_process');
+const ffmpegPath=require('ffmpeg-static');
 const app=express(); const port=process.env.PORT||10000;
+const CLEAN_FILE=path.join('/tmp','Rico_CPA_V2_SEM_MARCA_DAGUA.mp4');
+const RAW_FILE=path.join('/tmp','Rico_CPA_V2_original.mp4');
+let cleanPromise=null;
 const P={
  central:{c:'#ff304c',t:'RICO CPA — CENTRAL OFICIAL',s:'Todas as ferramentas da Equipe Rico em um só lugar',items:['Dashboard Equipe Rico','Mentoria Baú de 50','Bot Beta','Rico Proxy','Lista Prime','Rico Browser Android']},
  dashboard:{c:'#2388ff',t:'DASHBOARD EQUIPE RICO',s:'Painel direto para organizar e acompanhar a operação',items:['Depósitos • R$ 1.250','Saques • R$ 1.480','Baú • R$ 230','Lucro do dia • +R$ 460','Meta do dia • 83%','Ciclos finalizados • histórico']},
@@ -24,6 +31,43 @@ async function directVideoUrl(){
   if(!m)throw new Error('Arquivo original não encontrado');
   return m[1].replace(/&amp;/g,'&').replace(/&#x3D;/g,'=');
 }
+async function downloadRaw(){
+  if(fs.existsSync(RAW_FILE)&&fs.statSync(RAW_FILE).size>100000)return RAW_FILE;
+  const url=await directVideoUrl();
+  const r=await fetch(url,{redirect:'follow'});
+  if(!r.ok)throw new Error('Falha ao baixar vídeo original: '+r.status);
+  const ab=await r.arrayBuffer();
+  fs.writeFileSync(RAW_FILE,Buffer.from(ab));
+  return RAW_FILE;
+}
+async function ensureCleanVideo(){
+  if(fs.existsSync(CLEAN_FILE)&&fs.statSync(CLEAN_FILE).size>100000)return CLEAN_FILE;
+  if(cleanPromise)return cleanPromise;
+  cleanPromise=(async()=>{
+    const input=await downloadRaw();
+    try{fs.unlinkSync(CLEAN_FILE)}catch{}
+    await new Promise((resolve,reject)=>{
+      const args=['-y','-i',input,'-vf','crop=iw:trunc(ih*0.88/2)*2:0:0','-c:v','libx264','-preset','veryfast','-crf','18','-c:a','copy','-movflags','+faststart',CLEAN_FILE];
+      const p=spawn(ffmpegPath,args,{stdio:['ignore','ignore','pipe']});
+      let err='';p.stderr.on('data',d=>{err+=d.toString();if(err.length>12000)err=err.slice(-12000)});
+      p.on('error',reject);
+      p.on('close',code=>code===0?resolve():reject(new Error('ffmpeg falhou '+code+' '+err.slice(-1500))));
+    });
+    console.log('CLEAN_VIDEO_READY',fs.statSync(CLEAN_FILE).size);
+    return CLEAN_FILE;
+  })().finally(()=>{cleanPromise=null});
+  return cleanPromise;
+}
+function serveLocalMp4(req,res,file,downloadName){
+  const stat=fs.statSync(file),size=stat.size,range=req.headers.range;
+  res.setHeader('Content-Type','video/mp4');
+  res.setHeader('Accept-Ranges','bytes');
+  res.setHeader('Cache-Control','public,max-age=3600');
+  res.setHeader('Access-Control-Allow-Origin','*');
+  if(downloadName)res.setHeader('Content-Disposition',`attachment; filename="${downloadName}"`);
+  if(range){const m=/bytes=(\d+)-(\d*)/.exec(range);if(!m)return res.status(416).end();const start=parseInt(m[1],10),end=m[2]?Math.min(parseInt(m[2],10),size-1):size-1;if(start>=size)return res.status(416).setHeader('Content-Range',`bytes */${size}`).end();res.status(206);res.setHeader('Content-Range',`bytes ${start}-${end}/${size}`);res.setHeader('Content-Length',end-start+1);return fs.createReadStream(file,{start,end}).pipe(res)}
+  res.setHeader('Content-Length',size);fs.createReadStream(file).pipe(res);
+}
 app.get('/reveal/:name.png',(req,res)=>{if(!P[req.params.name])return res.status(404).end();return sendPng(req,res,revealSvg(req.params.name))});
 app.get('/:name.png',(req,res)=>{if(!P[req.params.name])return res.status(404).end();return sendPng(req,res,svg(req.params.name))});
 app.get('/Rico_CPA_V2_Final.mp4',async(req,res)=>{
@@ -33,17 +77,16 @@ app.get('/Rico_CPA_V2_Final.mp4',async(req,res)=>{
     if(req.headers.range)headers.Range=req.headers.range;
     const upstream=await fetch(url,{headers,redirect:'follow'});
     res.status(upstream.status);
-    for(const h of ['content-type','content-length','content-range','accept-ranges','last-modified','etag']){
-      const v=upstream.headers.get(h); if(v)res.setHeader(h,v);
-    }
+    for(const h of ['content-type','content-length','content-range','accept-ranges','last-modified','etag']){const v=upstream.headers.get(h);if(v)res.setHeader(h,v)}
     res.setHeader('Access-Control-Allow-Origin','*');
     res.setHeader('Cache-Control','public,max-age=300');
     if(!upstream.body)return res.end();
     Readable.fromWeb(upstream.body).pipe(res);
-  }catch(err){
-    console.error('video proxy',err);
-    res.status(502).send('Vídeo temporariamente indisponível');
-  }
+  }catch(err){console.error('video proxy',err);res.status(502).send('Vídeo temporariamente indisponível')}
+});
+app.get('/Rico_CPA_V2_SEM_MARCA_DAGUA.mp4',async(req,res)=>{
+  try{const file=await ensureCleanVideo();serveLocalMp4(req,res,file,'Rico_CPA_V2_SEM_MARCA_DAGUA.mp4')}
+  catch(err){console.error('clean video',err);res.status(503).send('Arquivo sendo preparado. Recarregue a página em instantes.')}
 });
 app.get('/',(_,res)=>res.send('Rico video assets online'));
-app.listen(port,()=>console.log('online',port));
+app.listen(port,()=>{console.log('online',port);setTimeout(()=>ensureCleanVideo().catch(err=>console.error('prewarm clean',err)),1500)});
