@@ -16,7 +16,7 @@ function moneyBR(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency'
 function stockErrorMessage(e){
   const c=e?.code||e?.message;
   if(c==='insufficient_provider_stock') return 'Este pacote está temporariamente sem estoque. Escolha uma quantidade menor ou tente novamente após a reposição.';
-  if(c==='pending_payment_exists') return 'Você já possui um Pix pendente. Pague ou aguarde a expiração antes de gerar outro.';
+  if(c==='pending_payment_exists') return 'Já existe um Pix ativo nesta conta. O código pendente será recuperado automaticamente.';
   if(c==='sales_paused') return 'Novas compras estão temporariamente pausadas.';
   if(c==='stock_check_failed'||c==='provider_not_configured') return 'Não foi possível confirmar o estoque agora. Tente novamente em instantes.';
   return e?.message||'Não foi possível gerar o Pix.';
@@ -27,6 +27,64 @@ async function getRicoStock(){
     const r=await fetch(`${SUPABASE_URL}/functions/v1/rico-proxy-stock-status`,{headers:{'apikey':SUPABASE_KEY}});
     return await r.json();
   }catch{return {available:false,status:'error'};}
+}
+
+async function getOwnPendingPix(){
+  if(!currentUser?.id) return null;
+  const {data,error}=await sb.from('rico_proxy_payments')
+    .select('id,gb,amount,pix_payload,pix_expiration,created_at')
+    .eq('user_id',currentUser.id)
+    .eq('status','pending')
+    .is('credited_at',null)
+    .order('created_at',{ascending:false})
+    .limit(1)
+    .maybeSingle();
+  if(error||!data?.pix_payload) return null;
+  return {
+    paymentId:data.id,
+    gb:data.gb,
+    amount:data.amount,
+    pixPayload:data.pix_payload,
+    expirationDate:data.pix_expiration,
+    reused:true
+  };
+}
+
+function showRicoPix(j){
+  const reused=!!j.reused;
+  const img=j.pixEncodedImage?`<img src="data:image/png;base64,${j.pixEncodedImage}" alt="QR Code Pix" style="width:190px;max-width:100%;display:block;margin:14px auto;border-radius:12px;background:white;padding:8px">`:'';
+  content.innerHTML=`<h3>${reused?'Pix pendente encontrado':'Pix gerado'}</h3>
+    <p>${reused?'Você já tinha um Pix ativo nesta conta. Use o código abaixo para concluir o pagamento.':'Seu Pix foi criado com sucesso.'}</p>
+    <p><b>${j.gb} GB</b> — ${moneyBR(j.amount)}</p>${img}
+    <div class="field"><label>Pix copia e cola</label><textarea id="rp-pix" readonly style="min-height:100px;background:#080d15;color:#dce7f9;border:1px solid #1a2b46;border-radius:9px;padding:10px;width:100%">${j.pixPayload}</textarea></div>
+    <button class="outline full" id="rp-copy">Copiar código Pix</button>
+    <button class="primary full" id="rp-verify" style="margin-top:10px">Já paguei — verificar</button>
+    <div id="rp-verify-feedback"></div>`;
+
+  document.querySelector('#rp-copy').onclick=async()=>{
+    await navigator.clipboard.writeText(j.pixPayload);
+    document.querySelector('#rp-copy').textContent='Código copiado!';
+  };
+
+  document.querySelector('#rp-verify').onclick=async()=>{
+    const vb=document.querySelector('#rp-verify');
+    const vf=document.querySelector('#rp-verify-feedback');
+    vf.innerHTML='';vb.disabled=true;vb.textContent='Verificando...';
+    try{
+      const v=await ricoCallFunction('rico-proxy-verify-payment',{paymentId:j.paymentId});
+      if(v.paid||v.credited){
+        vf.append(showMessage('Pagamento confirmado! GB adicionados à sua conta.'));
+        await loadCustomerData();
+        vb.textContent='Pagamento confirmado';
+      }else{
+        vf.append(showMessage('Pagamento ainda não confirmado. Tente novamente em alguns instantes.'));
+        vb.disabled=false;vb.textContent='Já paguei — verificar';
+      }
+    }catch(e){
+      vf.append(showMessage(e.message||'Erro ao verificar pagamento.','error'));
+      vb.disabled=false;vb.textContent='Já paguei — verificar';
+    }
+  };
 }
 
 async function openRicoRecharge(){
@@ -62,22 +120,15 @@ async function openRicoRecharge(){
     btn.disabled=true;btn.textContent='Gerando Pix...';
     try{
       const j=await ricoCallFunction('rico-proxy-create-payment',{planId,cpfCnpj,name});
-      const img=j.pixEncodedImage?`<img src="data:image/png;base64,${j.pixEncodedImage}" alt="QR Code Pix" style="width:190px;max-width:100%;display:block;margin:14px auto;border-radius:12px;background:white;padding:8px">`:'';
-      content.innerHTML=`<h3>Pix gerado</h3><p><b>${j.gb} GB</b> — ${moneyBR(j.amount)}</p>${img}
-      <div class="field"><label>Pix copia e cola</label><textarea id="rp-pix" readonly style="min-height:100px;background:#080d15;color:#dce7f9;border:1px solid #1a2b46;border-radius:9px;padding:10px;width:100%">${j.pixPayload}</textarea></div>
-      <button class="outline full" id="rp-copy">Copiar código Pix</button>
-      <button class="primary full" id="rp-verify" style="margin-top:10px">Já paguei — verificar</button>
-      <div id="rp-verify-feedback"></div>`;
-      document.querySelector('#rp-copy').onclick=async()=>{await navigator.clipboard.writeText(j.pixPayload);document.querySelector('#rp-copy').textContent='Código copiado!'};
-      document.querySelector('#rp-verify').onclick=async()=>{
-        const vb=document.querySelector('#rp-verify');const vf=document.querySelector('#rp-verify-feedback');vf.innerHTML='';vb.disabled=true;vb.textContent='Verificando...';
-        try{
-          const v=await ricoCallFunction('rico-proxy-verify-payment',{paymentId:j.paymentId});
-          if(v.paid||v.credited){vf.append(showMessage('Pagamento confirmado! GB adicionados à sua conta.'));await loadCustomerData();vb.textContent='Pagamento confirmado';}
-          else{vf.append(showMessage('Pagamento ainda não confirmado. Tente novamente em alguns instantes.'));vb.disabled=false;vb.textContent='Já paguei — verificar';}
-        }catch(e){vf.append(showMessage(e.message||'Erro ao verificar pagamento.','error'));vb.disabled=false;vb.textContent='Já paguei — verificar';}
-      };
-    }catch(e){fb.append(showMessage(stockErrorMessage(e),'error'));btn.disabled=false;btn.textContent='Gerar Pix';}
+      showRicoPix(j);
+    }catch(e){
+      if(e?.code==='pending_payment_exists'){
+        const pending=await getOwnPendingPix();
+        if(pending){showRicoPix(pending);return;}
+      }
+      fb.append(showMessage(stockErrorMessage(e),'error'));
+      btn.disabled=false;btn.textContent='Gerar Pix';
+    }
   };
 }
 
