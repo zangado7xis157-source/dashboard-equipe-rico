@@ -50,16 +50,52 @@ async function getOwnPendingPix(){
   };
 }
 
+let ricoQrLoaderPromise=null;
+function ensureRicoQrLibrary(){
+  if(window.QRCode) return Promise.resolve();
+  if(ricoQrLoaderPromise) return ricoQrLoaderPromise;
+  ricoQrLoaderPromise=new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[data-rico-qrcode]');
+    if(existing){
+      existing.addEventListener('load',()=>resolve(),{once:true});
+      existing.addEventListener('error',()=>reject(new Error('qr_load_failed')),{once:true});
+      return;
+    }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+    s.async=true;
+    s.dataset.ricoQrcode='1';
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error('qr_load_failed'));
+    document.head.appendChild(s);
+  });
+  return ricoQrLoaderPromise;
+}
+
+async function renderRicoQr(payload){
+  const box=document.querySelector('#rp-qr-generated');
+  if(!box||!payload) return;
+  try{
+    await ensureRicoQrLibrary();
+    box.innerHTML='';
+    new QRCode(box,{text:payload,width:190,height:190,correctLevel:QRCode.CorrectLevel.M});
+  }catch{
+    box.innerHTML='<small style="color:#94a3b8">Não foi possível gerar o QR Code. Use o Pix copia e cola abaixo.</small>';
+  }
+}
+
 function showRicoPix(j){
   const reused=!!j.reused;
-  const img=j.pixEncodedImage?`<img src="data:image/png;base64,${j.pixEncodedImage}" alt="QR Code Pix" style="width:190px;max-width:100%;display:block;margin:14px auto;border-radius:12px;background:white;padding:8px">`:'';
+  const img=j.pixEncodedImage?`<img src="data:image/png;base64,${j.pixEncodedImage}" alt="QR Code Pix" style="width:190px;max-width:100%;display:block;margin:14px auto;border-radius:12px;background:white;padding:8px">`:`<div id="rp-qr-generated" style="width:206px;min-height:206px;margin:14px auto;padding:8px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center"></div>`;
   content.innerHTML=`<h3>${reused?'Pix pendente encontrado':'Pix gerado'}</h3>
-    <p>${reused?'Você já tinha um Pix ativo nesta conta. Use o código abaixo para concluir o pagamento.':'Seu Pix foi criado com sucesso.'}</p>
+    <p>${reused?'Você já tinha um Pix ativo nesta conta. Use o QR Code ou o código abaixo para concluir o pagamento.':'Seu Pix foi criado com sucesso.'}</p>
     <p><b>${j.gb} GB</b> — ${moneyBR(j.amount)}</p>${img}
     <div class="field"><label>Pix copia e cola</label><textarea id="rp-pix" readonly style="min-height:100px;background:#080d15;color:#dce7f9;border:1px solid #1a2b46;border-radius:9px;padding:10px;width:100%">${j.pixPayload}</textarea></div>
     <button class="outline full" id="rp-copy">Copiar código Pix</button>
     <button class="primary full" id="rp-verify" style="margin-top:10px">Já paguei — verificar</button>
     <div id="rp-verify-feedback"></div>`;
+
+  if(!j.pixEncodedImage) renderRicoQr(j.pixPayload);
 
   document.querySelector('#rp-copy').onclick=async()=>{
     await navigator.clipboard.writeText(j.pixPayload);
