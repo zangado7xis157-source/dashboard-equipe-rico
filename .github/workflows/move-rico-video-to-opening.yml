@@ -1,0 +1,69 @@
+name: Move Rico CPA video to opening screen
+
+on:
+  push:
+    branches: [operacional-equipe-rico-preview]
+    paths:
+      - '.github/workflows/move-rico-video-to-opening.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: operacional-equipe-rico-preview
+
+      - name: Move intro video before operational tabs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('operacional-equipe-rico/index.html')
+          s=p.read_text(encoding='utf-8')
+
+          # Remove video block from the operational content area.
+          s=re.sub(r'\n\s*<section class="intro-video">.*?</section>\n', '\n', s, count=1, flags=re.S)
+
+          # Add full-screen protected opening styles.
+          marker='.modal{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:100;display:grid;place-items:center;padding:20px}'
+          opening_css='''\n.opening{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 12%,rgba(255,51,77,.16),transparent 32%),#05070b;display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto}.opening-card{width:min(1080px,100%);text-align:center}.opening-badge{display:inline-block;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,51,77,.28);background:rgba(255,51,77,.08);color:#ff8b9a;font-size:11px;font-weight:900;letter-spacing:.08em}.opening h2{margin:14px 0 7px;font-size:clamp(27px,5vw,48px);line-height:1}.opening p{margin:0 0 18px;color:#aab4c5;font-size:14px}.opening-player{width:min(980px,100%);margin:0 auto;background:#000;border:1px solid #283142;border-radius:18px;overflow:hidden;box-shadow:0 28px 80px rgba(0,0,0,.58);aspect-ratio:16/9}.opening-player video{width:100%;height:100%;display:block;background:#000}.opening-actions{margin:16px auto 0;width:min(420px,100%)}.opening-enter{width:100%;display:none;border:0;border-radius:13px;padding:15px 18px;font-weight:950;background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;cursor:pointer;box-shadow:0 12px 30px rgba(255,51,77,.22)}.opening-enter.show{display:block}.opening-note{font-size:11px;color:#737f92;margin-top:9px}\n'''
+          if '.opening{position:fixed' not in s:
+              s=s.replace(marker, opening_css+marker)
+
+          # Insert opening screen between login and app.
+          opening_html='''\n<section class="opening hidden" id="opening">\n  <div class="opening-card">\n    <span class="opening-badge">EQUIPE RICO • INTRODUÇÃO</span>\n    <h2>ASSISTA ANTES DE ENTRAR</h2>\n    <p>Depois do vídeo, o Operacional Equipe Rico será liberado.</p>\n    <div class="opening-player">\n      <video id="openingVideo" controls playsinline preload="metadata" src="videos/rico-cpa-final.mp4" controlsList="nodownload"></video>\n    </div>\n    <div class="opening-actions">\n      <button class="opening-enter" id="openingEnter" onclick="enterOperational()">ENTRAR NO OPERACIONAL</button>\n      <div class="opening-note" id="openingNote">Assista ao vídeo até o final para liberar as abas.</div>\n    </div>\n  </div>\n</section>\n\n'''
+          if 'id="opening"' not in s:
+              s=s.replace('\n<main class="app hidden" id="app">', '\n'+opening_html+'<main class="app hidden" id="app">', 1)
+
+          old="function openApp(result){document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.remove('hidden');const val=document.getElementById('validade');if(result&&result.kind==='lifetime'){val.textContent='Vitalícia'}else if(result&&result.expires_at){val.textContent=new Date(result.expires_at).toLocaleDateString('pt-BR')}else{val.textContent='Ativa'}}"
+          new="""let pendingAccessResult=null;\nfunction openApp(result){pendingAccessResult=result||null;document.getElementById('login').classList.add('hidden');document.getElementById('app').classList.add('hidden');document.getElementById('opening').classList.remove('hidden');const val=document.getElementById('validade');if(result&&result.kind==='lifetime'){val.textContent='Vitalícia'}else if(result&&result.expires_at){val.textContent=new Date(result.expires_at).toLocaleDateString('pt-BR')}else{val.textContent='Ativa'}const v=document.getElementById('openingVideo');const b=document.getElementById('openingEnter');const n=document.getElementById('openingNote');b.classList.remove('show');n.textContent='Assista ao vídeo até o final para liberar as abas.';try{v.pause();v.currentTime=0;v.load()}catch(e){}}\nfunction enterOperational(){const v=document.getElementById('openingVideo');try{v.pause()}catch(e){}document.getElementById('opening').classList.add('hidden');document.getElementById('app').classList.remove('hidden');window.scrollTo(0,0)}\nfunction unlockOperational(){document.getElementById('openingEnter').classList.add('show');document.getElementById('openingNote').textContent='Vídeo concluído. Seu operacional está liberado.'}\n"""
+          if old not in s:
+              raise SystemExit('openApp signature not found')
+          s=s.replace(old,new,1)
+
+          # Ensure returning to login hides opening too.
+          old_show="function showLogin(message){document.getElementById('app').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('error').textContent=message||''}"
+          new_show="function showLogin(message){document.getElementById('app').classList.add('hidden');document.getElementById('opening').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('error').textContent=message||''}"
+          if old_show in s:
+              s=s.replace(old_show,new_show,1)
+
+          # Wire end/error handling before keyboard listener.
+          hook="document.getElementById('key').addEventListener('keydown',e=>{if(e.key==='Enter')login()});"
+          events="""const openingVideo=document.getElementById('openingVideo');\nopeningVideo.addEventListener('ended',unlockOperational);\nopeningVideo.addEventListener('error',()=>{document.getElementById('openingEnter').classList.add('show');document.getElementById('openingNote').textContent='Não foi possível carregar o vídeo. Você pode entrar no operacional.'});\n"""
+          if 'openingVideo.addEventListener' not in s:
+              s=s.replace(hook,events+hook,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Commit opening flow
+        run: |
+          git config user.name 'Equipe Rico Site Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add operacional-equipe-rico/index.html
+          git commit -m 'Show Rico CPA video only as protected opening before tabs [skip ci]'
+          git push origin HEAD:operacional-equipe-rico-preview
