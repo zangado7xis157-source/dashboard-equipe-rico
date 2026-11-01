@@ -1,0 +1,117 @@
+name: Build Rico CPA Final Video
+
+on:
+  push:
+    branches: [operacional-equipe-rico-preview]
+    paths:
+      - '.github/workflows/build-rico-cpa-final-video.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-video:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: operacional-equipe-rico-preview
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      - name: Download approved V12 media
+        run: |
+          mkdir -p /tmp/rico-video operacional-equipe-rico/videos
+          curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/main?v=12' -o /tmp/rico-video/main.mp4
+          curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/demo?v=12' -o /tmp/rico-video/demo.mp4
+          curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/voice-transition?v=12' -o /tmp/rico-video/transition.wav
+          curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/voice-ending?v=12' -o /tmp/rico-video/ending.wav
+
+      - name: Extract Equipe Rico logo
+        run: |
+          python3 - <<'PY'
+          import re,base64,pathlib
+          s=pathlib.Path('video-preview-server/server.js').read_text(encoding='utf-8')
+          m=re.search(r"const LOGO='data:image/jpeg;base64,([^']+)'",s)
+          if not m:
+              raise SystemExit('logo not found')
+          pathlib.Path('/tmp/rico-video/logo.jpg').write_bytes(base64.b64decode(m.group(1)))
+          PY
+
+      - name: Build final MP4
+        run: |
+          set -e
+          cd /tmp/rico-video
+          FONT='/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
+          VF_MAIN="scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=yuv420p"
+
+          ffmpeg -y -i main.mp4 -t 22.45 \
+            -vf "$VF_MAIN" -af 'aresample=48000' -ac 2 -ar 48000 \
+            -c:v libx264 -preset medium -crf 23 -maxrate 2800k -bufsize 5600k \
+            -c:a aac -b:a 160k -movflags +faststart part1.mp4
+
+          ffmpeg -y -f lavfi -i 'color=c=#0b0d12:s=1280x720:r=30:d=9.6914286' -i transition.wav \
+            -filter_complex "[0:v]drawtext=fontfile=$FONT:text='DEMONSTRACAO PRATICA':fontcolor=#ff3556:fontsize=30:x=(w-text_w)/2:y=205,drawtext=fontfile=$FONT:text='BAU DE 50':fontcolor=white:fontsize=72:x=(w-text_w)/2:y=255,drawtext=fontfile=$FONT:text='Neste momento, eu vou demonstrar na pratica o funcionamento do Bau de 50,':fontcolor=white:fontsize=27:x=(w-text_w)/2:y=390,drawtext=fontfile=$FONT:text='para que voce entenda de forma clara como esse processo e executado dentro da operacao.':fontcolor=white:fontsize=24:x=(w-text_w)/2:y=438[v]" \
+            -map '[v]' -map 1:a -t 9.6914286 -ac 2 -ar 48000 \
+            -c:v libx264 -preset medium -crf 23 -maxrate 2800k -bufsize 5600k \
+            -c:a aac -b:a 160k -pix_fmt yuv420p transition.mp4
+
+          ffmpeg -y -i demo.mp4 -f lavfi -i 'anullsrc=channel_layout=stereo:sample_rate=48000' \
+            -filter_complex "[0:v]scale=1360:765:force_original_aspect_ratio=increase,crop=1280:720,fps=30,eq=contrast=1.04:saturation=1.03,format=yuv420p[v]" \
+            -map '[v]' -map 1:a -shortest -ac 2 -ar 48000 \
+            -c:v libx264 -preset medium -crf 23 -maxrate 2800k -bufsize 5600k \
+            -c:a aac -b:a 128k demo_clean.mp4
+
+          ffmpeg -y -ss 22.53 -i main.mp4 \
+            -vf "$VF_MAIN" -af 'aresample=48000' -ac 2 -ar 48000 \
+            -c:v libx264 -preset medium -crf 23 -maxrate 2800k -bufsize 5600k \
+            -c:a aac -b:a 160k -movflags +faststart tail.mp4
+
+          ffmpeg -y -f lavfi -i 'color=c=#08090b:s=1280x720:r=30:d=3.5004082' -i logo.jpg -i ending.wav \
+            -filter_complex "[1:v]scale=130:130[lg];[0:v][lg]overlay=(W-w)/2:150,drawtext=fontfile=$FONT:text='EQUIPE RICO':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=315,drawbox=x=360:y=398:w=560:h=3:color=#ff304f:t=fill,drawtext=fontfile=$FONT:text='O RESTO, DEIXA COM A GENTE':fontcolor=white:fontsize=30:x=(w-text_w)/2:y=435[v]" \
+            -map '[v]' -map 2:a -t 3.5004082 -ac 2 -ar 48000 \
+            -c:v libx264 -preset medium -crf 23 -maxrate 2800k -bufsize 5600k \
+            -c:a aac -b:a 160k -pix_fmt yuv420p final_card.mp4
+
+          printf "file '%s'\n" part1.mp4 transition.mp4 demo_clean.mp4 tail.mp4 final_card.mp4 > list.txt
+          ffmpeg -y -f concat -safe 0 -i list.txt -c copy rico-cpa-final.mp4
+
+          SIZE=$(stat -c%s rico-cpa-final.mp4)
+          if [ "$SIZE" -gt 90000000 ]; then
+            ffmpeg -y -i rico-cpa-final.mp4 -c:v libx264 -preset medium -crf 27 -maxrate 2100k -bufsize 4200k -c:a aac -b:a 128k -movflags +faststart rico-cpa-final-small.mp4
+            mv rico-cpa-final-small.mp4 rico-cpa-final.mp4
+          fi
+
+          cp rico-cpa-final.mp4 "$GITHUB_WORKSPACE/operacional-equipe-rico/videos/rico-cpa-final.mp4"
+          ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 rico-cpa-final.mp4
+
+      - name: Put final video on the operational site
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('operacional-equipe-rico/index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('.intro-player iframe{width:100%;height:100%;border:0;background:#000;display:block}', '.intro-player iframe,.intro-player video{width:100%;height:100%;border:0;background:#000;display:block}')
+          s=re.sub(r'<iframe src="https://share\.descript\.com/view/mnMJk07dfX5"[^>]*></iframe>', '<video controls playsinline preload="metadata" src="videos/rico-cpa-final.mp4"></video>', s)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Commit final video and site update
+        run: |
+          git config user.name 'Equipe Rico Video Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add operacional-equipe-rico/index.html operacional-equipe-rico/videos/rico-cpa-final.mp4
+          git commit -m 'Publish final Rico CPA narrated video on operational site [skip ci]'
+          git push origin HEAD:operacional-equipe-rico-preview
+
+      - name: Upload downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rico-cpa-final-video
+          path: operacional-equipe-rico/videos/rico-cpa-final.mp4
+          retention-days: 7
