@@ -1,90 +1,143 @@
 const express=require('express');
 const {Readable}=require('stream');
+const fs=require('fs');
+const path=require('path');
+const {spawn}=require('child_process');
+const ffmpegPath=require('ffmpeg-static');
+
 const app=express();
 const port=process.env.PORT||10000;
-const CLIP_SHARE='https://share.descript.com/view/yuypoFGx5YP';
 const MAIN_VIDEO='https://rico-video-assets-temp.onrender.com/Rico_CPA_V3_EXPLICATIVO_PRO.mp4';
+const CLIP_SHARE='https://share.descript.com/view/AkwOxO5O5gg';
+const CUT=22.45;
+const TMP='/tmp/rico-bau50-preview';
+const FINAL=path.join(TMP,'Rico_CPA_PREVIA_BAU50_SEM_MARCA.mp4');
+const phrase='Neste momento, eu vou demonstrar na prática o funcionamento do Baú de 50, para que você entenda de forma clara como esse processo é executado dentro da operação.';
+let buildPromise=null;
+
+fs.mkdirSync(TMP,{recursive:true});
 
 async function directVideoUrl(shareUrl){
-  const r=await fetch(shareUrl,{redirect:'follow'});
-  if(!r.ok)throw new Error('Falha ao consultar vídeo');
+  const r=await fetch(shareUrl,{redirect:'follow',headers:{'user-agent':'Mozilla/5.0'}});
+  if(!r.ok)throw new Error('Falha ao consultar vídeo: '+r.status);
   const html=await r.text();
   const m=html.match(/property="descript:video" content="([^"]+)"/i);
-  if(!m)throw new Error('Arquivo de vídeo não encontrado');
+  if(!m)throw new Error('Arquivo do vídeo não encontrado');
   return m[1].replace(/&amp;/g,'&').replace(/&#x3D;/g,'=');
 }
 
-async function proxyVideo(req,res,shareUrl){
-  try{
-    const url=await directVideoUrl(shareUrl);
-    const headers={};
-    if(req.headers.range)headers.Range=req.headers.range;
-    const upstream=await fetch(url,{headers,redirect:'follow'});
-    res.status(upstream.status);
-    for(const h of ['content-type','content-length','content-range','accept-ranges','etag','last-modified']){
-      const v=upstream.headers.get(h); if(v)res.setHeader(h,v);
-    }
-    res.setHeader('Access-Control-Allow-Origin','*');
-    res.setHeader('Cache-Control','public,max-age=300');
-    if(!upstream.body)return res.end();
-    Readable.fromWeb(upstream.body).pipe(res);
-  }catch(err){
-    console.error('proxy',err);
-    res.status(502).send('Vídeo temporariamente indisponível');
-  }
+async function download(url,file){
+  if(fs.existsSync(file)&&fs.statSync(file).size>100000)return file;
+  const r=await fetch(url,{redirect:'follow',headers:{'user-agent':'Mozilla/5.0'}});
+  if(!r.ok)throw new Error('Falha no download '+r.status+' '+url);
+  const out=fs.createWriteStream(file);
+  await new Promise((resolve,reject)=>{
+    if(!r.body)return reject(new Error('Download sem corpo'));
+    const s=Readable.fromWeb(r.body);
+    s.pipe(out);
+    s.on('error',reject); out.on('error',reject); out.on('finish',resolve);
+  });
+  return file;
 }
 
-app.get('/clip.mp4',(req,res)=>proxyVideo(req,res,CLIP_SHARE));
+async function run(args,label){
+  await new Promise((resolve,reject)=>{
+    const p=spawn(ffmpegPath,args,{stdio:['ignore','ignore','pipe']});
+    let err='';
+    p.stderr.on('data',d=>{err+=d.toString(); if(err.length>28000)err=err.slice(-28000)});
+    p.on('error',reject);
+    p.on('close',code=>code===0?resolve():reject(new Error(label+' ffmpeg '+code+'\n'+err.slice(-5000))));
+  });
+}
 
-app.get('/',(req,res)=>res.type('html').send(`<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#050608">
-<title>Prévia Rico CPA • Baú de 50</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0,rgba(255,48,76,.12),transparent 28%),#050608;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;min-height:100vh}.wrap{width:min(980px,calc(100% - 28px));margin:auto;padding:28px 0 50px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.brand{font-weight:1000;letter-spacing:.5px}.badge{font-size:10px;font-weight:900;letter-spacing:1.4px;padding:8px 10px;border:1px solid #3b424e;border-radius:999px;color:#b8c0cd;background:#0b0f15}.card{border:1px solid #252c36;background:linear-gradient(180deg,#0e1218,#080b10);border-radius:24px;padding:20px;box-shadow:0 28px 80px #0008}.head{text-align:center;margin-bottom:18px}.head small{color:#ff6c80;font-weight:900;letter-spacing:1.8px}.head h1{margin:8px 0 8px;font-size:clamp(28px,6vw,46px);line-height:1}.head p{margin:0;color:#9ba6b5;line-height:1.55}.stage{position:relative;width:min(430px,100%);margin:0 auto;aspect-ratio:9/14.2;background:#000;border-radius:18px;overflow:hidden;border:1px solid #2b313c;box-shadow:0 20px 55px rgba(0,0,0,.5)}.stage video{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:cover;object-position:center top}.hide{display:none!important}.transition{position:absolute;inset:0;z-index:10;background:radial-gradient(circle at 50% 35%,#25101a 0,#090b10 55%,#020304 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;opacity:0;pointer-events:none;transition:opacity .25s}.transition.show{opacity:1;pointer-events:auto}.transition .inner{max-width:330px}.transition .kicker{font-size:10px;letter-spacing:2.4px;color:#ff6177;font-weight:1000;margin-bottom:12px}.transition h2{font-size:31px;line-height:1.05;margin:0 0 14px}.transition p{color:#c5ccd7;font-size:13px;line-height:1.55;margin:0}.transition button{margin-top:20px;width:100%;border:0;border-radius:13px;padding:14px 16px;background:#fff;color:#08090b;font-weight:1000;font-size:13px;cursor:pointer}.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}.controls button{border:1px solid #303844;background:#111720;color:#fff;border-radius:11px;padding:11px 14px;font-weight:900;cursor:pointer}.controls .primary{background:#fff;color:#07090c;border-color:#fff}.note{margin-top:15px;text-align:center;color:#7f8997;font-size:11px;line-height:1.5}.status{text-align:center;margin-top:11px;font-size:12px;color:#aab4c2}.status b{color:#fff}
-</style>
-</head>
-<body>
-<main class="wrap">
-  <div class="top"><div class="brand">RICO CPA • PRÉVIA</div><div class="badge">NÃO PUBLICADO NO SITE</div></div>
-  <section class="card">
-    <div class="head"><small>REVISÃO DO VÍDEO</small><h1>Demonstração prática do Baú de 50</h1><p>Assista do começo ao fim. A prévia entra depois da Mentoria e volta normalmente para o Bot Beta.</p></div>
-    <div class="stage">
-      <video id="main" playsinline preload="metadata" src="${MAIN_VIDEO}"></video>
-      <video id="clip" class="hide" playsinline preload="metadata" src="/clip.mp4"></video>
-      <div id="transition" class="transition"><div class="inner"><div class="kicker">DEMONSTRAÇÃO PRÁTICA</div><h2>BAÚ DE 50</h2><p>Neste momento, eu vou demonstrar na prática o funcionamento do Baú de 50, para que você entenda de forma clara como esse processo é executado dentro da operação.</p><button id="continueBtn">VER DEMONSTRAÇÃO</button></div></div>
-    </div>
-    <div class="controls"><button class="primary" id="play">▶ ASSISTIR PRÉVIA</button><button id="restart">↻ RECOMEÇAR</button></div>
-    <div id="status" class="status">A demonstração entra automaticamente por volta de <b>22 segundos</b>.</div>
-    <div class="note">Esta é somente uma prévia para sua aprovação. O site principal continua com o vídeo anterior.</div>
-  </section>
-</main>
-<script>
-const main=document.getElementById('main');
-const clip=document.getElementById('clip');
-const trans=document.getElementById('transition');
-const play=document.getElementById('play');
-const restart=document.getElementById('restart');
-const continueBtn=document.getElementById('continueBtn');
-const status=document.getElementById('status');
-const CUT=22.42;
-let inserted=false,transitioning=false;
-const phrase='Neste momento, eu vou demonstrar na prática o funcionamento do Baú de 50, para que você entenda de forma clara como esse processo é executado dentro da operação.';
-function pickVoice(){const vs=speechSynthesis?.getVoices?.()||[];return vs.find(v=>/pt-BR/i.test(v.lang)&&/male|mascul|antonio|daniel|felipe|lucas|paulo/i.test(v.name))||vs.find(v=>/pt-BR/i.test(v.lang))||null}
-function speakIntro(){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(phrase);u.lang='pt-BR';u.rate=.93;u.pitch=.96;const v=pickVoice();if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}}
-function showTransition(){if(transitioning||inserted)return;transitioning=true;main.pause();main.currentTime=CUT;trans.classList.add('show');status.innerHTML='Trecho da <b>Mentoria concluído</b>. Agora entra a demonstração prática.';speakIntro()}
-function startClip(){trans.classList.remove('show');clip.classList.remove('hide');main.classList.add('hide');clip.currentTime=0;clip.play().catch(()=>{});status.innerHTML='Reproduzindo sua <b>demonstração do Baú de 50</b>.'}
-function resumeMain(){inserted=true;transitioning=false;clip.pause();clip.classList.add('hide');main.classList.remove('hide');main.currentTime=CUT+.08;main.play().catch(()=>{});status.innerHTML='Demonstração concluída. O vídeo voltou para o <b>Bot Beta</b> e continua normalmente.'}
-main.addEventListener('timeupdate',()=>{if(!inserted&&!transitioning&&main.currentTime>=CUT)showTransition()});
-clip.addEventListener('ended',resumeMain);
-continueBtn.addEventListener('click',startClip);
-play.addEventListener('click',()=>{if(trans.classList.contains('show')){startClip();return} if(!clip.classList.contains('hide')){clip.play();return} main.play();play.textContent='▶ CONTINUAR'});
-restart.addEventListener('click',()=>{try{speechSynthesis.cancel()}catch(e){};inserted=false;transitioning=false;clip.pause();clip.currentTime=0;clip.classList.add('hide');trans.classList.remove('show');main.classList.remove('hide');main.currentTime=0;main.pause();status.innerHTML='A demonstração entra automaticamente por volta de <b>22 segundos</b>.';play.textContent='▶ ASSISTIR PRÉVIA'});
-</script>
-</body></html>`));
+async function getNarration(){
+  const file=path.join(TMP,'narracao.mp3');
+  if(fs.existsSync(file)&&fs.statSync(file).size>10000)return file;
+  const q=encodeURIComponent(phrase);
+  const urls=[
+    `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=pt-BR&q=${q}`,
+    `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=pt-BR&q=${q}`
+  ];
+  for(const u of urls){
+    try{
+      const r=await fetch(u,{headers:{'user-agent':'Mozilla/5.0'}});
+      if(r.ok){
+        fs.writeFileSync(file,Buffer.from(await r.arrayBuffer()));
+        if(fs.statSync(file).size>10000)return file;
+      }
+    }catch(e){console.error('tts',e.message)}
+  }
+  throw new Error('Não foi possível gerar a narração');
+}
 
-app.get('/health',(_,res)=>res.json({ok:true,preview:true}));
-app.listen(port,()=>console.log('Rico video preview online',port));
+async function ensureFinal(){
+  if(fs.existsSync(FINAL)&&fs.statSync(FINAL).size>500000)return FINAL;
+  if(buildPromise)return buildPromise;
+  buildPromise=(async()=>{
+    const source=path.join(TMP,'source.mp4');
+    const rawDemo=path.join(TMP,'demo_raw.mp4');
+    const narration=await getNarration();
+    await download(MAIN_VIDEO,source);
+    const clipUrl=await directVideoUrl(CLIP_SHARE);
+    await download(clipUrl,rawDemo);
+
+    const pre=path.join(TMP,'pre.mp4');
+    const frame=path.join(TMP,'frame.jpg');
+    const intro=path.join(TMP,'intro.mp4');
+    const demo=path.join(TMP,'demo.mp4');
+    const post=path.join(TMP,'post.mp4');
+
+    await run(['-y','-i',source,'-t',String(CUT),
+      '-vf','scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30,format=yuv420p',
+      '-af','aresample=48000','-ac','2','-c:v','libx264','-preset','veryfast','-crf','19','-c:a','aac','-b:a','192k','-movflags','+faststart',pre],'pre');
+
+    await run(['-y','-ss','22.20','-i',source,'-frames:v','1',frame],'frame');
+    await run(['-y','-loop','1','-i',frame,'-i',narration,
+      '-vf','scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,gblur=sigma=7,eq=brightness=-0.34,setsar=1,fps=30,format=yuv420p',
+      '-af','aresample=48000,volume=1.18','-ac','2','-shortest','-c:v','libx264','-preset','veryfast','-crf','19','-c:a','aac','-b:a','192k','-movflags','+faststart',intro],'intro');
+
+    await run(['-y','-i',rawDemo,
+      '-filter_complex','[0:v]split=2[bg][fg];[bg]scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,gblur=sigma=28,eq=brightness=-0.38[bg2];[fg]scale=690:690:force_original_aspect_ratio=decrease[fg2];[bg2][fg2]overlay=(W-w)/2:(H-h)/2,setsar=1,fps=30,format=yuv420p[v];[0:a]aresample=48000,volume=0.78[a]',
+      '-map','[v]','-map','[a]','-ac','2','-c:v','libx264','-preset','veryfast','-crf','19','-c:a','aac','-b:a','192k','-movflags','+faststart',demo],'demo');
+
+    await run(['-y','-ss',String(CUT),'-i',source,
+      '-vf','scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30,format=yuv420p',
+      '-af','aresample=48000','-ac','2','-c:v','libx264','-preset','veryfast','-crf','19','-c:a','aac','-b:a','192k','-movflags','+faststart',post],'post');
+
+    await run(['-y','-i',pre,'-i',intro,'-i',demo,'-i',post,
+      '-filter_complex','[0:v][0:a][1:v][1:a][2:v][2:a][3:v][3:a]concat=n=4:v=1:a=1[v][a]',
+      '-map','[v]','-map','[a]','-c:v','libx264','-preset','veryfast','-crf','19','-c:a','aac','-b:a','192k','-movflags','+faststart',FINAL],'concat');
+
+    console.log('FINAL_READY',fs.statSync(FINAL).size);
+    return FINAL;
+  })().finally(()=>buildPromise=null);
+  return buildPromise;
+}
+
+function serveMp4(req,res,file){
+  const stat=fs.statSync(file),size=stat.size,range=req.headers.range;
+  res.setHeader('Content-Type','video/mp4');
+  res.setHeader('Accept-Ranges','bytes');
+  res.setHeader('Access-Control-Allow-Origin','*');
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('Content-Disposition','inline; filename="Rico_CPA_PREVIA_BAU50_SEM_MARCA.mp4"');
+  if(range){
+    const m=/bytes=(\d+)-(\d*)/.exec(range); if(!m)return res.status(416).end();
+    const start=parseInt(m[1],10),end=m[2]?Math.min(parseInt(m[2],10),size-1):size-1;
+    if(start>=size){res.status(416);res.setHeader('Content-Range',`bytes */${size}`);return res.end()}
+    res.status(206); res.setHeader('Content-Range',`bytes ${start}-${end}/${size}`); res.setHeader('Content-Length',end-start+1);
+    return fs.createReadStream(file,{start,end}).pipe(res);
+  }
+  res.setHeader('Content-Length',size); fs.createReadStream(file).pipe(res);
+}
+
+app.get('/Rico_CPA_PREVIA_BAU50_SEM_MARCA.mp4',async(req,res)=>{
+  try{serveMp4(req,res,await ensureFinal())}catch(err){console.error(err);res.status(503).send('Prévia ainda indisponível: '+err.message)}
+});
+app.get('/status',(_,res)=>res.json({ok:true,ready:fs.existsSync(FINAL)&&fs.statSync(FINAL).size>500000,building:!!buildPromise}));
+app.get('/',(_,res)=>res.type('html').send(`<!doctype html><meta charset="utf-8"><title>Prévia Rico CPA</title><style>body{margin:0;background:#050608;color:white;font-family:Arial;display:grid;place-items:center;min-height:100vh}.box{width:min(92vw,520px);text-align:center}video{width:100%;max-height:78vh;background:#000;border-radius:18px}a{display:inline-block;margin-top:14px;padding:13px 18px;border-radius:12px;background:white;color:#050608;text-decoration:none;font-weight:900}</style><div class="box"><h2>Rico CPA • Prévia Baú de 50</h2><p>Versão para aprovação. Nada foi alterado no site principal.</p><video controls playsinline src="/Rico_CPA_PREVIA_BAU50_SEM_MARCA.mp4"></video><br><a href="/Rico_CPA_PREVIA_BAU50_SEM_MARCA.mp4">ABRIR VÍDEO</a></div>`));
+
+app.listen(port,()=>{
+  console.log('Rico Bau 50 preview renderer online',port);
+  setTimeout(()=>ensureFinal().catch(err=>console.error('prewarm',err)),1500);
+});
