@@ -33,7 +33,18 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   requestAnimationFrame(()=>line.classList.add('show'));
   await sleep(250);title.classList.add('show');
   await sleep(330);protocol.classList.add('show');
-  const pagePromise=fetch('/app.html?v=20261031-3',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('Falha ao carregar central');return r.text()}).then(html=>html.replace(/R\$ 129,99/g,'R$ 119,99').replace(/R\$ 199,99/g,'R$ 119,99'));
+  const pagePromise=fetch('/app.html?v=20261101-video',{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('Falha ao carregar central');return r.text()})
+    .then(html=>{
+      html=html.replace(/R\$ 129,99/g,'R$ 119,99').replace(/R\$ 199,99/g,'R$ 119,99');
+      const extraCss=`<style>
+      .promo-wrap{max-width:1200px;margin:0 auto;padding:18px 22px 34px}.promo-box{position:relative;overflow:hidden;border:1px solid #2a2025;border-radius:24px;background:radial-gradient(circle at 50% 0,rgba(255,48,76,.16),transparent 38%),#090b0f;padding:30px 22px 34px;text-align:center;box-shadow:0 22px 60px rgba(0,0,0,.36)}.promo-kicker{font-size:10px;letter-spacing:2.6px;color:#ff8294;font-weight:900}.promo-title{margin:10px auto 9px;max-width:900px;font-size:clamp(34px,5vw,58px);line-height:.96;letter-spacing:-2px;font-weight:1000}.promo-title span{color:#ff304c}.promo-sub{margin:0 0 23px;color:#aeb6c2;font-size:14px}.promo-player{width:min(430px,100%);margin:0 auto;aspect-ratio:9/16;background:#000;border:1px solid #2b313c;border-radius:18px;overflow:hidden;box-shadow:0 22px 55px rgba(0,0,0,.5)}.promo-player video{width:100%;height:100%;display:block;background:#000;object-fit:contain}@media(max-width:700px){.promo-wrap{padding:10px 16px 28px}.promo-box{padding:24px 14px 28px;border-radius:18px}.promo-title{font-size:36px}}
+      </style>`;
+      html=html.replace('</head>',extraCss+'</head>');
+      const promo=`<section class="promo-wrap"><div class="promo-box"><div class="promo-kicker">ASSISTA PRIMEIRO</div><div class="promo-title">VOCÊ ESTÁ PRESTES A <span>COMEÇAR NO CPA CHINÊS</span></div><p class="promo-sub">Antes de qualquer coisa, assista ao vídeo abaixo até o final.</p><div class="promo-player"><video controls playsinline preload="metadata" controlsList="nodownload" src="https://rico-video-assets-temp.onrender.com/Rico_CPA_V2_Final.mp4"></video></div></div></section>`;
+      html=html.replace('<section class="section">',promo+'<section class="section">');
+      return html;
+    });
   await sleep(1050);
   intro.classList.add('fade');
   await sleep(450);
