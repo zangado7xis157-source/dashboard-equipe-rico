@@ -1,5 +1,7 @@
 const express=require('express');
 const sharp=require('sharp');
+const fs=require('fs');
+const path=require('path');
 const app=express(); const port=process.env.PORT||10000;
 const P={
  central:{c:'#ff304c',t:'RICO CPA — CENTRAL OFICIAL',s:'Todas as ferramentas da Equipe Rico em um só lugar',items:['Dashboard Equipe Rico','Mentoria Baú de 50','Bot Beta','Rico Proxy','Lista Prime','Rico Browser Android']},
@@ -17,5 +19,26 @@ function revealSvg(k){const p=P[k];return `<svg xmlns="http://www.w3.org/2000/sv
 async function sendPng(req,res,markup){try{const buf=await sharp(Buffer.from(markup)).png().toBuffer();const range=req.headers.range;res.set('Content-Type','image/png');res.set('Accept-Ranges','bytes');res.set('Cache-Control','public,max-age=60');if(range){const m=/bytes=(\d+)-(\d*)/.exec(range);if(m){const start=parseInt(m[1],10),end=m[2]?parseInt(m[2],10):buf.length-1;if(start>=buf.length)return res.status(416).set('Content-Range',`bytes */${buf.length}`).end();const last=Math.min(end,buf.length-1),chunk=buf.subarray(start,last+1);res.status(206);res.set('Content-Range',`bytes ${start}-${last}/${buf.length}`);res.set('Content-Length',String(chunk.length));return res.end(chunk)}}res.set('Content-Length',String(buf.length));res.end(buf)}catch(err){console.error(err);res.status(500).end()}}
 app.get('/reveal/:name.png',(req,res)=>{if(!P[req.params.name])return res.status(404).end();return sendPng(req,res,revealSvg(req.params.name))});
 app.get('/:name.png',(req,res)=>{if(!P[req.params.name])return res.status(404).end();return sendPng(req,res,svg(req.params.name))});
+app.get('/Rico_CPA_V2_Final.mp4',(req,res)=>{
+  const file=path.join(__dirname,'Rico_CPA_V2_Final.mp4');
+  if(!fs.existsSync(file))return res.status(404).send('Video indisponivel');
+  const stat=fs.statSync(file),size=stat.size,range=req.headers.range;
+  res.setHeader('Content-Type','video/mp4');
+  res.setHeader('Accept-Ranges','bytes');
+  res.setHeader('Cache-Control','public,max-age=86400');
+  res.setHeader('Access-Control-Allow-Origin','*');
+  if(range){
+    const m=/bytes=(\d+)-(\d*)/.exec(range);
+    if(!m)return res.status(416).end();
+    const start=parseInt(m[1],10),end=m[2]?Math.min(parseInt(m[2],10),size-1):size-1;
+    if(start>=size)return res.status(416).setHeader('Content-Range',`bytes */${size}`).end();
+    res.status(206);
+    res.setHeader('Content-Range',`bytes ${start}-${end}/${size}`);
+    res.setHeader('Content-Length',end-start+1);
+    return fs.createReadStream(file,{start,end}).pipe(res);
+  }
+  res.setHeader('Content-Length',size);
+  fs.createReadStream(file).pipe(res);
+});
 app.get('/',(_,res)=>res.send('Rico video assets online'));
 app.listen(port,()=>console.log('online',port));
