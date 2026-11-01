@@ -30,13 +30,14 @@ jobs:
           curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/demo?v=12' -o /tmp/rico-video/demo.mp4
           curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/voice-transition?v=12' -o /tmp/rico-video/transition.wav
           curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/media/voice-ending?v=12' -o /tmp/rico-video/ending.wav
+          curl -fL --retry 8 --retry-delay 3 'https://rico-video-preview-bau50.onrender.com/?v=12' -o /tmp/rico-video/preview.html
 
       - name: Extract Equipe Rico logo
         run: |
           python3 - <<'PY'
           import re,base64,pathlib
-          s=pathlib.Path('video-preview-server/server.js').read_text(encoding='utf-8')
-          m=re.search(r"const LOGO='data:image/jpeg;base64,([^']+)'",s)
+          s=pathlib.Path('/tmp/rico-video/preview.html').read_text(encoding='utf-8')
+          m=re.search(r'data:image/jpeg;base64,([^"\']+)',s)
           if not m:
               raise SystemExit('logo not found')
           pathlib.Path('/tmp/rico-video/logo.jpg').write_bytes(base64.b64decode(m.group(1)))
