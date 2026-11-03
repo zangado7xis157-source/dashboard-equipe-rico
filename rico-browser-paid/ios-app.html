@@ -20,9 +20,16 @@ ul{color:#acbfd5;line-height:1.7;padding-left:22px;font-size:13px}p{color:#b1c6d
 @media(max-width:480px){.tab{align-items:flex-start;flex-direction:column}.tab .actions{width:100%}.tab .actions a{flex:1;text-align:center}.tab strong,.tab small{max-width:82vw}}
 </style></head><body><main>
 <header><div><div class="top">EQUIPE RICO • BETA IPHONE</div><h1>Rico <span class="accent">Browser.</span></h1></div><span class="pill">ACESSO ATIVO</span></header>
-<div class="card"><h2>Suas abas e links</h2><p>Organize links e abra-os em abas do Safari. Esta versão <strong>não cria navegadores independentes com IPs próprios.</strong></p>
+<div class="card"><h2>Suas abas e links</h2><p>Organize links e abra-os em abas do Safari. Cada link abre em outra aba do navegador; esta versão <strong>não cria sessões separadas com IPs próprios.</strong></p>
 <div class="row"><input type="url" id="url" placeholder="https://seusite.com" aria-label="Endereço do site"><button id="add">+ ADICIONAR</button></div>
 <p id="msg" class="muted" role="status">Até 20 links salvos neste dispositivo.</p><div class="tabs" id="tabs"></div></div>
+<div class="card"><h2>🌐 Proxy e navegador no iPhone</h2>
+<p><strong>Os links abrem em novas abas do navegador.</strong> O Safari e o Chrome no iPhone não deixam este site criar um perfil isolado com um proxy diferente para cada aba.</p>
+<div class="info">⚠️ Proxy por aba: não disponível no Rico Browser web.<br>Para usar um proxy na conexão Wi-Fi do iPhone, configure-o nas opções do próprio iOS. Isso afeta a rede do dispositivo e não cria um IP separado para cada aba.</div>
+<button type="button" id="proxyHelp" class="mutedbtn">Mostrar como configurar proxy do Wi-Fi</button>
+<div id="proxySteps" style="display:none"><ul><li>Abra Ajustes → Wi-Fi no iPhone.</li><li>Toque no ⓘ da rede Wi-Fi conectada.</li><li>Procure <strong>Configurar Proxy</strong> e escolha Manual (se o fornecedor oferecer proxy compatível).</li><li>Configure servidor, porta e autenticação de acordo com seu fornecedor.</li></ul><p>Essa configuração é global para a rede Wi-Fi. Não funciona para proxy por aba nem para toda conexão 4G/5G.</p></div>
+</div>
+<div class="card"><h2>🧩 Extensões e speed</h2><p>O Rico Browser web não pode instalar automaticamente extensões do Chrome nem controlar a velocidade interna de slots. Extensões compatíveis com Safari precisam ser obtidas e ativadas pelo próprio iPhone, e não passam a funcionar dentro deste aplicativo automaticamente.</p><p><strong>Para gerenciar extensões do Safari:</strong> Ajustes → Apps → Safari → Extensões.</p></div>
 <div class="card"><h2>Recursos e compatibilidade</h2>
 <div class="info"><strong>Proxy individual por aba:</strong> ainda indisponível no iOS web.<br>
 <strong>Speed em slots:</strong> não disponível nesta versão; o navegador não altera a velocidade interna de jogos.</div>
@@ -47,6 +54,7 @@ document.getElementById('add').onclick=()=>{const val=sanitize(url.value);if(!va
 if(tabs.length>=20){msg.textContent='Limite de 20 links atingido.';return}if(tabs.includes(val)){msg.textContent='Este link já está salvo.';return}
 tabs.push(val);save();url.value='';msg.textContent='Link salvo.';render()};
 url.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('add').click()});
+document.getElementById('proxyHelp').onclick=()=>{const el=document.getElementById('proxySteps');const open=el.style.display!=='none';el.style.display=open?'none':'block';document.getElementById('proxyHelp').textContent=open?'Mostrar como configurar proxy do Wi-Fi':'Ocultar instruções de proxy'};
 document.getElementById('logout').onclick=async()=>{await fetch('/iphone/logout',{method:'POST'});location.replace('/iphone')};render();
 })();
 </script></body></html>
