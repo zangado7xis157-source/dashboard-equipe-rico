@@ -13,7 +13,7 @@ h1{font-size:clamp(34px,7vw,48px);line-height:1.05;letter-spacing:-1.5px;margin:
 p{color:#bfd0e1;line-height:1.55;font-size:15px}.notice{border-radius:14px;border:1px solid #36516b;padding:13px;background:#13263b;color:#dcecff;font-size:13px;line-height:1.55;margin:15px 0}
 strong{color:#fff}.btn{border:0;border-radius:13px;background:#ebf7ff;color:#102137;padding:15px;text-align:center;display:block;text-decoration:none;width:100%;font-weight:850;font-size:15px;cursor:pointer;margin:13px 0}.btn.secondary{background:#1a3551;color:#d9efff;border:1px solid #42749a}.btn:disabled{opacity:.65}
 label{display:block;color:#a2bbd2;font-weight:700;font-size:12px;margin-top:20px}
-input{width:100%;padding:15px;margin-top:8px;border:1px solid #45637c;background:#070f1e;border-radius:13px;color:#fff;font-size:14px}
+textarea{width:100%;min-height:100px;resize:vertical;padding:15px;margin-top:8px;border:1px solid #45637c;background:#070f1e;border-radius:13px;color:#fff;font-size:14px}
 small{color:#92aac0;line-height:1.6;display:block}.muted{color:#8da2b8;font-size:12px}.status{font-size:13px;min-height:18px;color:#addcff}
 a.link{color:#9bd8ff} .steps{padding-left:19px;color:#bcd2e7;font-size:13px;line-height:1.8}
 </style></head><body><main>
@@ -23,23 +23,23 @@ a.link{color:#9bd8ff} .steps{padding-left:19px;color:#bcd2e7;font-size:13px;line
 <div class="notice"><strong>O que funciona nesta versão inicial:</strong> salvar até 20 abas/links e abrir sites pelo Safari.<br>
 <strong>O que ainda não funciona:</strong> proxy individual por aba, sessões de navegação isoladas e aceleração de slots. Essa versão web não substitui todas as funções do Android.</div>
 <a class="btn" href="/">ADQUIRIR ACESSO PELO ASAAS</a>
-<label for="checkoutId">Já comprou? Informe seu código de compra do Asaas:</label>
-<input id="checkoutId" type="text" maxlength="200" placeholder="ID da compra" autocomplete="off">
+<label for="purchaseProof">Já comprou? Cole a chave de acesso recebida após o pagamento:</label>
+<textarea id="purchaseProof" maxlength="2048" placeholder="Cole aqui sua chave de acesso" autocomplete="off"></textarea>
 <button class="btn secondary" id="unlock">VERIFICAR PAGAMENTO E ENTRAR</button>
 <div class="status" id="status" role="status" aria-live="polite"></div>
-<small>Se você comprou neste mesmo navegador, o código é preenchido automaticamente. Guarde-o para recuperar o acesso no iPhone. Pagamento único, sem cobrança adicional pela versão beta.</small>
+<small>A chave aparece ao confirmar o Pix. Ela é diferente do ID da transação. Para compras anteriores sem chave, contate o suporte com o comprovante. Pagamento único, sem cobrança adicional pela versão beta.</small>
 <hr style="border:0;border-top:1px solid #2d4660;margin:24px 0">
 <strong>Como instalar no iPhone</strong>
 <ol class="steps"><li>Abra esta página no Safari.</li><li>Toque em Compartilhar.</li><li>Selecione <strong>Adicionar à Tela de Início</strong> e mantenha “Abrir como aplicativo”.</li></ol>
 <a class="link muted" href="/">Voltar à loja / versão Android</a>
 </main><script>
 (function(){
-const input=document.getElementById('checkoutId'),button=document.getElementById('unlock'),status=document.getElementById('status');
-input.value=localStorage.getItem('rico_checkout_id')||'';
-async function activate(){const checkoutId=input.value.trim();if(!checkoutId){status.textContent='Informe o código da compra.';return}
+const input=document.getElementById('purchaseProof'),button=document.getElementById('unlock'),status=document.getElementById('status');
+input.value=localStorage.getItem('rico_purchase_proof')||'';
+async function activate(){const purchaseProof=input.value.trim();if(!purchaseProof){status.textContent='Informe a chave de acesso da compra.';return}
 button.disabled=true;status.textContent='Conferindo pagamento no Asaas…';
-try{const r=await fetch('/iphone/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({checkoutId})});const d=await r.json();
-if(!r.ok||!d.ok)throw new Error(d.error||'Acesso não liberado.');localStorage.setItem('rico_checkout_id',checkoutId);status.textContent='Pagamento confirmado! Abrindo…';location.replace('/iphone/app')}
+try{const r=await fetch('/iphone/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({purchaseProof})});const d=await r.json();
+if(!r.ok||!d.ok)throw new Error(d.error||'Acesso não liberado.');localStorage.setItem('rico_purchase_proof',purchaseProof);status.textContent='Pagamento confirmado! Abrindo…';location.replace('/iphone/app')}
 catch(e){status.textContent=e.message;button.disabled=false}}
 button.addEventListener('click',activate);
 if(input.value){activate()}
