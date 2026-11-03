@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d18">
+<meta name="description" content="Acesse o Rico Browser Mobile para Android. Preparando a loja oficial.">
+<title>Iniciando… | Rico Browser Mobile</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;color:#f7f9fe;background:#060914;display:flex;align-items:center;justify-content:center;overflow-x:hidden;padding:24px}
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(ellipse 55% 55% at 15% 12%,#102c51 0,transparent 65%),radial-gradient(ellipse 65% 60% at 98% 92%,#123457 0,transparent 62%),linear-gradient(145deg,#060914,#0b1121)}
+.grid{position:fixed;inset:0;z-index:-1;opacity:.2;background-image:linear-gradient(#385574 1px,transparent 1px),linear-gradient(90deg,#385574 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(90deg,transparent,black,transparent)}
+.main{width:min(470px,100%);padding:32px 24px 24px;border:1px solid #233853;border-radius:26px;background:linear-gradient(160deg,rgba(20,35,57,.94),rgba(8,13,24,.95));box-shadow:0 26px 100px #0009,0 0 60px #2584ec13;text-align:center;position:relative}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:33px;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.4px;font-size:14px;text-align:left}
+.logo{display:grid;place-items:center;height:36px;width:36px;border-radius:11px;background:#f0f5ff;color:#101e32;box-shadow:0 4px 16px #ffffff24}
+.tag{font-size:11px;letter-spacing:1.1px;border-radius:999px;border:1px solid #365879;color:#b3cbe5;padding:7px 10px;font-weight:800}
+.emblem{display:grid;place-items:center;margin:0 auto 25px;width:118px;height:118px;position:relative}
+.emblem::before,.emblem::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent;border-top-color:#60bbff;border-right-color:#305f9d;animation:spin 2.4s linear infinite}
+.emblem::after{inset:9px;border-top-color:transparent;border-left-color:#8fd5ff;border-bottom-color:#296aa5;animation-direction:reverse;animation-duration:3.6s;opacity:.75}
+.device{width:74px;height:74px;display:grid;place-items:center;border-radius:24px;background:linear-gradient(150deg,#172e4d,#0a1729);box-shadow:inset 0 0 0 1px #3e6085,0 10px 35px #0008}
+h1{margin:0 0 11px;font-size:clamp(27px,6vw,36px);letter-spacing:-1.5px;line-height:1.08}
+h1 span{color:#87c9ff}
+.desc{margin:0 auto;color:#abbdd2;line-height:1.55;max-width:360px;font-size:14px}
+.progress{height:8px;overflow:hidden;border-radius:999px;background:#22364c;margin:28px 0 13px;position:relative}
+.progress:before{content:"";position:absolute;left:-36%;top:0;bottom:0;width:40%;border-radius:999px;background:linear-gradient(90deg,transparent,#56aff5,#8adeff);animation:loading 1.9s ease-in-out infinite}
+.status{min-height:18px;color:#bed1e6;font-size:12px;font-weight:650}
+.divider{height:1px;background:#27394e;margin:29px 0 17px}
+.foot{font-size:11px;line-height:1.5;color:#728aa4}
+.btn{margin-top:20px;width:100%;display:none;align-items:center;justify-content:center;gap:8px;background:#e7f4ff;color:#0a1c30;border-radius:14px;border:0;padding:15px;font:900 14px inherit;cursor:pointer;text-decoration:none}
+.btn:hover{background:#fff}
+.retry{background:#162c46;color:#e5f2ff;border:1px solid #3d6688}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes loading{0%{left:-36%}100%{left:100%}}
+@media (prefers-reduced-motion:reduce){.emblem::before,.emblem::after,.progress:before{animation-duration:6s}}
+@media (max-width:420px){.main{padding:25px 20px}.top{margin-bottom:28px}}
+</style>
+</head>
+<body>
+<div class="grid" aria-hidden="true"></div>
+<main class="main">
+  <div class="top">
+    <div class="brand"><div class="logo" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M10 18h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><div>RICO BROWSER</div></div>
+    <span class="tag">ANDROID</span>
+  </div>
+  <div class="emblem" aria-hidden="true"><div class="device"><svg width="42" height="42" viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="2.2" stroke="#b9e4ff" stroke-width="1.7"/><path d="M10 18.5h4" stroke="#b9e4ff" stroke-width="1.5" stroke-linecap="round"/></svg></div></div>
+  <h1>Iniciando <span>Rico Browser</span></h1>
+  <p class="desc" id="subtitle">Estamos preparando a plataforma para você. O acesso abrirá automaticamente quando estiver disponível.</p>
+  <div class="progress" role="progressbar" aria-label="Preparando acesso"></div>
+  <div class="status" id="status" role="status" aria-live="polite">Conectando ao servidor seguro…</div>
+  <a class="btn" id="enter" href="https://rico-browser-android-pago.onrender.com/">ENTRAR NA PLATAFORMA →</a>
+  <button class="btn retry" id="retry" type="button">TENTAR NOVAMENTE</button>
+  <div class="divider"></div>
+  <div class="foot">Rico Browser Mobile • Android<br>Se o servidor estiver reiniciando, a abertura poderá demorar um pouco mais.</div>
+</main>
+<script>
+(() => {
+  const destination = 'https://rico-browser-android-pago.onrender.com/';
+  const health = destination + 'health';
+  const status = document.getElementById('status');
+  const subtitle = document.getElementById('subtitle');
+  const enter = document.getElementById('enter');
+  const retry = document.getElementById('retry');
+  const started = Date.now();
+  let working = false;
+  let done = false;
+  async function check(){
+    if(done || working) return;
+    working = true;
+    const ctrl = new AbortController();
+    const timeout = setTimeout(()=>ctrl.abort(), 12000);
+    try {
+      const response = await fetch(health + '?check=' + Date.now(), {
+        method:'GET', mode:'cors', cache:'no-store', signal:ctrl.signal
+      });
+      if (!response.ok) throw new Error('Ainda iniciando');
+      const data = await response.json();
+      if (data && data.ok === true) {
+        done = true;
+        status.textContent = 'Plataforma pronta! Abrindo…';
+        subtitle.textContent = 'Tudo pronto. Você está sendo encaminhado para a plataforma oficial.';
+        enter.style.display = 'flex';
+        retry.style.display = 'none';
+        setTimeout(()=>window.location.replace(destination),1300);
+        return;
+      }
+    } catch(_) {}
+    finally { clearTimeout(timeout); working = false; }
+    const elapsed = Date.now() - started;
+    if (elapsed > 90000) {
+      status.textContent = 'O servidor ainda está iniciando. Tentaremos novamente.';
+      retry.style.display='flex';
+    } else if (elapsed > 20000) {
+      status.textContent = 'Finalizando a inicialização…';
+    } else if (elapsed > 7000) {
+      status.textContent = 'Aguardando a plataforma ficar disponível…';
+    }
+    setTimeout(check, 3200);
+  }
+  retry.addEventListener('click', () => {
+    retry.style.display='none';
+    status.textContent='Verificando novamente…';
+    check();
+  });
+  check();
+})();
+</script>
+</body>
+</html>
