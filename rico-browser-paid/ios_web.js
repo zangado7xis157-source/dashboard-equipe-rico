@@ -9,6 +9,7 @@ const ENV = process.env.ASAAS_ENV === 'sandbox' ? 'https://api-sandbox.asaas.com
 const secret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const cookieName = 'rico_iphone_access';
 const {verifyPurchaseProof}=require('./purchase_proof');
+const {bindIphoneInstallation}=require('./device_bind');
 
 function sign(data) {
   const body = Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -84,7 +85,17 @@ function registerIOSWeb(app) {
   app.post('/iphone/activate', async (req,res) => {
     res.set('Cache-Control','no-store');
     const supplied = req.body && req.body.purchaseProof;
+    const installationId = req.body && req.body.installationId;
     if (isValidDemoKey(supplied)) {
+      try {
+        const demoAccessId = 'demo_' + crypto.createHash('sha256').update(supplied).digest('hex');
+        if (!(await bindIphoneInstallation(demoAccessId, installationId))) {
+          return res.status(409).json({ok:false,error:'Esta chave de teste já foi ativada em outro dispositivo.'});
+        }
+      } catch(e) {
+        console.error('iphone_demo_binding',e.message);
+        return res.status(503).json({ok:false,error:'Não foi possível verificar este dispositivo. Use a versão instalada no iPhone.'});
+      }
       const until = Date.parse(process.env.RICO_IPHONE_DEMO_UNTIL);
       const now = Date.now();
       const exp = Math.min(now + 4*60*60*1000, until);
@@ -97,6 +108,9 @@ function registerIOSWeb(app) {
     if (!id) return res.status(400).json({ok:false,error:'Chave de acesso inválida. Conclua uma compra ou contate o suporte com o comprovante.'});
     try {
       if (!(await isPaid(id))) return res.status(403).json({ok:false,error:'Pagamento ainda não confirmado. Confira seu Pix.'});
+      if (!(await bindIphoneInstallation('paid_' + id, installationId))) {
+        return res.status(409).json({ok:false,error:'Esta chave já está vinculada a outro dispositivo. Entre em contato com o suporte para solicitar uma troca.'});
+      }
       const days = 90, maxAge = days*86400*1000;
       res.cookie(cookieName, sign({kind:'iphone-paid',checkoutId:id,exp:Date.now()+maxAge}), {
         httpOnly:true,secure:true,sameSite:'lax',path:'/iphone',maxAge
@@ -104,7 +118,7 @@ function registerIOSWeb(app) {
       return res.json({ok:true,go:'/iphone/app'});
     } catch (e) {
       console.error('iphone_activation_error',e.message);
-      return res.status(502).json({ok:false,error:'Não foi possível consultar o Asaas agora.'});
+      return res.status(502).json({ok:false,error:'Não foi possível verificar a compra ou o dispositivo agora.'});
     }
   });
   app.post('/iphone/logout', (req,res) => {res.clearCookie(cookieName,{path:'/iphone'});res.json({ok:true});});
