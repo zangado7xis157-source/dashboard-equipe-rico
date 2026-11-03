@@ -20,6 +20,7 @@ global.fetch = async (url, options = {}) => {
 // Acopla as notificações push, billings e vídeos privados sem alterar o server.js principal.
 const express = require('express');
 const { registerPushRoutes, notifySaleFromAsaas } = require('./push_notify');
+const { registerIOSWeb } = require('./ios_web');
 const { registerDashboardBilling } = require('./dashboard_billing');
 const { registerProductBilling } = require('./product_billing');
 const { registerOperacionalBilling } = require('./operacional_billing');
@@ -48,6 +49,7 @@ express.application.post = function(path, ...handlers) {
 
 const originalListen = express.application.listen;
 express.application.listen = function(...args) {
+  registerIOSWeb(this);
   if (!this.__dashboardBillingRegistered) {
     registerDashboardBilling(this);
   }
