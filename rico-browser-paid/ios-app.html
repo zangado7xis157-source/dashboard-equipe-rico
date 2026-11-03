@@ -29,10 +29,12 @@ ul{color:#acbfd5;line-height:1.7;padding-left:22px;font-size:13px}p{color:#b1c6d
 <ul><li>✅ Acesso instalado pela tela inicial do Safari</li><li>✅ Abas e favoritos salvos no dispositivo</li><li>✅ Abertura de sites em novas abas do Safari</li><li>⚠️ Alguns sites podem bloquear janelas ou abrir dentro do navegador</li></ul>
 <p>Para instalar: Safari → Compartilhar → Adicionar à Tela de Início.</p></div>
 <div class="card"><h2>Seu acesso</h2><p>Seu acesso foi confirmado pelo Asaas. A sessão neste dispositivo é renovável usando o código da compra salvo no navegador.</p>
-<button class="mutedbtn" id="logout">Sair desta sessão</button></div>
+<p><strong>Código da compra:</strong> <span id="purchase">não disponível aqui</span></p><button class="mutedbtn" id="copy">Copiar código da compra</button><br><button class="mutedbtn" id="logout">Sair desta sessão</button></div>
 </main><script>
 (function(){
 const key='rico_iphone_saved_tabs_v1',list=document.getElementById('tabs'),url=document.getElementById('url'),msg=document.getElementById('msg');
+const purchaseId=localStorage.getItem('rico_checkout_id')||''; document.getElementById('purchase').textContent=purchaseId||'salvo no navegador da compra';
+document.getElementById('copy').onclick=async()=>{if(!purchaseId){msg.textContent='Confira o código no navegador em que você comprou.';return}try{await navigator.clipboard.writeText(purchaseId);msg.textContent='Código copiado.'}catch(_){msg.textContent='Selecione e copie o código exibido.'}};
 let tabs=[];try{const raw=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(raw))tabs=raw.filter(x=>typeof x==='string').slice(0,20)}catch(_){}
 function sanitize(s){s=String(s||'').trim();if(!s)return null;if(!/^https?:\/\//i.test(s))s='https://'+s;try{const u=new URL(s);if(!['http:','https:'].includes(u.protocol)||!u.hostname)return null;return u.href}catch(_){return null}}
 function save(){localStorage.setItem(key,JSON.stringify(tabs))}
