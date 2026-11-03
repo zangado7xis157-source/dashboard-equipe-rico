@@ -26,9 +26,9 @@ function verify(token) {
     const val = JSON.parse(Buffer.from(chunks[0], 'base64url').toString('utf8'));
     const now = Date.now();
     if (!val.exp || val.exp <= now) return null;
-    if (val.kind === 'iphone-paid') return val;
+    if (val.kind === 'iphone-paid-device-v2') return val;
     const demoUntil = Date.parse(process.env.RICO_IPHONE_DEMO_UNTIL || '');
-    if (val.kind === 'iphone-demo' && Number.isFinite(demoUntil) && demoUntil > now && val.exp <= demoUntil) return val;
+    if (val.kind === 'iphone-demo-device-v2' && Number.isFinite(demoUntil) && demoUntil > now && val.exp <= demoUntil) return val;
     return null;
   } catch (_) { return null; }
 }
@@ -99,7 +99,7 @@ function registerIOSWeb(app) {
       const until = Date.parse(process.env.RICO_IPHONE_DEMO_UNTIL);
       const now = Date.now();
       const exp = Math.min(now + 4*60*60*1000, until);
-      res.cookie(cookieName, sign({kind:'iphone-demo',exp}), {
+      res.cookie(cookieName, sign({kind:'iphone-demo-device-v2',exp}), {
         httpOnly:true,secure:true,sameSite:'lax',path:'/iphone',maxAge:exp-now
       });
       return res.json({ok:true,go:'/iphone/app',demo:true});
@@ -112,7 +112,7 @@ function registerIOSWeb(app) {
         return res.status(409).json({ok:false,error:'Esta chave já está vinculada a outro dispositivo. Entre em contato com o suporte para solicitar uma troca.'});
       }
       const days = 90, maxAge = days*86400*1000;
-      res.cookie(cookieName, sign({kind:'iphone-paid',checkoutId:id,exp:Date.now()+maxAge}), {
+      res.cookie(cookieName, sign({kind:'iphone-paid-device-v2',checkoutId:id,exp:Date.now()+maxAge}), {
         httpOnly:true,secure:true,sameSite:'lax',path:'/iphone',maxAge
       });
       return res.json({ok:true,go:'/iphone/app'});
