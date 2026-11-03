@@ -23,8 +23,22 @@ function verify(token) {
     const a = Buffer.from(sig), b = Buffer.from(chunks[1]);
     if (a.length !== b.length || !crypto.timingSafeEqual(a,b)) return null;
     const val = JSON.parse(Buffer.from(chunks[0], 'base64url').toString('utf8'));
-    return val.kind === 'iphone-paid' && val.exp > Date.now() ? val : null;
+    const now = Date.now();
+    if (!val.exp || val.exp <= now) return null;
+    if (val.kind === 'iphone-paid') return val;
+    const demoUntil = Date.parse(process.env.RICO_IPHONE_DEMO_UNTIL || '');
+    if (val.kind === 'iphone-demo' && Number.isFinite(demoUntil) && demoUntil > now && val.exp <= demoUntil) return val;
+    return null;
   } catch (_) { return null; }
+}
+function isValidDemoKey(candidate) {
+  const expected = process.env.RICO_IPHONE_DEMO_KEY || '';
+  const until = Date.parse(process.env.RICO_IPHONE_DEMO_UNTIL || '');
+  if (!expected || !Number.isFinite(until) || Date.now() >= until) return false;
+  if (typeof candidate !== 'string') return false;
+  const actual = Buffer.from(candidate, 'utf8');
+  const target = Buffer.from(expected, 'utf8');
+  return actual.length === target.length && crypto.timingSafeEqual(actual, target);
 }
 function getCookie(req) {
   const cookie = String(req.headers.cookie || '').split(';').map(x => x.trim()).find(x => x.startsWith(cookieName + '='));
@@ -49,8 +63,15 @@ function registerIOSWeb(app) {
   app.__iosWebRegistered = true;
   app.get('/iphone', (req,res) => res.set('Cache-Control','no-store').type('html').send(fs.readFileSync(pricePage,'utf8')));
   app.get('/iphone/app', (req,res) => {
-    if (!verify(getCookie(req))) return res.redirect(302,'/iphone');
-    return res.set('Cache-Control','no-store').type('html').send(fs.readFileSync(appPage,'utf8'));
+    const session = verify(getCookie(req));
+    if (!session) return res.redirect(302,'/iphone');
+    let html = fs.readFileSync(appPage, 'utf8');
+    if (session.kind === 'iphone-demo') {
+      html = html.replace('ACESSO ATIVO', 'MODO TESTE');
+      html = html.replace('Seu acesso foi confirmado pelo Asaas. A sessão neste dispositivo é renovável usando o código da compra salvo no navegador.',
+        'Você está usando uma chave temporária de demonstração. Nenhum pagamento foi realizado. Esse acesso não libera o APK Android.');
+    }
+    return res.set('Cache-Control','no-store').type('html').send(html);
   });
   app.get('/iphone/manifest.webmanifest', (req,res) => res.type('application/manifest+json').send({
     id:'/iphone/', name:'Rico Browser — iPhone Beta', short_name:'Rico Browser',
@@ -62,7 +83,17 @@ function registerIOSWeb(app) {
   app.get('/iphone/sw.js', (req,res) => res.set('Cache-Control','no-store').type('application/javascript').send('self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));'));
   app.post('/iphone/activate', async (req,res) => {
     res.set('Cache-Control','no-store');
-    const id = verifyPurchaseProof(req.body && req.body.purchaseProof);
+    const supplied = req.body && req.body.purchaseProof;
+    if (isValidDemoKey(supplied)) {
+      const until = Date.parse(process.env.RICO_IPHONE_DEMO_UNTIL);
+      const now = Date.now();
+      const exp = Math.min(now + 4*60*60*1000, until);
+      res.cookie(cookieName, sign({kind:'iphone-demo',exp}), {
+        httpOnly:true,secure:true,sameSite:'lax',path:'/iphone',maxAge:exp-now
+      });
+      return res.json({ok:true,go:'/iphone/app',demo:true});
+    }
+    const id = verifyPurchaseProof(supplied);
     if (!id) return res.status(400).json({ok:false,error:'Chave de acesso inválida. Conclua uma compra ou contate o suporte com o comprovante.'});
     try {
       if (!(await isPaid(id))) return res.status(403).json({ok:false,error:'Pagamento ainda não confirmado. Confira seu Pix.'});
