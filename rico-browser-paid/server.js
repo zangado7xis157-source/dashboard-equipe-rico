@@ -95,7 +95,7 @@ async function check(){if(!token){title.textContent='Sessão não encontrada';st
 
 app.get('/', (req,res)=>res.type('html').send(pageHtml()));
 app.get('/retorno', (req,res)=>res.type('html').send(returnHtml()));
-app.get('/health', (req,res)=>res.json({ok:true,asaasConfigured:Boolean(ASAAS_API_KEY),apk:fs.existsSync(APK_PATH)}));
+app.get('/health', (req,res)=>{res.set('Access-Control-Allow-Origin','*');res.set('Cache-Control','no-store');res.json({ok:true,asaasConfigured:Boolean(ASAAS_API_KEY),apk:fs.existsSync(APK_PATH)});});
 
 app.post('/api/checkout', async (req,res) => {
   if (!ASAAS_API_KEY) return res.status(503).json({error:'Pagamento em configuração. Tente novamente em breve.'});
