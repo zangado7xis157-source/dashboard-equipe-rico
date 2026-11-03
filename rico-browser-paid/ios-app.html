@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080e19"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rico Browser"><link rel="manifest" href="/iphone/manifest.webmanifest">
+<title>Rico Browser iPhone — Área do Cliente</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,Arial,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:#080e19;color:#f7fbff;padding:18px 15px 36px}main{margin:auto;max-width:680px}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 3px 21px;gap:10px}h1{font-size:26px;letter-spacing:-1px;margin:0}.accent{color:#80cbff}small,.muted{color:#91abc4}.top{font-size:11px;font-weight:900;letter-spacing:1.5px;color:#9bcceb}
+.card{border:1px solid #2b405b;background:#0e1b2d;border-radius:20px;padding:22px;margin-bottom:16px}.card h2{font-size:18px;margin:0 0 8px}.row{display:flex;gap:9px}.row input{flex:1;min-width:0}
+input{border:1px solid #3b5671;border-radius:12px;background:#071322;color:#fff;padding:14px;font:inherit;width:100%}
+button{cursor:pointer;border:0;background:#eaf6ff;color:#0a1d30;padding:13px 16px;border-radius:12px;font-weight:850;font-size:13px}.remove{border:1px solid #45617a;background:#1a2c41;color:#bcd6ee}
+.tabs{display:grid;gap:10px;margin-top:15px}.tab{border:1px solid #314b66;background:#0a1424;border-radius:14px;padding:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tab strong{display:block;max-width:290px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tab small{display:block;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tab .actions{display:flex;gap:6px}.tab a{padding:10px 11px;border-radius:10px;color:#0a1d30;background:#eaf6ff;text-decoration:none;font-weight:800;font-size:12px;white-space:nowrap}
+.pill{display:inline-block;border-radius:999px;padding:6px 10px;background:#203b54;border:1px solid #47749a;color:#bde7ff;font-size:11px;font-weight:800}
+.info{border:1px solid #5e5435;background:#292518;border-radius:14px;padding:13px;font-size:13px;line-height:1.6;color:#f1deb0} .info strong{color:#fff}
+ul{color:#acbfd5;line-height:1.7;padding-left:22px;font-size:13px}p{color:#b1c6d9;line-height:1.55;font-size:14px}.mutedbtn{background:transparent;color:#b6d9ff;padding:6px 0}
+@media(max-width:480px){.tab{align-items:flex-start;flex-direction:column}.tab .actions{width:100%}.tab .actions a{flex:1;text-align:center}.tab strong,.tab small{max-width:82vw}}
+</style></head><body><main>
+<header><div><div class="top">EQUIPE RICO • BETA IPHONE</div><h1>Rico <span class="accent">Browser.</span></h1></div><span class="pill">ACESSO ATIVO</span></header>
+<div class="card"><h2>Suas abas e links</h2><p>Organize links e abra-os em abas do Safari. Esta versão <strong>não cria navegadores independentes com IPs próprios.</strong></p>
+<div class="row"><input type="url" id="url" placeholder="https://seusite.com" aria-label="Endereço do site"><button id="add">+ ADICIONAR</button></div>
+<p id="msg" class="muted" role="status">Até 20 links salvos neste dispositivo.</p><div class="tabs" id="tabs"></div></div>
+<div class="card"><h2>Recursos e compatibilidade</h2>
+<div class="info"><strong>Proxy individual por aba:</strong> ainda indisponível no iOS web.<br>
+<strong>Speed em slots:</strong> não disponível nesta versão; o navegador não altera a velocidade interna de jogos.</div>
+<ul><li>✅ Acesso instalado pela tela inicial do Safari</li><li>✅ Abas e favoritos salvos no dispositivo</li><li>✅ Abertura de sites em novas abas do Safari</li><li>⚠️ Alguns sites podem bloquear janelas ou abrir dentro do navegador</li></ul>
+<p>Para instalar: Safari → Compartilhar → Adicionar à Tela de Início.</p></div>
+<div class="card"><h2>Seu acesso</h2><p>Seu acesso foi confirmado pelo Asaas. A sessão neste dispositivo é renovável usando o código da compra salvo no navegador.</p>
+<button class="mutedbtn" id="logout">Sair desta sessão</button></div>
+</main><script>
+(function(){
+const key='rico_iphone_saved_tabs_v1',list=document.getElementById('tabs'),url=document.getElementById('url'),msg=document.getElementById('msg');
+let tabs=[];try{const raw=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(raw))tabs=raw.filter(x=>typeof x==='string').slice(0,20)}catch(_){}
+function sanitize(s){s=String(s||'').trim();if(!s)return null;if(!/^https?:\/\//i.test(s))s='https://'+s;try{const u=new URL(s);if(!['http:','https:'].includes(u.protocol)||!u.hostname)return null;return u.href}catch(_){return null}}
+function save(){localStorage.setItem(key,JSON.stringify(tabs))}
+function render(){list.textContent='';if(!tabs.length){const p=document.createElement('p');p.textContent='Nenhum link adicionado ainda.';list.appendChild(p);return}
+tabs.forEach((v,i)=>{const el=document.createElement('div');el.className='tab';const info=document.createElement('div'),name=document.createElement('strong'),meta=document.createElement('small'),actions=document.createElement('div'),a=document.createElement('a'),del=document.createElement('button');
+const u=new URL(v);name.textContent=u.hostname;meta.textContent=v;info.append(name,meta);actions.className='actions';
+a.textContent='ABRIR';a.href=v;a.target='_blank';a.rel='noopener noreferrer';del.textContent='REMOVER';del.className='remove';del.onclick=()=>{tabs.splice(i,1);save();render()};
+actions.append(a,del);el.append(info,actions);list.appendChild(el)})}
+document.getElementById('add').onclick=()=>{const val=sanitize(url.value);if(!val){msg.textContent='Digite um endereço válido (http/https).';return}
+if(tabs.length>=20){msg.textContent='Limite de 20 links atingido.';return}if(tabs.includes(val)){msg.textContent='Este link já está salvo.';return}
+tabs.push(val);save();url.value='';msg.textContent='Link salvo.';render()};
+url.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('add').click()});
+document.getElementById('logout').onclick=async()=>{await fetch('/iphone/logout',{method:'POST'});location.replace('/iphone')};render();
+})();
+</script></body></html>
