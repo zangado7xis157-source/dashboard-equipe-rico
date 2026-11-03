@@ -22,8 +22,8 @@ a.link{color:#9bd8ff} .steps{padding-left:19px;color:#bcd2e7;font-size:13px;line
 <p>Instale pela tela inicial do Safari, sem App Store e sem taxa de publicação da Apple. O acesso ao produto continua <strong>pago</strong> pelo sistema atual do Asaas.</p>
 <div class="notice"><strong>O que funciona nesta versão inicial:</strong> salvar até 20 abas/links e abrir sites pelo Safari.<br>
 <strong>O que ainda não funciona:</strong> proxy individual por aba, sessões de navegação isoladas e aceleração de slots. Essa versão web não substitui todas as funções do Android.</div>
-<a class="btn" href="/">ADQUIRIR ACESSO PELO ASAAS</a>
-<label for="purchaseProof">Já comprou? Cole a chave de acesso recebida após o pagamento:</label>
+<div class="notice"><strong>Primeiro instale no iPhone.</strong> Abra no Safari, toque em Compartilhar → Adicionar à Tela de Início. <strong>Só depois</strong> abra o ícone Rico Browser e ative a chave. Isso evita que o navegador e o aplicativo sejam registrados como dois dispositivos diferentes.</div><a class="btn" href="/">ADQUIRIR ACESSO PELO ASAAS</a>
+<label for="purchaseProof">Já comprou? Cole a chave de acesso (válida para uma instalação):</label>
 <textarea id="purchaseProof" maxlength="2048" placeholder="Cole aqui sua chave de acesso" autocomplete="off"></textarea>
 <button class="btn secondary" id="unlock">VERIFICAR PAGAMENTO E ENTRAR</button>
 <div class="status" id="status" role="status" aria-live="polite"></div>
@@ -36,13 +36,22 @@ a.link{color:#9bd8ff} .steps{padding-left:19px;color:#bcd2e7;font-size:13px;line
 (function(){
 const input=document.getElementById('purchaseProof'),button=document.getElementById('unlock'),status=document.getElementById('status');
 input.value=localStorage.getItem('rico_purchase_proof')||'';
-async function activate(){const purchaseProof=input.value.trim();if(!purchaseProof){status.textContent='Informe a chave de acesso da compra.';return}
+const isIphone=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const installed=window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+let installationId=localStorage.getItem('rico_ios_install_id');
+if(!/^[0-9a-fA-F-]{36}$/.test(installationId||'')){
+  installationId=crypto.randomUUID();localStorage.setItem('rico_ios_install_id',installationId);
+}
+async function activate(){
+if(!isIphone){status.textContent='A versão beta é para iPhone. Instale e ative no próprio iPhone para não prender sua chave a este computador.';return}
+if(!installed){status.textContent='Instale o Rico Browser na Tela de Início pelo Safari e abra pelo ícone antes de usar sua chave.';return}
+const purchaseProof=input.value.trim();if(!purchaseProof){status.textContent='Informe a chave de acesso da compra.';return}
 button.disabled=true;status.textContent='Conferindo pagamento no Asaas…';
-try{const r=await fetch('/iphone/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({purchaseProof})});const d=await r.json();
+try{const r=await fetch('/iphone/activate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({purchaseProof,installationId})});const d=await r.json();
 if(!r.ok||!d.ok)throw new Error(d.error||'Acesso não liberado.');localStorage.setItem('rico_purchase_proof',purchaseProof);status.textContent='Pagamento confirmado! Abrindo…';location.replace('/iphone/app')}
 catch(e){status.textContent=e.message;button.disabled=false}}
 button.addEventListener('click',activate);
-if(input.value){activate()}
+if(input.value && isIphone && installed){activate()}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/iphone/sw.js',{scope:'/iphone/'}).catch(()=>{})}
 })();
 </script></body></html>
