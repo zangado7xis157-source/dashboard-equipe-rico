@@ -18,6 +18,7 @@ const PRICE = 69.99;
 const OLD_PRICE = 130.99;
 const APK_PATH = path.join(__dirname, 'private', 'RicoBrowserMobile.apk');
 const paidCache = new Set();
+const {signPurchaseProof,verifyPurchaseProof}=require('./purchase_proof');
 
 function sign(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
@@ -69,7 +70,7 @@ async function checkoutWasPaid(checkoutId) {
     headers: {'content-type':'application/json'}
   });
   const payments = Array.isArray(result.data) ? result.data : [];
-  const paid = payments.some(p => ['RECEIVED','CONFIRMED'].includes(p.status));
+  const paid = payments.some(p => p.checkoutSession === checkoutId && ['RECEIVED','CONFIRMED'].includes(p.status) && Number(p.value) >= PRICE-0.01);
   if (paid) paidCache.add(checkoutId);
   return paid;
 }
@@ -79,10 +80,10 @@ function pageHtml() {
 *{box-sizing:border-box}body{margin:0;background:#07090d;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh;display:grid;place-items:center;padding:22px}.wrap{width:min(960px,100%)}.card{border:1px solid #252a35;background:linear-gradient(180deg,#121722,#0b0e14);border-radius:28px;padding:34px;box-shadow:0 30px 90px #0009}.top{display:flex;gap:10px;flex-wrap:wrap}.tag{border:1px solid #343b49;border-radius:999px;padding:8px 12px;color:#cbd3df;font-size:12px;font-weight:800}.android{background:#fff;color:#080a0d}.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:28px;margin-top:26px}.hero h1{font-size:clamp(38px,7vw,72px);line-height:.96;letter-spacing:-2.5px;margin:0 0 18px}.lead{color:#aab4c2;line-height:1.6;font-size:17px;max-width:620px}.offer{background:#0a0d13;border:1px solid #2d3543;border-radius:22px;padding:24px}.offer small{color:#8e9aad}.old{font-size:20px;color:#7f8998;text-decoration:line-through;margin-top:8px}.today{font-weight:900;margin-top:8px;font-size:14px}.price{font-size:52px;font-weight:950;letter-spacing:-2px;margin:3px 0 4px}.life{font-size:13px;color:#aab4c2;margin-bottom:20px}.btn{display:flex;width:100%;border:0;border-radius:15px;padding:16px 18px;align-items:center;justify-content:center;background:#fff;color:#090b0f;font-weight:950;font-size:15px;cursor:pointer}.btn:disabled{opacity:.55;cursor:wait}.btn.secondary{display:none;margin-top:10px;background:#151a23;color:#fff;border:1px solid #303846}.msg{margin-top:12px;color:#aab4c2;font-size:13px;line-height:1.4}.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}.b{background:#0a0d13;border:1px solid #252b36;border-radius:16px;padding:16px}.b strong{display:block;margin-bottom:4px}.b span{font-size:13px;color:#8f99a8}.fine{margin-top:20px;text-align:center;color:#66707e;font-size:11px}@media(max-width:760px){.card{padding:24px}.hero{grid-template-columns:1fr}.benefits{grid-template-columns:1fr}.hero h1{letter-spacing:-1.5px}}
 </style></head><body><main class="wrap"><section class="card"><div class="top"><span class="tag android">ANDROID</span><span class="tag">🍎 IPHONE BETA</span><span class="tag">ACESSO VITALÍCIO</span><span class="tag">PAGAMENTO SEGURO ASAAS</span></div><div class="hero"><div><h1>Rico Browser<br>Mobile.</h1><p class="lead">No Android, utilize o aplicativo com seus recursos de navegação. No iPhone, está disponível uma versão web beta para organizar e abrir links, sem proxy por aba ou speed de slots. Após o pagamento confirmado, você pode acessar as duas versões.</p><div class="benefits"><div class="b"><strong>✓ Vitalício</strong><span>Pagamento único.</span></div><div class="b"><strong>✓ Android</strong><span>Download do APK.</span></div><div class="b"><strong>✓ Atualizações</strong><span>Quem já comprou não paga novamente.</span></div></div></div><aside class="offer"><small>VALOR NORMAL</small><div class="old">R$ ${OLD_PRICE.toFixed(2).replace('.', ',')}</div><div class="today">OFERTA DE HOJE</div><div class="price">R$ ${PRICE.toFixed(2).replace('.', ',')}</div><div class="life">Acesso vitalício • pagamento único via Pix</div><button id="buy" class="btn">LIBERAR ACESSO AGORA</button><a href="/iphone" class="btn" style="text-decoration:none;background:#1a2f48;color:#e9f5ff;border:1px solid #406181;margin-top:9px">🍎 CONHECER VERSÃO IPHONE BETA</a><button id="update" class="btn secondary">JÁ COMPREI / BAIXAR ATUALIZAÇÃO</button><div id="msg" class="msg">Você será direcionado ao checkout seguro do Asaas.</div></aside></div><div class="fine">Produto digital para Android + versão web beta do iPhone. Recursos diferentes; confira antes de comprar.</div></section></main><script>
 const btn=document.getElementById('buy'),upd=document.getElementById('update'),msg=document.getElementById('msg');
-const savedCheckout=localStorage.getItem('rico_checkout_id');
-if(savedCheckout){upd.style.display='flex'}
-btn.onclick=async()=>{btn.disabled=true;msg.textContent='Gerando pagamento seguro…';try{const r=await fetch('/api/checkout',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Não foi possível iniciar o pagamento.');localStorage.setItem('rico_access_token',d.accessToken);localStorage.setItem('rico_checkout_id',d.checkoutId);location.href=d.checkoutUrl}catch(e){msg.textContent=e.message;btn.disabled=false}};
-upd.onclick=async()=>{const checkoutId=localStorage.getItem('rico_checkout_id');if(!checkoutId){msg.textContent='Compra anterior não encontrada neste navegador.';return}upd.disabled=true;msg.textContent='Conferindo sua compra anterior…';try{const r=await fetch('/api/recover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({checkoutId})});const d=await r.json();if(!r.ok)throw new Error(d.error||'Não foi possível validar sua compra.');msg.textContent='Compra confirmada ✓ Iniciando atualização…';location.href=d.downloadUrl;setTimeout(()=>{upd.disabled=false},3000)}catch(e){msg.textContent=e.message;upd.disabled=false}};
+const savedProof=localStorage.getItem('rico_purchase_proof');
+if(savedProof){upd.style.display='flex'}
+btn.onclick=async()=>{btn.disabled=true;msg.textContent='Gerando pagamento seguro…';try{const r=await fetch('/api/checkout',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Não foi possível iniciar o pagamento.');localStorage.setItem('rico_access_token',d.accessToken);localStorage.setItem('rico_checkout_id',d.checkoutId);localStorage.setItem('rico_purchase_proof',d.purchaseProof);location.href=d.checkoutUrl}catch(e){msg.textContent=e.message;btn.disabled=false}};
+upd.onclick=async()=>{const purchaseProof=localStorage.getItem('rico_purchase_proof');if(!purchaseProof){msg.textContent='Chave de acesso ausente. Entre em contato com o suporte com seu comprovante.';return}upd.disabled=true;msg.textContent='Verificando pagamento…';try{const r=await fetch('/api/recover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({purchaseProof})});const d=await r.json();if(!r.ok||!d.paid)throw new Error(d.error||'Pagamento ainda não confirmado.');msg.textContent='Compra confirmada. Iniciando download…';location.href=d.downloadUrl;setTimeout(()=>{upd.disabled=false},3000)}catch(e){msg.textContent=e.message;upd.disabled=false}};
 </script></body></html>`;
 }
 
@@ -108,11 +109,11 @@ app.post('/api/checkout', async (req,res) => {
       minutesToExpire:60,
       externalReference:orderId,
       callback:{successUrl:`${PUBLIC_URL}/retorno`,cancelUrl:`${PUBLIC_URL}/?status=cancelado`,expiredUrl:`${PUBLIC_URL}/?status=expirado`},
-      items:[{name:'Rico Browser Mobile — Acesso Vitalício',description:'Licença vitalícia para Android',quantity:1,value:PRICE}]
+      items:[{name:'Rico Browser Mobile — Acesso Vitalício',description:'Licenca Android e iPhone Beta',quantity:1,value:PRICE}]
     })});
     if (!checkout.id) throw new Error('Checkout sem identificador');
     const accessToken = sign({kind:'checkout',checkoutId:checkout.id,orderId,exp:Date.now()+2*60*60*1000});
-    res.json({checkoutId:checkout.id,accessToken,checkoutUrl:`https://asaas.com/checkoutSession/show?id=${encodeURIComponent(checkout.id)}`});
+    res.json({checkoutId:checkout.id,accessToken,purchaseProof:signPurchaseProof(checkout.id),checkoutUrl:`https://asaas.com/checkoutSession/show?id=${encodeURIComponent(checkout.id)}`});
   } catch (e) {
     console.error('checkout_error', e.status || '', e.data || e.message);
     res.status(502).json({error:'Não foi possível gerar o pagamento agora.'});
@@ -127,8 +128,8 @@ app.get('/api/status', async (req,res) => {
   try {
     const paid = await checkoutWasPaid(data.checkoutId);
     if (!paid) return res.json({paid:false});
-    const dlToken = sign({kind:'download',checkoutId:data.checkoutId,exp:Date.now()+15*60*1000});
-    res.json({paid:true,downloadUrl:`/download?token=${encodeURIComponent(dlToken)}`});
+    const dlToken = sign({kind:'download-v2',checkoutId:data.checkoutId,exp:Date.now()+15*60*1000});
+    res.json({paid:true,purchaseProof:signPurchaseProof(data.checkoutId),downloadUrl:`/download?token=${encodeURIComponent(dlToken)}`});
   } catch (e) {
     console.error('status_error', e.status || '', e.data || e.message);
     res.status(502).json({error:'Não foi possível confirmar o pagamento neste momento.'});
@@ -137,14 +138,12 @@ app.get('/api/status', async (req,res) => {
 
 app.post('/api/recover', async (req,res) => {
   if (!ASAAS_API_KEY) return res.status(503).json({error:'Pagamento em configuração.'});
-  const checkoutId = String(req.body && req.body.checkoutId || '').trim();
-  if (!checkoutId || checkoutId.length > 200 || !/^[A-Za-z0-9_-]+$/.test(checkoutId)) {
-    return res.status(400).json({error:'Compra anterior inválida.'});
-  }
+  const checkoutId = verifyPurchaseProof(req.body && req.body.purchaseProof);
+  if (!checkoutId) return res.status(401).json({error:'Chave de acesso ausente ou inválida. Para compras antigas, envie seu comprovante ao suporte.'});
   try {
     const paid = await checkoutWasPaid(checkoutId);
     if (!paid) return res.status(403).json({error:'Não encontrei pagamento confirmado para esta compra.'});
-    const dlToken = sign({kind:'download',checkoutId,exp:Date.now()+15*60*1000});
+    const dlToken = sign({kind:'download-v2',checkoutId,exp:Date.now()+15*60*1000});
     res.json({paid:true,downloadUrl:`/download?token=${encodeURIComponent(dlToken)}`});
   } catch (e) {
     console.error('recover_error', e.status || '', e.data || e.message);
@@ -161,7 +160,7 @@ app.post('/webhook/asaas', (req,res) => {
 });
 
 app.get('/download', (req,res) => {
-  const data = verify(req.query.token, 'download');
+  const data = verify(req.query.token, 'download-v2');
   if (!data) return res.status(401).send('Link de download inválido ou expirado.');
   if (!fs.existsSync(APK_PATH)) return res.status(503).send('APK temporariamente indisponível.');
   res.download(APK_PATH, 'RicoBrowserMobile-Android.apk');
