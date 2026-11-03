@@ -8,6 +8,7 @@ const appPage = path.join(__dirname, 'ios-app.html');
 const ENV = process.env.ASAAS_ENV === 'sandbox' ? 'https://api-sandbox.asaas.com/v3' : 'https://api.asaas.com/v3';
 const secret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const cookieName = 'rico_iphone_access';
+const {verifyPurchaseProof}=require('./purchase_proof');
 
 function sign(data) {
   const body = Buffer.from(JSON.stringify(data)).toString('base64url');
@@ -41,7 +42,7 @@ async function isPaid(checkoutId) {
   });
   if (!response.ok) throw new Error('asaas_' + response.status);
   const result = await response.json();
-  return Array.isArray(result.data) && result.data.some(p => ['RECEIVED','CONFIRMED'].includes(p.status));
+  return Array.isArray(result.data) && result.data.some(p => p.checkoutSession === checkoutId && ['RECEIVED','CONFIRMED'].includes(p.status) && Number(p.value)>=69.98);
 }
 function registerIOSWeb(app) {
   if (app.__iosWebRegistered) return;
@@ -61,8 +62,8 @@ function registerIOSWeb(app) {
   app.get('/iphone/sw.js', (req,res) => res.set('Cache-Control','no-store').type('application/javascript').send('self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));'));
   app.post('/iphone/activate', async (req,res) => {
     res.set('Cache-Control','no-store');
-    const id = cleanId(req.body && req.body.checkoutId);
-    if (!id) return res.status(400).json({ok:false,error:'Código da compra inválido.'});
+    const id = verifyPurchaseProof(req.body && req.body.purchaseProof);
+    if (!id) return res.status(400).json({ok:false,error:'Chave de acesso inválida. Conclua uma compra ou contate o suporte com o comprovante.'});
     try {
       if (!(await isPaid(id))) return res.status(403).json({ok:false,error:'Pagamento ainda não confirmado. Confira seu Pix.'});
       const days = 90, maxAge = days*86400*1000;
