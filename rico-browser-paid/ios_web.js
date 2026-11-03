@@ -41,7 +41,7 @@ async function isPaid(checkoutId) {
   });
   if (!response.ok) throw new Error('asaas_' + response.status);
   const result = await response.json();
-  return Array.isArray(result.data) && result.data.some(p => p.checkoutSession === checkoutId && ['RECEIVED','CONFIRMED'].includes(p.status));
+  return Array.isArray(result.data) && result.data.some(p => ['RECEIVED','CONFIRMED'].includes(p.status));
 }
 function registerIOSWeb(app) {
   if (app.__iosWebRegistered) return;
