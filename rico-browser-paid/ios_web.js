@@ -67,7 +67,7 @@ function registerIOSWeb(app) {
     const session = verify(getCookie(req));
     if (!session) return res.redirect(302,'/iphone');
     let html = fs.readFileSync(appPage, 'utf8');
-    if (session.kind === 'iphone-demo') {
+    if (session.kind === 'iphone-demo-device-v2') {
       html = html.replace('ACESSO ATIVO', 'MODO TESTE');
       html = html.replace('Seu acesso foi confirmado pelo Asaas. A sessão neste dispositivo é renovável usando o código da compra salvo no navegador.',
         'Você está usando uma chave temporária de demonstração. Nenhum pagamento foi realizado. Esse acesso não libera o APK Android.');
@@ -119,6 +119,37 @@ function registerIOSWeb(app) {
     } catch (e) {
       console.error('iphone_activation_error',e.message);
       return res.status(502).json({ok:false,error:'Não foi possível verificar a compra ou o dispositivo agora.'});
+    }
+  });
+
+  // Native iOS WKWebView app: verifies paid license and enforces one installation per key.
+  // Unlike web PWA, the native client stores its installation UUID in iOS Keychain.
+  app.post('/iphone/native/activate', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const supplied = req.body && req.body.purchaseProof;
+    const installationId = req.body && req.body.installationId;
+    if (isValidDemoKey(supplied)) {
+      try {
+        const demoAccessId = 'demo_' + crypto.createHash('sha256').update(supplied).digest('hex');
+        const allowed = await bindIphoneInstallation(demoAccessId, installationId);
+        if (!allowed) return res.status(409).json({ok:false,error:'Esta chave de teste já foi vinculada a outra instalação. Solicite uma chave de teste nova.'});
+        return res.json({ok:true,demo:true});
+      } catch (e) {
+        console.error('native_demo_license_error', e.message);
+        return res.status(503).json({ok:false,error:'Não foi possível validar esta instalação agora.'});
+      }
+    }
+    const checkoutId = verifyPurchaseProof(supplied);
+    if (!checkoutId) return res.status(401).json({ok:false,error:'Chave inválida ou expirada. Confira a chave recebida após o Pix.'});
+    try {
+      const paid = await isPaid(checkoutId);
+      if (!paid) return res.status(403).json({ok:false,error:'Pagamento ainda não confirmado no Asaas.'});
+      const allowed = await bindIphoneInstallation('paid_' + checkoutId, installationId);
+      if (!allowed) return res.status(409).json({ok:false,error:'Esta chave está vinculada a outra instalação. Solicite ao suporte a transferência de aparelho.'});
+      return res.json({ok:true,demo:false});
+    } catch (e) {
+      console.error('native_license_error', e.message);
+      return res.status(502).json({ok:false,error:'Serviço de licença indisponível. Tente novamente quando estiver conectado.'});
     }
   });
   app.post('/iphone/logout', (req,res) => {res.clearCookie(cookieName,{path:'/iphone'});res.json({ok:true});});
