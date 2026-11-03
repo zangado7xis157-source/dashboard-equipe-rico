@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080d18">
-<meta name="description" content="Acesse o Rico Browser Mobile para Android. Preparando a loja oficial.">
+<meta name="description" content="Rico Browser Mobile para Android e iPhone Beta. Acesso pago com Asaas.">
 <title>Iniciando… | Rico Browser Mobile</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
@@ -43,7 +43,7 @@ h1 span{color:#87c9ff}
 <main class="main">
   <div class="top">
     <div class="brand"><div class="logo" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="7" y="2" width="10" height="20" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M10 18h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><div>RICO BROWSER</div></div>
-    <span class="tag">ANDROID</span>
+    <span class="tag" id="platform-tag">ANDROID / IPHONE</span>
   </div>
   <div class="emblem" aria-hidden="true"><div class="device"><svg width="42" height="42" viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="2.2" stroke="#b9e4ff" stroke-width="1.7"/><path d="M10 18.5h4" stroke="#b9e4ff" stroke-width="1.5" stroke-linecap="round"/></svg></div></div>
   <h1>Iniciando <span>Rico Browser</span></h1>
@@ -53,12 +53,15 @@ h1 span{color:#87c9ff}
   <a class="btn" id="enter" href="https://rico-browser-android-pago.onrender.com/">ENTRAR NA PLATAFORMA →</a>
   <button class="btn retry" id="retry" type="button">TENTAR NOVAMENTE</button>
   <div class="divider"></div>
-  <div class="foot">Rico Browser Mobile • Android<br>Se o servidor estiver reiniciando, a abertura poderá demorar um pouco mais.</div>
+  <div class="foot">Rico Browser Mobile • Android / iPhone Beta<br>Se o servidor estiver reiniciando, a abertura poderá demorar um pouco mais.</div>
 </main>
 <script>
 (() => {
-  const destination = 'https://rico-browser-android-pago.onrender.com/';
-  const health = destination + 'health';
+  const platform = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'iphone' : 'android';
+  const base = 'https://rico-browser-android-pago.onrender.com/';
+  const destination = platform === 'iphone' ? base + 'iphone' : base;
+  const health = base + 'health';
+  document.getElementById('platform-tag').textContent = platform === 'iphone' ? 'IPHONE BETA' : 'ANDROID';
   const status = document.getElementById('status');
   const subtitle = document.getElementById('subtitle');
   const enter = document.getElementById('enter');
