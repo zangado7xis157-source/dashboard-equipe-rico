@@ -17,3 +17,21 @@ body>.modal{z-index:100}
   .hero{background:linear-gradient(90deg,rgba(3,6,11,.66),rgba(3,6,11,.33))}
 }
 @media(prefers-reduced-motion:reduce){body::before{background-attachment:scroll}}
+
+/* Destaque extra nos olhos do tigre — apenas visual */
+body::before{
+  background-image:url("tigre-azul.svg");
+  background-position:center 30%;
+  background-size:cover;
+  opacity:1;
+  filter:brightness(1.72) saturate(1.85) contrast(1.22);
+}
+.hero-copy{
+  background:radial-gradient(ellipse at 35% 48%,rgba(2,5,13,.84) 0%,rgba(2,5,13,.55) 52%,transparent 85%);
+  border-radius:28px;
+  text-shadow:0 3px 18px #02050b,0 1px 7px #02050b;
+}
+@media(max-width:680px){
+  body::before{background-position:center 15%;background-size:auto 100%;opacity:.78;filter:brightness(1.65) saturate(1.7) contrast(1.15)}
+  .hero-copy{background:linear-gradient(90deg,rgba(2,5,13,.77),rgba(2,5,13,.32))}
+}
