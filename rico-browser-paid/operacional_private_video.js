@@ -143,7 +143,22 @@ function registerOperacionalPrivateVideo(app) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.status(upstream.status);
       if (!upstream.body) return res.end();
-      Readable.fromWeb(upstream.body).pipe(res);
+      // A remote video stream may terminate after fetch() has returned.
+      // Without an error listener, Readable emits an uncaught error and
+      // crashes the shared billing server (including Asaas checkout routes).
+      const stream = Readable.fromWeb(upstream.body);
+      stream.on('error', (streamError) => {
+        console.error('operacional_video_stream_error', streamError.code || streamError.message || streamError);
+        if (!res.headersSent) {
+          res.status(502).end('Nao foi possivel carregar este video agora.');
+        } else if (!res.destroyed) {
+          res.destroy(streamError);
+        }
+      });
+      res.on('close', () => {
+        if (!stream.destroyed) stream.destroy();
+      });
+      stream.pipe(res);
     } catch (error) {
       console.error('operacional_video_stream_error', error.message || error);
       if (!res.headersSent) return res.status(502).send('Nao foi possivel carregar este video agora.');
