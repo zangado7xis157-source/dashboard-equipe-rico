@@ -143,6 +143,8 @@ function registerDashboardBilling(app) {
       ok: true,
       asaasConfigured: Boolean(ASAAS_API_KEY),
       billingConfigured: Boolean(DASHBOARD_BILLING_SECRET),
+      webhookConfigured: Boolean(process.env.WEBHOOK_TOKEN),
+      asaasEnvironment: ASAAS_ENV,
     });
   });
 
