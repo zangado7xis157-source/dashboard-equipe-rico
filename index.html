@@ -52,6 +52,18 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--line);backgroun
 .paywall h2{font-size:30px;margin:0 0 8px}
 .countdown{font-size:24px;font-weight:900;color:var(--yellow);margin:10px 0}
 .paybtn{display:inline-block;text-decoration:none;margin-top:14px;padding:14px 18px;border-radius:13px;background:linear-gradient(180deg,var(--green),var(--green2));color:#03120a;font-weight:900}
+.billing-plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.billing-plan-btn{width:100%;min-height:86px;display:flex;flex-direction:column;justify-content:center;gap:6px;padding:15px;border:1px solid rgba(49,230,124,.35);border-radius:14px;background:linear-gradient(180deg,rgba(49,230,124,.16),rgba(49,230,124,.07));color:var(--text);text-align:left;font:inherit;cursor:pointer}
+.billing-plan-btn.lifetime{border-color:rgba(101,183,255,.35);background:linear-gradient(180deg,rgba(101,183,255,.16),rgba(101,183,255,.06))}
+.billing-plan-btn strong{font-size:16px;font-weight:950}.billing-plan-btn span{font-size:12px;color:var(--muted)}
+.billing-plan-btn:disabled{opacity:.55;cursor:wait}
+.billing-msg{min-height:20px;margin-top:12px;color:var(--muted);font-size:13px;line-height:1.5}
+.billing-verify{display:none;margin-top:10px;width:100%}
+.legacy-key{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);text-align:left}
+.legacy-key summary{cursor:pointer;color:var(--muted);font-size:13px;font-weight:850}
+.monthly-payment-btn{border:0;cursor:pointer;font:inherit}
+.games-lock-pay,.games-lock-key{border:0;cursor:pointer;font:inherit}
+@media(max-width:520px){.billing-plan-grid{grid-template-columns:1fr}}
 .trialbadge{display:inline-block;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,200,87,.08);color:var(--yellow);font-size:12px;font-weight:800}
 .cycle-tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.notify-ok{color:var(--green)!important;border-color:rgba(49,230,124,.55)!important}
 .network-invite-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999;backdrop-filter:blur(6px)}
@@ -230,32 +242,30 @@ body.side-menu-open{overflow:hidden}
 <section id="paywallScreen" class="paywall card hidden">
   <div class="trialbadge" id="lockBadge">Acesso encerrado</div>
   <h2 id="lockTitle">Seu período de acesso terminou</h2>
-  <p class="muted" id="lockText">Para continuar usando o Dashboard de Lucro CPA — Equipe Rico, renove sua mensalidade de R$ 29,99 pelo botão abaixo.</p>
+  <p class="muted" id="lockText">Escolha o plano mensal de 30 dias ou o vitalício. O pagamento é feito via PIX no Asaas e o acesso é liberado automaticamente após a confirmação.</p>
 
-  <a class="paybtn" id="paymentBtn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 29,99 pelo Nubank pelo Nubank</a>
-
-  <div id="paidArea" style="margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:none">
-    <h3 style="margin:0 0 8px">Pagamento realizado?</h3>
-    <p class="muted" style="line-height:1.55">
-      Depois de concluir o pagamento ou renovação, clique em <strong style="color:var(--text)">Liberar acesso</strong>. Você será direcionado ao WhatsApp para solicitar sua key do dashboard.
-    </p>
-    <a class="paybtn" id="alreadyPaidBtn" href="#" target="_blank" rel="noopener noreferrer"
-       style="display:block;margin-top:12px;text-align:center">
-      Liberar acesso
-    </a>
-
-    <div style="margin-top:18px">
-      <p class="muted" style="line-height:1.55">
-        Quando receber sua key, digite abaixo para continuar. Cada key funciona uma única vez e libera 30 dias.
-      </p>
-      <div class="field" style="text-align:left;margin-top:12px">
-        <label>Key de liberação</label>
-        <input id="unlockCode" type="password" placeholder="Digite a senha recebida no WhatsApp">
-      </div>
-      <button class="primary" id="unlockBtn" style="width:100%">Liberar acesso</button>
-      <div id="unlockMsg" class="msg"></div>
-    </div>
+  <div class="billing-plan-grid">
+    <button class="billing-plan-btn" id="buyMonthlyBtn" type="button">
+      <strong>Mensal — R$ 29,99</strong>
+      <span>30 dias de acesso · PIX avulso</span>
+    </button>
+    <button class="billing-plan-btn lifetime" id="buyLifetimeBtn" type="button">
+      <strong>Vitalício — R$ 79,99</strong>
+      <span>Acesso sem prazo · pagamento único</span>
+    </button>
   </div>
+  <div id="billingMsg" class="billing-msg" aria-live="polite"></div>
+  <button class="secondary billing-verify" id="billingVerifyBtn" type="button">Verificar pagamento</button>
+
+  <details class="legacy-key">
+    <summary>Já tenho uma key antiga?</summary>
+    <div class="field" style="text-align:left;margin-top:12px">
+      <label>Key de liberação</label>
+      <input id="unlockCode" type="password" placeholder="Digite sua key antiga">
+    </div>
+    <button class="primary" id="unlockBtn" style="width:100%">Validar key antiga</button>
+    <div id="unlockMsg" class="msg"></div>
+  </details>
 
   <button class="secondary" id="paywallLogout" style="margin-top:16px">Sair da conta</button>
 </section>
@@ -273,7 +283,7 @@ body.side-menu-open{overflow:hidden}
       <div class="monthly-payment-title">R$ 29,99 <span>/ mês</span></div>
       <div class="monthly-payment-sub">Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.</div>
     </div>
-    <a class="monthly-payment-btn" href="#" target="_blank" rel="noopener noreferrer">Pagar R$ 29,99 pelo Nubank</a>
+    <button class="monthly-payment-btn" id="monthlyPaymentBtn" type="button">Renovar por PIX — R$ 29,99</button>
   </div>
 
   <div class="main-menu-bar">
@@ -549,12 +559,13 @@ body.side-menu-open{overflow:hidden}
         <div class="games-lock-box">
           <div class="games-lock-icon">🔒</div>
           <h2>Jogos exclusivos para assinantes</h2>
-          <p>Seu teste grátis de 24 horas continua normalmente no Dashboard. A lista de jogos fica borrada durante o teste e é liberada após o pagamento e ativação da key de 30 dias.</p>
+          <p>Seu teste grátis de 24 horas continua normalmente no Dashboard. Assine o plano mensal via PIX e os jogos serão liberados automaticamente na mesma conta assim que o Asaas confirmar o pagamento.</p>
           <div class="games-lock-actions">
-            <a class="games-lock-pay games-payment-link" href="#" target="_blank" rel="noopener noreferrer">Liberar jogos — R$ 29,99</a>
-            <a class="games-lock-key" href="https://wa.me/5535910238277?text=ja%20paguei%20a%20mensalidade%20e%20quero%20minha%20key%20do%20dashboard" target="_blank" rel="noopener noreferrer">Já paguei / Pedir key</a>
+            <button class="games-lock-pay" id="buyGamesBtn" type="button">Liberar jogos — R$ 29,99</button>
+            <button class="games-lock-key" id="gamesVerifyBtn" type="button" style="display:none">Já paguei — verificar</button>
           </div>
-          <div class="games-lock-note">Depois que a key for validada, os jogos são liberados automaticamente pelo período pago.</div>
+          <div class="billing-msg" id="gamesBillingMsg" aria-live="polite"></div>
+          <div class="games-lock-note">Não precisa pedir key pelo WhatsApp: a confirmação do PIX libera o acesso automaticamente.</div>
         </div>
       </div>
     </div>
@@ -629,11 +640,11 @@ body.side-menu-open{overflow:hidden}
 <script>
 const SUPABASE_URL='https://ytjwwgskilygayjrycfk.supabase.co';
 const SUPABASE_KEY='sb_publishable_hNMbrbwaUMxkkuOmGyUL9w_d1Ci9Og8';
+const DASHBOARD_BILLING_API='https://rico-browser-android-pago.onrender.com';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let mode="login", user=null, clients=[], entries=[], selectedClientId=null;
 const RICO_ADMIN_USER_ID="2f2e9b50-79c2-4bd2-9ffc-1ae3c7b3b63e";
-const PAYMENT_URL="https://nubank.com.br/cobrar/fvuvf2/6ac2ed65-d57b-4b82-97f5-ee2baac469e4";
 let adminRows=[];
 const $=id=>document.getElementById(id);
 const fmt=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -660,11 +671,15 @@ function totals(list){
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 
-let accessRow=null, countdownTimer=null;
+let accessRow=null, countdownTimer=null, billingCheckInProgress=false;
 
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
-  if(session){user=session.user;await checkAccess()} else showAuth();
+  if(session){
+    user=session.user;
+    const activated=await resumeDashboardPayment();
+    if(!activated)await checkAccess();
+  }else showAuth();
 }
 function hideAll(){
   $("authScreen").classList.add("hidden");
@@ -674,13 +689,132 @@ function hideAll(){
 function showAuth(){hideAll();$("authScreen").classList.remove("hidden")}
 function isRicoAdmin(){return user?.id===RICO_ADMIN_USER_ID}
 function showApp(){hideAll();$("appScreen").classList.remove("hidden");$("userEmail").textContent=user?.email||"";$("adminTab").classList.toggle("hidden",!isRicoAdmin());$("sideAdminItem")?.classList.toggle("hidden",!isRicoAdmin());$("monthlyPaymentBanner").classList.add("hidden");syncGamesAccessUI()}
-function applyPaymentUrl(){
-  const ids=["paymentBtn"];
-  ids.forEach(id=>{const el=$(id);if(el)el.href=PAYMENT_URL});
-  document.querySelectorAll(".monthly-payment-btn").forEach(el=>el.href=PAYMENT_URL);
-  document.querySelectorAll(".games-payment-link").forEach(el=>el.href=PAYMENT_URL);
+function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden")}
+
+function clearBillingReturnQuery(){
+  const url=new URL(window.location.href);
+  url.searchParams.delete("billing");
+  window.history.replaceState({},document.title,url.pathname+url.search+url.hash);
 }
-function showPaywall(){hideAll();$("paywallScreen").classList.remove("hidden");setTimeout(setupPaymentFlow,0)}
+
+function setBillingMessage(message){
+  ["billingMsg","gamesBillingMsg"].forEach(id=>{const el=$(id);if(el)el.textContent=message});
+}
+
+function setBillingVerifyVisible(visible){
+  ["billingVerifyBtn","gamesVerifyBtn"].forEach(id=>{const el=$(id);if(el)el.style.display=visible?"inline-block":"none"});
+}
+
+async function startDashboardCheckout(plan){
+  if(!user){showAuth();return}
+  const buttons=["buyMonthlyBtn","buyLifetimeBtn","buyGamesBtn","monthlyPaymentBtn"].map($).filter(Boolean);
+  buttons.forEach(btn=>btn.disabled=true);
+  setBillingMessage("Gerando seu PIX seguro pelo Asaas...");
+  try{
+    const response=await fetch(DASHBOARD_BILLING_API+"/api/dashboard/checkout",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({userId:user.id,plan})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.checkoutUrl||!data.billingToken){
+      if(response.status===503)throw new Error("O pagamento do Asaas ainda não está configurado no servidor. Nenhuma cobrança foi criada.");
+      throw new Error(data.error||"Não foi possível gerar o PIX. Tente novamente.");
+    }
+    localStorage.setItem("rico_dashboard_billing_"+user.id,data.billingToken);
+    localStorage.setItem("rico_dashboard_plan_"+user.id,plan);
+    window.location.assign(data.checkoutUrl);
+  }catch(error){
+    setBillingMessage(error.message||"Não foi possível iniciar o pagamento.");
+    buttons.forEach(btn=>btn.disabled=false);
+  }
+}
+
+async function resumeDashboardPayment(){
+  if(!user||billingCheckInProgress)return false;
+  const tokenKey="rico_dashboard_billing_"+user.id;
+  const planKey="rico_dashboard_plan_"+user.id;
+  const token=localStorage.getItem(tokenKey);
+  const callbackStatus=new URLSearchParams(window.location.search).get("billing");
+
+  if(callbackStatus==="cancelado"||callbackStatus==="expirado"){
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(planKey);
+    clearBillingReturnQuery();
+    setBillingVerifyVisible(false);
+    setBillingMessage(callbackStatus==="cancelado"?"Pagamento cancelado. Você pode gerar um novo PIX quando quiser.":"O PIX expirou. Gere um novo pagamento para continuar.");
+    return false;
+  }
+
+  if(!token){
+    if(callbackStatus==="return"){
+      clearBillingReturnQuery();
+      setBillingMessage("Não encontrei a sessão de pagamento neste navegador. Entre na mesma conta e no dispositivo em que iniciou a compra.");
+    }
+    return false;
+  }
+
+  billingCheckInProgress=true;
+  setBillingVerifyVisible(true);
+  setBillingMessage("Confirmando seu pagamento com o Asaas. Assim que o PIX for reconhecido, o acesso será liberado automaticamente.");
+  const verifyButtons=["billingVerifyBtn","gamesVerifyBtn"].map($).filter(Boolean);
+  verifyButtons.forEach(btn=>btn.disabled=true);
+
+  try{
+    for(let attempt=0;attempt<12;attempt++){
+      const response=await fetch(DASHBOARD_BILLING_API+"/api/dashboard/status",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({billingToken:token})
+      });
+      const result=await response.json().catch(()=>({}));
+
+      if(response.status===401){
+        localStorage.removeItem(tokenKey);
+        localStorage.removeItem(planKey);
+        setBillingVerifyVisible(false);
+        setBillingMessage("A sessão deste PIX expirou. Gere um novo pagamento para liberar o acesso.");
+        clearBillingReturnQuery();
+        return false;
+      }
+      if(response.status===503){
+        setBillingMessage("O Asaas ainda não está configurado para liberar este acesso. Nenhuma liberação foi feita.");
+        break;
+      }
+      if(!response.ok)throw new Error(result.error||"Falha ao consultar o pagamento.");
+
+      if(result.paid===true&&result.activated===true){
+        const {data:row,error}=await sb.from("cpa_access").select("*").eq("user_id",user.id).single();
+        if(error)throw new Error("PIX confirmado, mas não consegui atualizar os dados da sua conta. Clique em verificar novamente.");
+        accessRow=row;
+        localStorage.removeItem(tokenKey);
+        localStorage.removeItem(planKey);
+        clearBillingReturnQuery();
+        setBillingVerifyVisible(false);
+        setBillingMessage("PIX confirmado! Seu acesso foi liberado automaticamente.");
+        showApp();
+        await touchAccount();
+        startCountdown();
+        await loadData();
+        return true;
+      }
+
+      if(attempt<11)await new Promise(resolve=>setTimeout(resolve,2500));
+    }
+
+    setBillingMessage("Ainda aguardamos a confirmação do Asaas. Se você já pagou, clique em “Verificar pagamento”; não precisa enviar comprovante nem pedir key.");
+    setBillingVerifyVisible(true);
+    clearBillingReturnQuery();
+    return false;
+  }catch(error){
+    setBillingMessage(error.message||"Não foi possível verificar agora. Tente novamente.");
+    setBillingVerifyVisible(true);
+    return false;
+  }finally{
+    billingCheckInProgress=false;
+    verifyButtons.forEach(btn=>btn.disabled=false);
+  }
+}
 function showNetworkInvite(){
   $("networkInvite").classList.remove("hidden");
 }
@@ -739,15 +873,15 @@ async function checkAccess(){
     if(data.access_status==="paid"){
       $("lockBadge").textContent="Assinatura vencida";
       $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
-      $("lockText").textContent="Renove sua mensalidade de R$ 29,99 e use uma nova key para liberar mais 30 dias.";
+      $("lockText").textContent="Renove por PIX no Asaas para liberar automaticamente mais 30 dias de acesso, sem solicitar uma nova key.";
     }else if(data.access_status==="blocked"){
       $("lockBadge").textContent="Teste grátis indisponível";
       $("lockTitle").textContent="Este dispositivo ou rede já utilizou o teste";
-      $("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, ative a mensalidade de R$ 29,99.";
+      $("lockText").textContent="O teste grátis de 24 horas é liberado uma única vez por dispositivo/rede. Para continuar, escolha o plano mensal de 30 dias ou o vitalício e pague via PIX.";
     }else{
       $("lockBadge").textContent="Acesso bloqueado";
       $("lockTitle").textContent="Ative seu Dashboard";
-      $("lockText").textContent="A mensalidade é R$ 29,99. Faça o pagamento e depois use a key recebida para liberar 30 dias de acesso.";
+      $("lockText").textContent="Escolha o plano mensal de 30 dias ou o vitalício. O PIX é confirmado pelo Asaas e o acesso é liberado automaticamente.";
     }
     showPaywall();
     return;
@@ -846,7 +980,8 @@ $("authSubmit").onclick=async()=>{
 
     user=res.data.user;
     const createdNow=mode==="signup";
-    await checkAccess();
+    const activated=await resumeDashboardPayment();
+    if(!activated)await checkAccess();
     if(createdNow)setTimeout(showNetworkInvite,450);
   }finally{
     btn.disabled=false;
@@ -1659,24 +1794,6 @@ $("monthProfitCard").onclick=openMonthDetail;
 $("monthProfitCard").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openMonthDetail()}};
 $("monthBackBtn").onclick=closeMonthDetail;
 
-function setupPaymentFlow(){
-  const key = user ? `payment_started_${user.id}` : "payment_started";
-  const paidArea = $("paidArea");
-  const paymentBtn = $("paymentBtn");
-  const alreadyPaidBtn = $("alreadyPaidBtn");
-
-  if(localStorage.getItem(key)==="1"){
-    paidArea.style.display="block";
-  }
-
-  paymentBtn.addEventListener("click",()=>{
-    localStorage.setItem(key,"1");
-    setTimeout(()=>{ paidArea.style.display="block"; },300);
-  });
-
-  alreadyPaidBtn.href = "https://wa.me/5535910238277?text=gostaria%20de%20saber%20minha%20key%20do%20dashabord%0A";
-}
-
 async function sha256Hex(text){
   const data=new TextEncoder().encode(text);
   const digest=await crypto.subtle.digest("SHA-256",data);
@@ -1721,7 +1838,13 @@ $("unlockBtn").onclick=async()=>{
   setTimeout(async()=>{showApp();startCountdown();await loadData();},500);
 };
 
-applyPaymentUrl();
+$("buyMonthlyBtn").onclick=()=>startDashboardCheckout("monthly");
+$("buyLifetimeBtn").onclick=()=>startDashboardCheckout("lifetime");
+$("buyGamesBtn").onclick=()=>startDashboardCheckout("monthly");
+$("monthlyPaymentBtn").onclick=()=>startDashboardCheckout("monthly");
+$("billingVerifyBtn").onclick=()=>resumeDashboardPayment();
+$("gamesVerifyBtn").onclick=()=>resumeDashboardPayment();
+
 registerRicoWorker().then(()=>refreshNotifyButton());
 boot();
 </script>
