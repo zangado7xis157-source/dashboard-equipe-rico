@@ -779,7 +779,9 @@ async function resumeDashboardPayment(){
       }
       if(response.status===503){
         setBillingMessage("O Asaas ainda não está configurado para liberar este acesso. Nenhuma liberação foi feita.");
-        break;
+        setBillingVerifyVisible(true);
+        clearBillingReturnQuery();
+        return false;
       }
       if(!response.ok)throw new Error(result.error||"Falha ao consultar o pagamento.");
 
