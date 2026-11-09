@@ -279,9 +279,9 @@ body.side-menu-open{overflow:hidden}
 
   <div id="monthlyPaymentBanner" class="monthly-payment-banner hidden">
     <div class="monthly-payment-copy">
-      <div class="monthly-payment-kicker">MENSALIDADE DO DASHBOARD</div>
-      <div class="monthly-payment-title">R$ 29,99 <span>/ mês</span></div>
-      <div class="monthly-payment-sub">Mantenha seu acesso ao Dashboard de Lucro CPA — Equipe Rico.</div>
+      <div class="monthly-payment-kicker">RENOVAÇÃO DO DASHBOARD</div>
+      <div class="monthly-payment-title">R$ 29,99 <span>/ 30 dias</span></div>
+      <div class="monthly-payment-sub">Renove seu acesso por mais 30 dias com PIX pelo Asaas.</div>
     </div>
     <button class="monthly-payment-btn" id="monthlyPaymentBtn" type="button">Renovar por PIX — R$ 29,99</button>
   </div>
@@ -908,7 +908,7 @@ function startCountdown(){
         clearInterval(countdownTimer);
         $("lockBadge").textContent="Assinatura vencida";
         $("lockTitle").textContent="Seus 30 dias de acesso terminaram";
-        $("lockText").textContent="Renove sua assinatura para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
+        $("lockText").textContent="Renove seu acesso via PIX para continuar usando o Dashboard de Lucro CPA — Equipe Rico.";
         showPaywall();
         return;
       }
