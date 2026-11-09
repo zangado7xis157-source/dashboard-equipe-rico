@@ -74,12 +74,19 @@ async function asaas(url, options = {}) {
   return data;
 }
 
-async function checkoutWasPaid(checkoutId) {
+async function checkoutWasPaid(checkoutId, plan) {
+  const expectedValue = PLANS[plan] && PLANS[plan].value;
+  if (!expectedValue) return false;
+
   const result = await asaas(`/payments?checkoutSession=${encodeURIComponent(checkoutId)}&limit=100`, {
     method: 'GET',
   });
   const payments = Array.isArray(result.data) ? result.data : [];
-  return payments.some((payment) => ['RECEIVED', 'CONFIRMED'].includes(payment.status));
+  return payments.some((payment) =>
+    ['RECEIVED', 'CONFIRMED'].includes(payment.status) &&
+    Number.isFinite(Number(payment.value)) &&
+    Math.abs(Number(payment.value) - expectedValue) < 0.01
+  );
 }
 
 async function grantAccess({ userId, plan, checkoutId }) {
@@ -209,7 +216,7 @@ function registerDashboardBilling(app) {
     if (!session) return res.status(401).json({ error: 'Sessao de pagamento invalida ou expirada.' });
 
     try {
-      const paid = await checkoutWasPaid(session.checkoutId);
+      const paid = await checkoutWasPaid(session.checkoutId, session.plan);
       if (!paid) return res.json({ paid: false, activated: false, plan: session.plan });
 
       const access = await grantAccess({
