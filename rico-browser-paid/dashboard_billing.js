@@ -137,13 +137,31 @@ function registerDashboardBilling(app) {
     return res.status(204).end();
   });
 
-  app.get('/api/dashboard/health', (req, res) => {
+  app.get('/api/dashboard/health', async (req, res) => {
     if (!setCors(req, res)) return res.status(403).json({ ok: false });
+
+    let checkoutWebhookSubscribed = false;
+    if (ASAAS_API_KEY) {
+      try {
+        const webhooks = await asaas('/webhooks?limit=100', { method: 'GET' });
+        const expectedUrl = 'https://rico-browser-android-pago.onrender.com/webhook/asaas';
+        checkoutWebhookSubscribed = (Array.isArray(webhooks.data) ? webhooks.data : []).some((item) =>
+          String(item.url || '').replace(/\\/$/, '') === expectedUrl &&
+          item.enabled === true &&
+          Array.isArray(item.events) &&
+          item.events.includes('CHECKOUT_PAID')
+        );
+      } catch (error) {
+        console.error('dashboard_webhook_health_error', error.status || '', error.message);
+      }
+    }
+
     res.json({
       ok: true,
       asaasConfigured: Boolean(ASAAS_API_KEY),
       billingConfigured: Boolean(DASHBOARD_BILLING_SECRET),
       webhookConfigured: Boolean(process.env.WEBHOOK_TOKEN),
+      checkoutWebhookSubscribed,
       asaasEnvironment: ASAAS_ENV,
     });
   });
