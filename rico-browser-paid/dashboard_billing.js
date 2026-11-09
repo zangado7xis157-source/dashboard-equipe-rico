@@ -146,7 +146,7 @@ function registerDashboardBilling(app) {
         const webhooks = await asaas('/webhooks?limit=100', { method: 'GET' });
         const expectedUrl = 'https://rico-browser-android-pago.onrender.com/webhook/asaas';
         checkoutWebhookSubscribed = (Array.isArray(webhooks.data) ? webhooks.data : []).some((item) =>
-          String(item.url || '').replace(/\\/$/, '') === expectedUrl &&
+          String(item.url || '').replace(/\/$/, '') === expectedUrl &&
           item.enabled === true &&
           Array.isArray(item.events) &&
           item.events.includes('CHECKOUT_PAID')
