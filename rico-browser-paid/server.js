@@ -19,6 +19,7 @@ const OLD_PRICE = 130.99;
 const APK_PATH = path.join(__dirname, 'private', 'RicoBrowserMobile.apk');
 const paidCache = new Set();
 const {signPurchaseProof,verifyPurchaseProof}=require('./purchase_proof');
+const {handleDashboardCheckoutWebhook}=require('./dashboard_billing');
 
 function sign(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
@@ -151,12 +152,22 @@ app.post('/api/recover', async (req,res) => {
   }
 });
 
-app.post('/webhook/asaas', (req,res) => {
+app.post('/webhook/asaas', async (req,res) => {
   if (!WEBHOOK_TOKEN || req.headers['asaas-access-token'] !== WEBHOOK_TOKEN) return res.status(401).json({ok:false});
   const evt = req.body || {};
   const checkoutId = evt.checkout && evt.checkout.id;
-  if (evt.event === 'CHECKOUT_PAID' && checkoutId) paidCache.add(checkoutId);
-  res.status(200).json({ok:true});
+
+  if (evt.event === 'CHECKOUT_PAID' && checkoutId) {
+    paidCache.add(checkoutId);
+    try {
+      await handleDashboardCheckoutWebhook(evt);
+    } catch (error) {
+      console.error('dashboard_webhook_error', error.status || '', error.data || error.message);
+      return res.status(500).json({ok:false});
+    }
+  }
+
+  return res.status(200).json({ok:true});
 });
 
 app.get('/download', (req,res) => {
