@@ -168,7 +168,7 @@ function registerDashboardBilling(app) {
           billingTypes: ['PIX'],
           chargeTypes: ['DETACHED'],
           minutesToExpire: 60,
-          externalReference: `dashboard:${orderId}`,
+          externalReference: `dashboard:${userId}:${plan}:${orderId}`,
           callback: {
             successUrl: `${DASHBOARD_PUBLIC_URL}/?billing=return`,
             cancelUrl: `${DASHBOARD_PUBLIC_URL}/?billing=cancelado`,
@@ -239,4 +239,23 @@ function registerDashboardBilling(app) {
   });
 }
 
-module.exports = { registerDashboardBilling };
+async function handleDashboardCheckoutWebhook(evt) {
+  if (!evt || evt.event !== 'CHECKOUT_PAID') return { handled: false };
+
+  const checkout = evt.checkout || {};
+  const checkoutId = String(checkout.id || '').trim();
+  const externalReference = String(checkout.externalReference || '').trim();
+  const match = /^dashboard:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(monthly|lifetime):([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.exec(externalReference);
+
+  if (!checkoutId || !match) return { handled: false };
+
+  const userId = match[1];
+  const plan = match[2];
+  const paid = await checkoutWasPaid(checkoutId, plan);
+  if (!paid) return { handled: false, pending: true };
+
+  const access = await grantAccess({ userId, plan, checkoutId });
+  return { handled: true, access };
+}
+
+module.exports = { registerDashboardBilling, handleDashboardCheckoutWebhook };
