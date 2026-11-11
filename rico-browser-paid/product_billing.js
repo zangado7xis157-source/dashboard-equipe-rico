@@ -23,7 +23,7 @@ const PRODUCTS = Object.freeze({
   },
   list_prime: {
     callbackPath: '/pagamento.html',
-    origins: new Set(['https://rico-cpa-casas.onrender.com']),
+    origins: new Set(['https://rico-cpa-casas.onrender.com', 'https://premios.ricocpa.com.br']),
     plans: {
       monthly: { value: 49.99, name: 'Lista Prime 30 dias', description: 'Acesso a Lista Prime por 30 dias' },
     },
