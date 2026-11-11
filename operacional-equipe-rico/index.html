@@ -28,6 +28,8 @@ body{background:radial-gradient(circle at 50% -15%,#ffffff12,transparent 36%),#0
 .video:hover{border-color:#888}.thumb:after{background:#f3f3f3;color:#080808;box-shadow:0 12px 30px #ffffff16}.body h4{color:#f5f5f5}.info{background:linear-gradient(90deg,#ffffff0c,#ffffff04);border-color:#393939}.info span{color:#aaa}.support{background:#f1f1f1;color:#090909}.support:hover{background:#fff}.foot{color:#777}
 .modal{background:#000e}.modal-head{border-color:#333}.close{background:#1a1a1a;color:#fff;border-color:#444}.waiting{color:#bbb}.waiting b{color:#fff}.opening-note{color:#999}
 @media(prefers-reduced-motion:no-preference){.video,.btn,.support{transition:transform .2s ease,background .2s ease,border-color .2s ease}.video:hover{transform:translateY(-3px)}}
+
+.login-buy{display:block;margin-top:15px;padding:13px 16px;border:1px solid #555;border-radius:12px;color:#fff;background:#ffffff0a;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:.04em;text-align:center;transition:background .2s,border-color .2s}.login-buy:hover{background:#ffffff16;border-color:#aaa}
 </style>
 </head>
 <body>
@@ -41,6 +43,7 @@ body{background:radial-gradient(circle at 50% -15%,#ffffff12,transparent 36%),#0
     <button class="btn btn-primary" id="loginBtn" onclick="login()">ENTRAR NA ÁREA VIP</button>
     <div class="error" id="error"></div>
     <div class="login-note">A key é vinculada ao primeiro navegador/dispositivo usado no acesso.</div>
+    <a class="login-buy" href="comprar.html">NÃO TEM KEY? COMPRAR ACESSO</a>
   </div>
 </section>
 
@@ -109,7 +112,7 @@ async function openPrivateVideo(t,lesson){const hash=localStorage.getItem(STORAG
 function closeModal(){const box=document.getElementById('playerBox');const v=box.querySelector('video');if(v){v.pause();v.removeAttribute('src');v.load()}document.getElementById('modal').classList.add('hidden');box.innerHTML=''}
 const openingVideo=document.getElementById('openingVideo');
 openingVideo.addEventListener('ended',unlockOperational);
-openingVideo.addEventListener('error',()=>{document.getElementById('openingEnter').classList.add('show');document.getElementById('openingNote').textContent='Não foi possível carregar o vídeo. Você pode entrar no operacional.'});
+openingVideo.addEventListener('error',()=>{document.getElementById('openingEnter').classList.remove('show');document.getElementById('openingNote').textContent='Não foi possível carregar o vídeo. Atualize a página ou fale com o suporte; o acesso só será liberado após a conclusão do vídeo.'});
 document.getElementById('key').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 autoLogin();
 </script>
